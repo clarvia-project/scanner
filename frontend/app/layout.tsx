@@ -13,9 +13,33 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Clarvia AEO Scanner",
+  title: "Clarvia AEO Scanner — Is your service ready for AI agents?",
   description:
-    "Is your service ready for AI agents? Get your Clarvia Score — the AEO standard for agent discoverability.",
+    "Get your Clarvia Score — the AEO standard for agent discoverability and trust. Scan any API to measure AI Engine Optimization readiness.",
+  openGraph: {
+    title: "Clarvia AEO Scanner",
+    description:
+      "Is your service ready for AI agents? Get your Clarvia Score — the AEO standard for agent discoverability and trust.",
+    url: "https://scanner.clarvia.io",
+    siteName: "Clarvia",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Clarvia AEO Scanner",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Clarvia AEO Scanner",
+    description:
+      "Is your service ready for AI agents? Get your Clarvia Score.",
+    images: ["/og-image.png"],
+  },
+  metadataBase: new URL("https://scanner.clarvia.io"),
 };
 
 export default function RootLayout({

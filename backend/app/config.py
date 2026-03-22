@@ -25,7 +25,20 @@ class Settings(BaseSettings):
     mcp_registry_urls: list[str] = [
         "https://mcp.so",
         "https://smithery.ai",
+        "https://glama.ai",
     ]
+
+    # Stripe
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_price_id: str = ""
+
+    # Supabase
+    supabase_url: str = ""
+    supabase_anon_key: str = ""
+
+    # Frontend URL (for Stripe redirects)
+    frontend_url: str = "http://localhost:3000"
 
     model_config = {"env_prefix": "SCANNER_"}
 

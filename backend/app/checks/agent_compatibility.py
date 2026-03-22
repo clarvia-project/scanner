@@ -29,10 +29,11 @@ async def check_mcp_server(
     # Strip www. prefix for search
     search_domain = domain.replace("www.", "")
 
-    # Check mcp.so and smithery.ai
+    # Check mcp.so, smithery.ai, and glama.ai registries
     registry_checks = [
         f"https://mcp.so/api/search?q={search_domain}",
         f"https://registry.smithery.ai/api/search?q={search_domain}",
+        f"https://glama.ai/mcp/servers?search={search_domain}",
     ]
 
     for registry_url in registry_checks:

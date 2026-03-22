@@ -272,7 +272,9 @@ async def run_scan(url: str) -> ScanResponse:
         best_ds_result = None
         best_openapi_spec = None
         for scan_url in scan_urls:
-            ds_result, openapi_spec = await run_data_structuring(session, scan_url)
+            ds_result, openapi_spec = await run_data_structuring(
+                session, scan_url, api_url=api_url,
+            )
             if best_ds_result is None or ds_result["score"] > best_ds_result["score"]:
                 best_ds_result = ds_result
                 best_openapi_spec = openapi_spec
