@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // ----- Types -----
 
@@ -67,8 +69,10 @@ function scoreBgClass(score: number, max: number): string {
 
 function gradeBadgeClass(rating: string): string {
   switch (rating) {
-    case "Excellent":
+    case "Exceptional":
+    case "Strong":
       return "bg-score-green/15 text-score-green border-score-green/30";
+    case "Moderate":
     case "Good":
       return "bg-score-yellow/15 text-score-yellow border-score-yellow/30";
     case "Basic":
@@ -130,17 +134,53 @@ function formatEvidence(evidence: Record<string, unknown>): string[] {
       lines.push(`HTTP ${value}`);
     } else if (key === "indicators" && Array.isArray(value)) {
       lines.push(`Indicators: ${value.join(", ")}`);
+    } else if (key === "method" && typeof value === "string") {
+      lines.push(`Method: ${value}`);
+    } else if (key === "github_bonus" && typeof value === "number") {
+      lines.push(`GitHub activity bonus: +${value}`);
+    } else if (key === "graphql_bonus" && typeof value === "number") {
+      lines.push(`GraphQL bonus: +${value}`);
     }
   }
   return lines;
 }
 
+// ----- Animated Score Counter -----
+
+function useAnimatedNumber(target: number, duration: number = 1200): number {
+  const [current, setCurrent] = useState(0);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const start = performance.now();
+    const from = 0;
+
+    function tick(now: number) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCurrent(Math.round(from + (target - from) * eased));
+
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [target, duration]);
+
+  return current;
+}
+
 // ----- Score Gauge Component -----
 
 function ScoreGauge({ score }: { score: number }) {
-  const color = scoreColor(score);
+  const animatedScore = useAnimatedNumber(score);
+  const color = scoreColor(animatedScore);
   const circumference = 2 * Math.PI * 54;
-  const progress = (score / 100) * circumference;
+  const progress = (animatedScore / 100) * circumference;
 
   return (
     <div className="relative w-40 h-40 mx-auto">
@@ -163,15 +203,15 @@ function ScoreGauge({ score }: { score: number }) {
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference - progress}
-          className="transition-all duration-1000 ease-out"
+          className="transition-[stroke] duration-300"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span
-          className="text-4xl font-mono font-bold"
+          className="text-4xl font-mono font-bold transition-[color] duration-300"
           style={{ color }}
         >
-          {score}
+          {animatedScore}
         </span>
         <span className="text-xs text-muted mt-1">/ 100</span>
       </div>
@@ -193,7 +233,7 @@ function DimensionBar({
   const pct = dimension.max > 0 ? (dimension.score / dimension.max) * 100 : 0;
 
   return (
-    <div className="bg-card-bg border border-card-border rounded-lg overflow-hidden">
+    <div className="bg-card-bg border border-card-border rounded-lg overflow-hidden transition-all duration-300">
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full px-5 py-4 text-left flex items-center gap-4 hover:bg-card-border/20 transition-colors"
@@ -213,7 +253,7 @@ function DimensionBar({
           </div>
         </div>
         <svg
-          className={`w-4 h-4 text-muted transition-transform shrink-0 ${expanded ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-muted transition-transform duration-200 shrink-0 ${expanded ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -223,7 +263,11 @@ function DimensionBar({
         </svg>
       </button>
 
-      {expanded && (
+      <div
+        className={`overflow-hidden transition-all duration-300 ${
+          expanded ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
         <div className="px-5 pb-4 space-y-3 border-t border-card-border pt-3">
           <p className="text-xs text-muted">{meta?.description}</p>
           {Object.entries(dimension.sub_factors).map(([key, sf]) => {
@@ -239,7 +283,7 @@ function DimensionBar({
                 </div>
                 <div className="h-1.5 bg-card-border rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${scoreBgClass(sf.score, sf.max)}`}
+                    className={`h-full rounded-full transition-all duration-500 ${scoreBgClass(sf.score, sf.max)}`}
                     style={{ width: `${sfPct}%` }}
                   />
                 </div>
@@ -254,7 +298,7 @@ function DimensionBar({
             );
           })}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -262,9 +306,10 @@ function DimensionBar({
 // ----- Scanning Animation -----
 
 const SCAN_PHASES = [
-  "Checking endpoint accessibility...",
+  "Discovering endpoints...",
+  "Checking MCP registries...",
   "Analyzing API documentation...",
-  "Probing data structure...",
+  "Probing error structures...",
   "Testing agent compatibility...",
   "Evaluating trust signals...",
   "Calculating Clarvia Score...",
@@ -276,7 +321,7 @@ function ScanningView() {
   useEffect(() => {
     const interval = setInterval(() => {
       setPhase((p) => (p < SCAN_PHASES.length - 1 ? p + 1 : p));
-    }, 2000);
+    }, 1800);
     return () => clearInterval(interval);
   }, []);
 
@@ -285,27 +330,30 @@ function ScanningView() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 px-6">
       <div className="w-full max-w-md space-y-4">
-        <div className="h-2 bg-card-border rounded-full overflow-hidden">
+        <div className="h-1.5 bg-card-border rounded-full overflow-hidden">
           <div
             className="h-full bg-accent rounded-full transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="space-y-2 text-center">
+        <div className="space-y-1.5">
           {SCAN_PHASES.map((label, i) => (
             <p
               key={i}
-              className={`text-sm font-mono transition-all duration-300 ${
+              className={`text-xs font-mono transition-all duration-300 ${
                 i === phase
                   ? "text-foreground"
                   : i < phase
-                    ? "text-muted/40"
+                    ? "text-score-green/60"
                     : "text-muted/20"
               }`}
             >
               {i < phase ? "[done]" : i === phase ? "[....]" : "[    ]"} {label}
             </p>
           ))}
+        </div>
+        <div className="flex justify-center pt-4">
+          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     </div>
@@ -322,16 +370,20 @@ export default function ScanResultPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [appeared, setAppeared] = useState(false);
 
   useEffect(() => {
     if (!scanId) return;
 
     async function fetchResult() {
       try {
-        const res = await fetch(`http://localhost:8000/api/scan/${scanId}`);
+        const res = await fetch(`${API_BASE}/api/scan/${scanId}`);
         if (!res.ok) throw new Error(`Failed to load scan (${res.status})`);
         const data = await res.json();
         setResult(data);
+        // Trigger entrance animation
+        requestAnimationFrame(() => setAppeared(true));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load scan");
       } finally {
@@ -346,6 +398,32 @@ export default function ScanResultPage() {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleGetReport() {
+    if (!result) return;
+    setCheckoutLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/report/create-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scan_id: result.scan_id }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.detail || "Failed to create checkout");
+      }
+
+      const data = await res.json();
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Payment unavailable");
+      setCheckoutLoading(false);
+    }
   }
 
   return (
@@ -379,7 +457,11 @@ export default function ScanResultPage() {
         )}
 
         {result && (
-          <div className="space-y-8">
+          <div
+            className={`space-y-8 transition-all duration-700 ${
+              appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            }`}
+          >
             {/* Service header */}
             <div className="text-center space-y-2">
               <h1 className="text-2xl font-bold">{result.service_name}</h1>
@@ -444,7 +526,7 @@ export default function ScanResultPage() {
             {result.top_recommendations.length > 0 && (
               <div className="space-y-3">
                 <h2 className="text-sm font-medium text-muted uppercase tracking-wider">
-                  Recommendations
+                  Top Recommendations
                 </h2>
                 <div className="space-y-2">
                   {result.top_recommendations.map((rec, i) => (
@@ -473,12 +555,32 @@ export default function ScanResultPage() {
                 {copied ? "Copied!" : "Share this score"}
               </button>
               <button
-                disabled
-                className="flex-1 bg-card-bg border border-card-border text-muted px-5 py-3 rounded-lg text-sm font-medium cursor-not-allowed opacity-50 text-center"
-                title="Coming soon"
+                onClick={handleGetReport}
+                disabled={checkoutLoading}
+                className="flex-1 bg-accent hover:bg-accent-hover disabled:opacity-60 text-white px-5 py-3 rounded-lg text-sm font-medium transition-colors text-center"
               >
-                Get detailed report — $29
+                {checkoutLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Redirecting...
+                  </span>
+                ) : (
+                  "Get Detailed Report — $29"
+                )}
               </button>
+            </div>
+
+            {/* Report upsell */}
+            <div className="bg-card-bg border border-card-border rounded-lg px-5 py-4 space-y-2">
+              <p className="text-sm font-medium">
+                Unlock the full report
+              </p>
+              <ul className="text-xs text-muted space-y-1">
+                <li>All 13 sub-factors with detailed evidence</li>
+                <li>15 prioritized recommendations with implementation steps</li>
+                <li>Competitive benchmark data</li>
+                <li>Downloadable PDF report</li>
+              </ul>
             </div>
 
             {/* Metadata */}
@@ -503,7 +605,7 @@ export default function ScanResultPage() {
             Clarvia — Discovery & Trust standard for the agent economy
           </span>
           <a
-            href="https://github.com"
+            href="https://github.com/clarvia-project"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-foreground transition-colors"

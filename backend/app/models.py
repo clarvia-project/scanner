@@ -52,3 +52,7 @@ class ScanResponse(BaseModel):
 class ErrorResponse(BaseModel):
     error: str
     detail: str | None = None
+
+
+class WaitlistRequest(BaseModel):
+    email: str = Field(..., description="Email address for waitlist signup")

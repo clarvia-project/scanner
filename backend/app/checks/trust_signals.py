@@ -248,6 +248,59 @@ async def check_update_frequency(
     return (0, {"reason": "No update frequency data available"})
 
 
+async def check_github_activity(
+    session: aiohttp.ClientSession, base_url: str
+) -> tuple[int, dict[str, Any]]:
+    """Check GitHub org/repo for stars and recent activity as a trust signal.
+
+    Returns a bonus score (0-3) that can boost uptime or update_frequency scores.
+    """
+    domain = urlparse(base_url).hostname or ""
+    company = domain.replace("www.", "").split(".")[0]
+
+    # Search GitHub for the organization/company
+    github_api = f"https://api.github.com/search/repositories?q=org:{company}&sort=stars&per_page=5"
+
+    try:
+        async with session.get(
+            github_api,
+            timeout=aiohttp.ClientTimeout(total=5),
+            allow_redirects=True, ssl=False,
+            headers={"Accept": "application/vnd.github.v3+json"},
+        ) as resp:
+            if resp.status < 300:
+                data = await resp.json()
+                items = data.get("items", [])
+                if items:
+                    total_stars = sum(r.get("stargazers_count", 0) for r in items)
+                    top_repo = items[0]
+                    pushed_at = top_repo.get("pushed_at", "")
+
+                    activity_score = 0
+                    evidence: dict[str, Any] = {
+                        "github_org": company,
+                        "total_stars": total_stars,
+                        "top_repo": top_repo.get("full_name"),
+                        "last_push": pushed_at,
+                    }
+
+                    if total_stars >= 1000:
+                        activity_score = 3
+                        evidence["reason"] = "Active GitHub presence with 1000+ stars"
+                    elif total_stars >= 100:
+                        activity_score = 2
+                        evidence["reason"] = "GitHub presence with 100+ stars"
+                    elif total_stars >= 10:
+                        activity_score = 1
+                        evidence["reason"] = "GitHub presence with some activity"
+
+                    return (activity_score, evidence)
+    except (aiohttp.ClientError, asyncio.TimeoutError):
+        pass
+
+    return (0, {"reason": "No GitHub activity data found"})
+
+
 async def run_trust_signals(
     session: aiohttp.ClientSession, base_url: str
 ) -> dict:
@@ -255,10 +308,18 @@ async def run_trust_signals(
     uptime_task = check_uptime(session, base_url)
     docs_task = check_documentation_quality(session, base_url)
     update_task = check_update_frequency(session, base_url)
+    github_task = check_github_activity(session, base_url)
 
-    (uptime_score, uptime_ev), (docs_score, docs_ev), (update_score, update_ev) = (
-        await asyncio.gather(uptime_task, docs_task, update_task)
+    (uptime_score, uptime_ev), (docs_score, docs_ev), (update_score, update_ev), (gh_score, gh_ev) = (
+        await asyncio.gather(uptime_task, docs_task, update_task, github_task)
     )
+
+    # GitHub activity boosts uptime score (capped at 10)
+    if gh_score > 0 and uptime_score < 10:
+        bonus = min(gh_score, 10 - uptime_score)
+        uptime_score += bonus
+        uptime_ev["github_bonus"] = bonus
+        uptime_ev["github_evidence"] = gh_ev
 
     total = uptime_score + docs_score + update_score
 

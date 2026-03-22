@@ -3,3 +3,12 @@ uvicorn[standard]>=0.29.0
 aiohttp>=3.9.0
 pydantic>=2.6.0
 pydantic-settings>=2.2.0
+
+# PDF generation
+reportlab>=4.0
+
+# Payment (optional — scanner works without it)
+stripe>=8.0.0
+
+# Database (optional — scanner works without it)
+supabase>=2.0.0
