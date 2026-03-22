@@ -195,6 +195,37 @@ def _build_dimension_result(raw: dict) -> DimensionResult:
     )
 
 
+async def _discover_api_url(session: aiohttp.ClientSession, base_url: str) -> str | None:
+    """Try to find the API subdomain for a given website URL."""
+    parsed = urlparse(base_url)
+    hostname = parsed.hostname or ""
+
+    # If already an API URL, skip
+    if hostname.startswith("api."):
+        return None
+
+    # Try common API subdomain patterns
+    candidates = [
+        f"https://api.{hostname}",
+        f"https://api.{hostname}/v1",
+        f"https://api.{hostname}/v2",
+    ]
+
+    for candidate in candidates:
+        try:
+            async with session.head(
+                candidate,
+                timeout=aiohttp.ClientTimeout(total=5),
+                allow_redirects=True,
+            ) as resp:
+                if resp.status < 500:  # Even 401/403 means API exists
+                    return candidate.rstrip("/v1").rstrip("/v2").rstrip("/")
+        except Exception:
+            continue
+
+    return None
+
+
 async def run_scan(url: str) -> ScanResponse:
     """Execute the full 5-phase scan pipeline."""
     start_time = time.monotonic()
@@ -210,7 +241,7 @@ async def run_scan(url: str) -> ScanResponse:
         connector=connector,
         headers={"User-Agent": "ClarviaScannerBot/1.0 (+https://clarvia.io/bot)"},
     ) as session:
-        # Phase 1: Quick reachability check
+        # Phase 1: Quick reachability check + API URL discovery
         try:
             async with session.head(
                 url,
@@ -219,7 +250,6 @@ async def run_scan(url: str) -> ScanResponse:
             ):
                 pass
         except Exception:
-            # Try GET as fallback (some sites block HEAD)
             try:
                 async with session.get(
                     url,
@@ -230,19 +260,41 @@ async def run_scan(url: str) -> ScanResponse:
             except Exception as e:
                 raise ValueError(f"URL unreachable: {url} — {type(e).__name__}")
 
-        # Phase 2+3: Run all dimension checks concurrently
-        # Data structuring runs first because it discovers OpenAPI spec needed by API checks
-        ds_result, openapi_spec = await run_data_structuring(session, url)
+        # Discover API subdomain (api.stripe.com, api.github.com, etc.)
+        api_url = await _discover_api_url(session, url)
 
-        # Now run the rest concurrently (API accessibility uses the discovered spec)
-        api_task = run_api_accessibility(session, url, openapi_spec)
+        # Use both website URL and API URL for comprehensive scanning
+        scan_urls = [url]
+        if api_url:
+            scan_urls.append(api_url)
+
+        # Phase 2+3: Run data structuring on both URLs, take best result
+        best_ds_result = None
+        best_openapi_spec = None
+        for scan_url in scan_urls:
+            ds_result, openapi_spec = await run_data_structuring(session, scan_url)
+            if best_ds_result is None or ds_result["score"] > best_ds_result["score"]:
+                best_ds_result = ds_result
+                best_openapi_spec = openapi_spec
+        ds_result = best_ds_result
+        openapi_spec = best_openapi_spec
+
+        # Run the rest concurrently
+        # For API accessibility: check both website and API URL, take best
+        api_tasks = [run_api_accessibility(session, url, openapi_spec)]
+        if api_url:
+            api_tasks.append(run_api_accessibility(session, api_url, openapi_spec))
+
         ac_task = run_agent_compatibility(session, url)
         ts_task = run_trust_signals(session, url)
         oc_task = run_onchain_bonus(url)
 
-        api_result, ac_result, ts_result, oc_result = await asyncio.gather(
-            api_task, ac_task, ts_task, oc_task
-        )
+        all_results = await asyncio.gather(*api_tasks, ac_task, ts_task, oc_task)
+
+        # Pick best API result
+        api_results = all_results[:len(api_tasks)]
+        api_result = max(api_results, key=lambda r: r["score"])
+        ac_result, ts_result, oc_result = all_results[len(api_tasks):]
 
     # Phase 4: Score calculation
     base_score = (
