@@ -37,32 +37,30 @@ async def check_uptime(
         f"https://{company}.upptime.js.org",
     ]
 
-    for url in status_urls:
+    async def _check_status_url(url: str) -> tuple[int, dict] | None:
         try:
             async with session.get(
-                url, timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
+                url, timeout=aiohttp.ClientTimeout(total=5),
                 allow_redirects=True, ssl=False,
             ) as resp:
                 if resp.status < 300:
                     text = await resp.text()
                     text_lower = text.lower()
-
-                    # Look for uptime indicators
                     if any(kw in text_lower for kw in [
                         "operational", "uptime", "all systems",
                         "no incidents", "status page",
                     ]):
-                        return (7, {
-                            "reason": "Public status page found with operational indicators",
-                            "url": url,
-                        })
-                    else:
-                        return (4, {
-                            "reason": "Status page found",
-                            "url": url,
-                        })
-        except (aiohttp.ClientError, asyncio.TimeoutError):
-            continue
+                        return (7, {"reason": "Public status page found with operational indicators", "url": url})
+                    return (4, {"reason": "Status page found", "url": url})
+        except Exception:
+            pass
+        return None
+
+    # Check all status URLs in parallel, take first success
+    results = await asyncio.gather(*[_check_status_url(u) for u in status_urls])
+    for r in results:
+        if r is not None:
+            return r
 
     # No status page found — give 1 point if the main site responds reliably
     try:
@@ -99,27 +97,27 @@ async def check_documentation_quality(
         f"{base_url}/docs",
         f"{base_url}/documentation",
         f"https://docs.{bare_domain}",
+        f"https://developer.{bare_domain}",
+        f"https://developers.{bare_domain}",
         f"{base_url}/api",
         f"{base_url}/reference",
         f"{base_url}/developers",
+        f"https://docs.{bare_domain}/api",
+        f"https://docs.{bare_domain}/reference",
     ]
 
-    best_score = 0
-    best_evidence: dict[str, Any] = {"reason": "No documentation found"}
-
-    for url in docs_urls:
+    async def _check_docs_url(url: str) -> tuple[int, dict]:
         try:
             async with session.get(
-                url, timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
+                url, timeout=aiohttp.ClientTimeout(total=5),
                 allow_redirects=True, ssl=False,
             ) as resp:
                 if resp.status >= 300:
-                    continue
+                    return (0, {})
 
                 text = await resp.text()
                 text_lower = text.lower()
 
-                # Count documentation quality signals
                 signals = {
                     "api_reference": any(kw in text_lower for kw in ["api reference", "endpoints", "api documentation"]),
                     "guides": any(kw in text_lower for kw in ["guide", "tutorial", "getting started", "quickstart"]),
@@ -130,30 +128,27 @@ async def check_documentation_quality(
                 }
 
                 signal_count = sum(signals.values())
-
                 if signal_count >= 4:
-                    score = 8
-                    reason = "Comprehensive documentation"
+                    score, reason = 8, "Comprehensive documentation"
                 elif signal_count >= 3:
-                    score = 5
-                    reason = "Good API reference with some guides"
+                    score, reason = 5, "Good API reference with some guides"
                 elif signal_count >= 1:
-                    score = 3
-                    reason = "Basic API reference"
+                    score, reason = 3, "Basic API reference"
                 else:
-                    score = 1
-                    reason = "Minimal documentation page"
+                    score, reason = 1, "Minimal documentation page"
 
-                if score > best_score:
-                    best_score = score
-                    best_evidence = {
-                        "reason": reason,
-                        "url": url,
-                        "signals": {k: v for k, v in signals.items() if v},
-                    }
+                return (score, {"reason": reason, "url": url, "signals": {k: v for k, v in signals.items() if v}})
+        except Exception:
+            return (0, {})
 
-        except (aiohttp.ClientError, asyncio.TimeoutError):
-            continue
+    # Check all docs URLs in parallel, take best
+    results = await asyncio.gather(*[_check_docs_url(u) for u in docs_urls])
+    best_score = 0
+    best_evidence: dict[str, Any] = {"reason": "No documentation found"}
+    for score, ev in results:
+        if score > best_score:
+            best_score = score
+            best_evidence = ev
 
     return (best_score, best_evidence)
 

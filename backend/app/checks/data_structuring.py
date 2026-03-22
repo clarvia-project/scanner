@@ -75,9 +75,17 @@ async def discover_openapi_spec(
         f"https://api.{parsed.hostname}/swagger.json" if parsed.hostname else "",
     ]
 
-    for url in candidates:
+    # Check all candidates in parallel for speed
+    async def _try_candidate(url: str) -> tuple[dict | None, str]:
         spec = await _fetch_json(session, url)
-        if spec and ("openapi" in spec or "swagger" in spec or "paths" in spec):
+        if spec and ("openapi" in spec or "swagger" in spec or "paths" in spec
+                      or "components" in spec or spec.get("_partial")):
+            return (spec, url)
+        return (None, url)
+
+    results = await asyncio.gather(*[_try_candidate(u) for u in candidates if u])
+    for spec, url in results:
+        if spec is not None:
             return (spec, url)
 
     return (None, None)
