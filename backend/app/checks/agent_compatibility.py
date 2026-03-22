@@ -142,11 +142,35 @@ async def check_robots_txt(
                             found_ai_rules.append(agent)
 
             if found_ai_rules:
-                return (5, {
-                    "reason": "robots.txt explicitly addresses AI agents",
-                    "url": robots_url,
-                    "ai_agents": found_ai_rules[:10],
-                })
+                # Check if they allow or block AI agents
+                # Even blocking = they're aware of agents (partial credit)
+                allows_ai = False
+                blocks_ai = False
+                current_agent = ""
+                for line in lines:
+                    line = line.strip()
+                    if line.startswith("user-agent:"):
+                        current_agent = line.split(":", 1)[1].strip()
+                    elif any(a in current_agent for a in ai_agents):
+                        if line.startswith("allow:"):
+                            allows_ai = True
+                        elif line.startswith("disallow:"):
+                            blocks_ai = True
+
+                if allows_ai:
+                    return (5, {
+                        "reason": "robots.txt explicitly ALLOWS AI agents",
+                        "url": robots_url,
+                        "ai_agents": found_ai_rules[:10],
+                        "policy": "allow",
+                    })
+                else:
+                    return (2, {
+                        "reason": "robots.txt addresses AI agents but blocks them (agent-aware)",
+                        "url": robots_url,
+                        "ai_agents": found_ai_rules[:10],
+                        "policy": "block",
+                    })
 
             # Check if it's permissive (allows all)
             has_disallow_all = "disallow: /" in text_lower and "disallow: / " not in text_lower

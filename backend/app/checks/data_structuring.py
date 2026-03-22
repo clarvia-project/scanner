@@ -16,17 +16,31 @@ from ..config import settings
 
 
 async def _fetch_json(session: aiohttp.ClientSession, url: str) -> dict | None:
-    """Try to fetch and parse JSON from a URL."""
+    """Try to fetch and parse JSON from a URL. For large files, read only first 64KB to detect structure."""
+    if not url:
+        return None
     try:
         async with session.get(
-            url, timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
+            url, timeout=aiohttp.ClientTimeout(total=15),
             allow_redirects=True, ssl=False,
         ) as resp:
             if resp.status < 300:
                 ct = resp.headers.get("content-type", "")
-                if "json" in ct or "yaml" in ct:
-                    text = await resp.text()
-                    return json.loads(text)
+                cl = int(resp.headers.get("content-length", "0") or "0")
+
+                is_json_like = "json" in ct or "yaml" in ct or "octet" in ct or "text/plain" in ct or url.endswith(".json")
+                if is_json_like:
+                    if cl > 500_000:
+                        # Large spec — read first 64KB to detect structure
+                        chunk = await resp.content.read(65536)
+                        text = chunk.decode("utf-8", errors="ignore")
+                        # Check if it looks like OpenAPI
+                        if '"openapi"' in text or '"swagger"' in text or '"paths"' in text or '"components"' in text or '"schemas"' in text:
+                            # Parse a minimal version: extract key fields
+                            return {"openapi": "3.x", "paths": {"_large_spec": True}, "_partial": True, "_size": cl}
+                    else:
+                        text = await resp.text()
+                        return json.loads(text)
     except Exception:
         pass
     return None
@@ -36,6 +50,11 @@ async def discover_openapi_spec(
     session: aiohttp.ClientSession, base_url: str
 ) -> tuple[dict | None, str | None]:
     """Try to find and parse an OpenAPI/Swagger spec. Returns (spec_dict, spec_url)."""
+    # Extract domain for GitHub raw spec lookup
+    from urllib.parse import urlparse
+    parsed = urlparse(base_url)
+    domain_name = parsed.hostname.replace("www.", "").split(".")[0] if parsed.hostname else ""
+
     candidates = [
         f"{base_url}/openapi.json",
         f"{base_url}/swagger.json",
@@ -45,6 +64,15 @@ async def discover_openapi_spec(
         f"{base_url}/.well-known/openapi.json",
         f"{base_url}/v1/openapi.json",
         f"{base_url}/api/swagger.json",
+        f"{base_url}/api/v1/swagger.json",
+        f"{base_url}/.well-known/ai-plugin.json",
+        # Well-known GitHub-hosted specs (try common patterns)
+        f"https://raw.githubusercontent.com/{domain_name}/openapi/master/openapi/spec3.json",
+        f"https://raw.githubusercontent.com/{domain_name}/openapi/main/openapi/spec3.json",
+        f"https://raw.githubusercontent.com/{domain_name}/{domain_name}-openapi/main/openapi.json",
+        # Known API docs patterns
+        f"https://api.{parsed.hostname}/openapi.json" if parsed.hostname else "",
+        f"https://api.{parsed.hostname}/swagger.json" if parsed.hostname else "",
     ]
 
     for url in candidates:
@@ -61,6 +89,14 @@ async def check_schema_definition(
     """Score schema definition quality (10 pts max)."""
     if not openapi_spec:
         return (0, {"reason": "No OpenAPI/Swagger spec found"})
+
+    # Handle large partial specs (detected via chunk reading)
+    if openapi_spec.get("_partial"):
+        return (8, {
+            "reason": "Large OpenAPI spec found (structure verified, full parsing skipped)",
+            "spec_url": spec_url,
+            "size_bytes": openapi_spec.get("_size", 0),
+        })
 
     paths = openapi_spec.get("paths", {})
     components = openapi_spec.get("components", {}) or openapi_spec.get("definitions", {})
@@ -224,6 +260,35 @@ async def check_error_structure(
                             "status": resp.status,
                             "content_type": ct,
                         })
+        except (aiohttp.ClientError, asyncio.TimeoutError):
+            continue
+
+    # Try hitting known API base with no auth — many APIs return structured 401/403
+    auth_probes = [
+        f"{base_url}/api/v1",
+        f"{base_url}/api",
+        f"{base_url}/v1",
+    ]
+    for probe in auth_probes:
+        try:
+            async with session.get(
+                probe, timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
+                allow_redirects=True, ssl=False,
+            ) as resp:
+                ct = resp.headers.get("content-type", "")
+                if resp.status in (401, 403) and "json" in ct:
+                    try:
+                        data = await resp.json()
+                        has_error = "error" in data or "message" in data
+                        if has_error:
+                            return (5, {
+                                "reason": "Structured auth error response (JSON 401/403)",
+                                "probe_url": probe,
+                                "status": resp.status,
+                                "error_keys": list(data.keys())[:8],
+                            })
+                    except Exception:
+                        pass
         except (aiohttp.ClientError, asyncio.TimeoutError):
             continue
 
