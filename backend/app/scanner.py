@@ -71,111 +71,157 @@ def _get_rating(score: int) -> str:
 
 def _generate_recommendations(dimensions: dict, onchain: dict) -> list[str]:
     """Rule-based recommendation generator (no Claude API for MVP)."""
-    recs: list[str] = []
+    # (potential_gain, recommendation_text)
+    recs: list[tuple[int, str]] = []
 
     # API Accessibility
     api = dimensions.get("api_accessibility", {})
     api_subs = api.get("sub_factors", {})
 
     ep = api_subs.get("endpoint_existence", {})
-    if ep.get("score", 0) < 10:
-        recs.append(
+    if ep.get("score", 0) < 7:
+        gap = 7 - ep.get("score", 0)
+        recs.append((gap,
             "Ensure your API has a publicly reachable endpoint returning 2xx "
-            "responses to gain up to 10 points in API Accessibility."
-        )
+            "responses to gain up to 7 points in API Accessibility."
+        ))
 
     speed = api_subs.get("response_speed", {})
-    if speed.get("score", 0) < 7:
+    if speed.get("score", 0) < 5:
+        gap = 7 - speed.get("score", 0)
         p50 = speed.get("evidence", {}).get("p50_ms")
         msg = "Optimize API response time to under 200ms for full marks."
         if p50:
             msg += f" Current p50: {p50}ms."
-        recs.append(msg)
+        recs.append((gap, msg))
 
-    auth = api_subs.get("auth_documentation", {})
-    if auth.get("score", 0) < 5:
-        recs.append(
-            "Publish an OpenAPI/Swagger spec with security schemes to earn "
-            "5 points in Auth Documentation."
-        )
+    rate = api_subs.get("rate_limit_info", {})
+    if rate.get("score", 0) < 3:
+        gap = 3 - rate.get("score", 0)
+        recs.append((gap,
+            "Expose X-RateLimit-* headers (limit, remaining, reset) in API "
+            "responses so agents can self-throttle."
+        ))
+
+    sdk = api_subs.get("sdk_availability", {})
+    if sdk.get("score", 0) < 2:
+        gap = 2 - sdk.get("score", 0)
+        recs.append((gap,
+            "Publish official SDKs on PyPI/npm so agents can integrate "
+            "programmatically without raw HTTP."
+        ))
 
     # Data Structuring
     ds = dimensions.get("data_structuring", {})
     ds_subs = ds.get("sub_factors", {})
 
     schema = ds_subs.get("schema_definition", {})
-    if schema.get("score", 0) < 10:
-        recs.append(
+    if schema.get("score", 0) < 7:
+        gap = 7 - schema.get("score", 0)
+        recs.append((gap,
             "Publish a complete OpenAPI 3.x spec with JSON Schema models "
-            "to maximize Schema Definition score (up to 10 points)."
-        )
+            "to maximize Schema Definition score (up to 7 points)."
+        ))
 
-    pricing = ds_subs.get("pricing_quantified", {})
-    if pricing.get("score", 0) < 5:
-        recs.append(
-            "Add machine-readable pricing (JSON or structured data) "
-            f"to improve Pricing score by up to {8 - pricing.get('score', 0)} points."
-        )
+    webhook = ds_subs.get("webhook_support", {})
+    if webhook.get("score", 0) < 3:
+        gap = 3 - webhook.get("score", 0)
+        recs.append((gap,
+            "Add webhook support so agents receive real-time event "
+            "notifications instead of polling."
+        ))
+
+    batch = ds_subs.get("batch_api", {})
+    if batch.get("score", 0) < 3:
+        gap = 3 - batch.get("score", 0)
+        recs.append((gap,
+            "Implement batch/bulk API endpoints to let agents process "
+            "multiple items in a single request."
+        ))
 
     errors = ds_subs.get("error_structure", {})
-    if errors.get("score", 0) < 4:
-        recs.append(
+    if errors.get("score", 0) < 3:
+        gap = 5 - errors.get("score", 0)
+        recs.append((gap,
             "Implement standardized error responses (RFC 7807 or similar) "
             "with error codes and remediation hints."
-        )
+        ))
 
     # Agent Compatibility
     ac = dimensions.get("agent_compatibility", {})
     ac_subs = ac.get("sub_factors", {})
 
     mcp = ac_subs.get("mcp_server_exists", {})
-    if mcp.get("score", 0) < 15:
-        recs.append(
+    if mcp.get("score", 0) < 10:
+        gap = 10 - mcp.get("score", 0)
+        recs.append((gap,
             "Publish an MCP (Model Context Protocol) server to gain up to "
-            "15 points in Agent Compatibility — the single highest-impact improvement."
-        )
+            "10 points — the single highest-impact improvement for agent compatibility."
+        ))
 
-    robots = ac_subs.get("robots_txt_agent_policy", {})
-    if robots.get("score", 0) < 5:
-        recs.append(
-            "Add AI-agent-specific User-agent rules to robots.txt "
-            "to signal your policy to AI crawlers."
-        )
+    plugin = ac_subs.get("ai_plugin_manifest", {})
+    if plugin.get("score", 0) < 3:
+        gap = 3 - plugin.get("score", 0)
+        recs.append((gap,
+            "Create a .well-known/ai-plugin.json manifest to enable "
+            "ChatGPT-style plugin discovery by AI agents."
+        ))
 
-    sitemap = ac_subs.get("sitemap_discovery", {})
-    if sitemap.get("score", 0) < 5:
-        recs.append(
-            "Create a .well-known/ai-plugin.json or ensure sitemap.xml "
-            "includes API documentation URLs for agent discovery."
-        )
+    cors = ac_subs.get("cors_policy", {})
+    if cors.get("score", 0) < 2:
+        gap = 2 - cors.get("score", 0)
+        recs.append((gap,
+            "Enable CORS (Access-Control-Allow-Origin) so browser-based "
+            "agents can call your API directly."
+        ))
+
+    playground = ac_subs.get("api_playground", {})
+    if playground.get("score", 0) < 2:
+        gap = 2 - playground.get("score", 0)
+        recs.append((gap,
+            "Provide an API playground or sandbox for agents to test "
+            "integrations without production consequences."
+        ))
 
     # Trust Signals
     ts = dimensions.get("trust_signals", {})
     ts_subs = ts.get("sub_factors", {})
 
     uptime = ts_subs.get("success_rate_uptime", {})
-    if uptime.get("score", 0) < 7:
-        recs.append(
+    if uptime.get("score", 0) < 4:
+        gap = 6 - uptime.get("score", 0)
+        recs.append((gap,
             "Set up a public status page (e.g., statuspage.io) to demonstrate "
-            "uptime commitment and earn up to 10 Trust Signal points."
-        )
+            "uptime commitment."
+        ))
 
-    docs = ts_subs.get("documentation_quality", {})
-    if docs.get("score", 0) < 5:
-        recs.append(
-            "Expand developer documentation with guides, tutorials, and "
-            "code examples in 3+ languages."
-        )
+    consistency = ts_subs.get("response_consistency", {})
+    if consistency.get("score", 0) < 4:
+        gap = 4 - consistency.get("score", 0)
+        recs.append((gap,
+            "Ensure deterministic API responses — agents rely on consistent "
+            "outputs for reliable automation."
+        ))
 
-    update = ts_subs.get("update_frequency", {})
-    if update.get("score", 0) < 5:
-        recs.append(
-            "Maintain a public changelog updated at least monthly to demonstrate "
-            "active maintenance."
-        )
+    error_quality = ts_subs.get("error_response_quality", {})
+    if error_quality.get("score", 0) < 3:
+        gap = 3 - error_quality.get("score", 0)
+        recs.append((gap,
+            "Include documentation links in error responses so agents "
+            "can self-diagnose and recover from failures."
+        ))
 
-    # Sort by potential impact (highest possible gain first) and cap at 5
-    return recs[:5]
+    deprecation = ts_subs.get("deprecation_policy", {})
+    if deprecation.get("score", 0) < 2:
+        gap = 2 - deprecation.get("score", 0)
+        recs.append((gap,
+            "Publish a deprecation/sunset policy so agents know how long "
+            "current API versions will be supported."
+        ))
+
+    # Sort by potential impact (highest gain first) and cap at 5
+    recs.sort(key=lambda x: x[0], reverse=True)
+    return [text for _, text in recs[:5]]
 
 
 def _build_dimension_result(raw: dict) -> DimensionResult:
