@@ -3,13 +3,42 @@
   "version": "1.0.0",
   "description": "Clarvia MCP Server - Search and evaluate AI services via Model Context Protocol",
   "type": "module",
+  "main": "./dist/index.js",
   "bin": {
     "clarvia-mcp": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clarvia/scanner.git",
+    "directory": "mcp-server"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "aeo",
+    "clarvia",
+    "scanner",
+    "agent"
+  ],
+  "author": "Clarvia",
+  "homepage": "https://clarvia.art",
+  "bugs": {
+    "url": "https://github.com/clarvia/scanner/issues"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1"

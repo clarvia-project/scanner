@@ -65,12 +65,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if request.method != "POST" or not request.url.path.startswith("/api/scan"):
             return await call_next(request)
 
+        # Bypass rate limiting for localhost/internal requests
+        client_ip = _get_client_ip(request)
+        if client_ip in ("127.0.0.1", "::1", "localhost"):
+            return await call_next(request)
+
         api_key = request.headers.get("x-api-key")
         if api_key:
             key = f"apikey:{api_key}"
             limit = API_KEY_LIMIT
         else:
-            key = f"ip:{_get_client_ip(request)}"
+            key = f"ip:{client_ip}"
             limit = FREE_LIMIT
 
         entry = _rate_store[key]

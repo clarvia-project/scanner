@@ -308,6 +308,13 @@ async def scan_profile(profile_id: str):
         }
         _save_profiles()
 
+        # Persist to Supabase
+        try:
+            from ..services.supabase_client import save_scan
+            await save_scan(result)
+        except Exception as e:
+            logger.warning("Failed to persist scan to Supabase: %s", e)
+
         return {
             "profile_id": profile_id,
             "clarvia_score": result.clarvia_score,
