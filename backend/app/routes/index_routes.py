@@ -102,6 +102,45 @@ def _load_data() -> None:
     _by_scan_id = {s["scan_id"]: s for s in _services}
     logger.info("Loaded %d services for Index API", len(_services))
 
+    # Merge scanned profiles into the services index
+    _merge_profiles()
+
+
+def _merge_profiles() -> None:
+    """Load scanned profiles and add them to the services index."""
+    global _services, _by_scan_id
+    try:
+        from .profile_routes import get_all_profiles
+
+        for profile in get_all_profiles():
+            if profile.get("status") != "scanned" or profile.get("scan_result") is None:
+                continue
+
+            scan_result = profile["scan_result"]
+            scan_id = scan_result.get("scan_id")
+            if not scan_id or scan_id in _by_scan_id:
+                continue  # already present or no scan_id
+
+            entry = {
+                "scan_id": scan_id,
+                "url": profile["url"],
+                "service_name": profile["name"],
+                "clarvia_score": profile.get("clarvia_score", 0),
+                "rating": scan_result.get("rating", "unknown"),
+                "dimensions": scan_result.get("dimensions", {}),
+                "category": profile.get("category", "other"),
+                "scanned_at": scan_result.get("scanned_at"),
+                "source": "profile",
+                "profile_id": profile["profile_id"],
+                "tags": profile.get("tags", []),
+            }
+            _services.append(entry)
+            _by_scan_id[scan_id] = entry
+
+        logger.info("Merged profiles, total services: %d", len(_services))
+    except Exception as e:
+        logger.warning("Failed to merge profiles: %s", e)
+
 
 def _ensure_loaded() -> None:
     if not _services:
