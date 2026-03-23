@@ -379,10 +379,28 @@ export default function ScanResultPage() {
     async function fetchResult() {
       try {
         const res = await fetch(`${API_BASE}/api/scan/${scanId}`);
-        if (!res.ok) throw new Error(`Failed to load scan (${res.status})`);
-        const data = await res.json();
-        setResult(data);
-        // Trigger entrance animation
+        if (res.ok) {
+          const data = await res.json();
+          setResult(data);
+          requestAnimationFrame(() => setAppeared(true));
+          return;
+        }
+
+        // Backend miss (404 etc) — try prebuilt static data
+        const fallbackRes = await fetch("/data/prebuilt-scans.json");
+        if (!fallbackRes.ok) throw new Error(`Failed to load scan (${res.status})`);
+        const scans: ScanResult[] = await fallbackRes.json();
+        const match = scans.find((s) => s.scan_id === scanId);
+        if (!match) throw new Error(`Scan not found (${scanId})`);
+
+        // Fill optional fields that prebuilt data may lack
+        if (!match.top_recommendations) match.top_recommendations = [];
+        if (!match.scan_duration_ms) match.scan_duration_ms = 0;
+        if (!match.onchain_bonus) {
+          match.onchain_bonus = { score: 0, max: 10, applicable: false, sub_factors: {} };
+        }
+
+        setResult(match);
         requestAnimationFrame(() => setAppeared(true));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load scan");
@@ -605,7 +623,9 @@ export default function ScanResultPage() {
                   timeStyle: "short",
                 })}
               </p>
-              <p>Scan duration: {(result.scan_duration_ms / 1000).toFixed(1)}s</p>
+              {result.scan_duration_ms > 0 && (
+                <p>Scan duration: {(result.scan_duration_ms / 1000).toFixed(1)}s</p>
+              )}
             </div>
           </div>
         )}
