@@ -1236,6 +1236,168 @@
     "scanned_at": "2026-03-23T14:38:44.861720+00:00"
   },
   {
+    "url": "https://circle.com",
+    "service_name": "Circle",
+    "clarvia_score": 62,
+    "rating": "Moderate",
+    "dimensions": {
+      "api_accessibility": {
+        "score": 20,
+        "max": 25,
+        "sub_factors": {
+          "endpoint_existence": {
+            "score": 10,
+            "max": 10,
+            "label": "Endpoint Existence",
+            "evidence": {
+              "endpoint": "https://circle.com",
+              "status": 200,
+              "content_type": "text/html; charset=utf-8",
+              "reason": "Publicly reachable endpoint returning 2xx"
+            }
+          },
+          "response_speed": {
+            "score": 10,
+            "max": 10,
+            "label": "Response Speed",
+            "evidence": {
+              "p50_ms": 81,
+              "samples": [
+                80,
+                80,
+                81,
+                100,
+                119
+              ]
+            }
+          },
+          "auth_documentation": {
+            "score": 0,
+            "max": 5,
+            "label": "Auth Documentation",
+            "evidence": {
+              "reason": "No auth documentation found"
+            }
+          }
+        }
+      },
+      "data_structuring": {
+        "score": 15,
+        "max": 25,
+        "sub_factors": {
+          "schema_definition": {
+            "score": 0,
+            "max": 10,
+            "label": "Schema Definition",
+            "evidence": {
+              "reason": "No OpenAPI/Swagger spec found"
+            }
+          },
+          "pricing_quantified": {
+            "score": 8,
+            "max": 8,
+            "label": "Pricing Quantified",
+            "evidence": {
+              "reason": "Pricing page with structured data (JSON-LD)",
+              "url": "https://circle.com/pricing"
+            }
+          },
+          "error_structure": {
+            "score": 7,
+            "max": 7,
+            "label": "Error Structure",
+            "evidence": {
+              "reason": "Standardized error format (RFC 7807 or equivalent)",
+              "probe_url": "https://api.circle.com/nonexistent-resource-test-12345",
+              "method": "GET",
+              "status": 404,
+              "error_keys": [
+                "code",
+                "message"
+              ]
+            }
+          }
+        }
+      },
+      "agent_compatibility": {
+        "score": 5,
+        "max": 25,
+        "sub_factors": {
+          "mcp_server_exists": {
+            "score": 0,
+            "max": 15,
+            "label": "MCP Server Exists",
+            "evidence": {
+              "reason": "No MCP server found"
+            }
+          },
+          "robots_txt_agent_policy": {
+            "score": 0,
+            "max": 5,
+            "label": "robots.txt Agent Policy",
+            "evidence": {
+              "reason": "robots.txt blocks automated access",
+              "url": "https://circle.com/robots.txt"
+            }
+          },
+          "sitemap_discovery": {
+            "score": 5,
+            "max": 5,
+            "label": "Sitemap / Discovery",
+            "evidence": {
+              "reason": "Sitemap.xml with API documentation URLs",
+              "url": "https://circle.com/sitemap.xml"
+            }
+          }
+        }
+      },
+      "trust_signals": {
+        "score": 22,
+        "max": 25,
+        "sub_factors": {
+          "success_rate_uptime": {
+            "score": 7,
+            "max": 10,
+            "label": "Success Rate & Uptime",
+            "evidence": {
+              "reason": "Public status page found with operational indicators",
+              "url": "https://status.circle.com"
+            }
+          },
+          "documentation_quality": {
+            "score": 8,
+            "max": 8,
+            "label": "Documentation Quality",
+            "evidence": {
+              "reason": "Comprehensive documentation",
+              "url": "https://developers.circle.com",
+              "signals": {
+                "api_reference": true,
+                "guides": true,
+                "changelog": true,
+                "code_examples": true,
+                "multi_language": true
+              }
+            }
+          },
+          "update_frequency": {
+            "score": 7,
+            "max": 7,
+            "label": "Update Frequency",
+            "evidence": {
+              "reason": "Updated within 30 days",
+              "url": "https://circle.com/blog",
+              "last_modified": "Mon, 23 Mar 2026 13:07:17 GMT",
+              "days_ago": 0
+            }
+          }
+        }
+      }
+    },
+    "scan_id": "scn_c1a5dd11249f",
+    "scanned_at": "2026-03-23T14:40:42.042299+00:00"
+  },
+  {
     "url": "https://anthropic.com",
     "service_name": "Anthropic",
     "clarvia_score": 61,
@@ -1960,6 +2122,179 @@
     "scanned_at": "2026-03-23T13:41:49.851925+00:00"
   },
   {
+    "url": "https://plaid.com",
+    "service_name": "Plaid",
+    "clarvia_score": 58,
+    "rating": "Basic",
+    "dimensions": {
+      "api_accessibility": {
+        "score": 23,
+        "max": 25,
+        "sub_factors": {
+          "endpoint_existence": {
+            "score": 10,
+            "max": 10,
+            "label": "Endpoint Existence",
+            "evidence": {
+              "endpoint": "https://plaid.com",
+              "status": 200,
+              "content_type": "text/html",
+              "reason": "Publicly reachable endpoint returning 2xx"
+            }
+          },
+          "response_speed": {
+            "score": 10,
+            "max": 10,
+            "label": "Response Speed",
+            "evidence": {
+              "p50_ms": 120,
+              "samples": [
+                115,
+                117,
+                120,
+                126,
+                140
+              ]
+            }
+          },
+          "auth_documentation": {
+            "score": 3,
+            "max": 5,
+            "label": "Auth Documentation",
+            "evidence": {
+              "reason": "Docs page with auth section found",
+              "url": "https://plaid.com/docs",
+              "keywords_found": [
+                "api key",
+                "oauth"
+              ]
+            }
+          }
+        }
+      },
+      "data_structuring": {
+        "score": 5,
+        "max": 25,
+        "sub_factors": {
+          "schema_definition": {
+            "score": 0,
+            "max": 10,
+            "label": "Schema Definition",
+            "evidence": {
+              "reason": "No OpenAPI/Swagger spec found"
+            }
+          },
+          "pricing_quantified": {
+            "score": 5,
+            "max": 8,
+            "label": "Pricing Quantified",
+            "evidence": {
+              "reason": "Pricing page with clear tiers but not machine-readable",
+              "url": "https://plaid.com/pricing",
+              "indicators": [
+                "free tier",
+                "pricing",
+                "plan"
+              ]
+            }
+          },
+          "error_structure": {
+            "score": 0,
+            "max": 7,
+            "label": "Error Structure",
+            "evidence": {
+              "reason": "Could not probe error responses (endpoints may require auth)"
+            }
+          }
+        }
+      },
+      "agent_compatibility": {
+        "score": 5,
+        "max": 25,
+        "sub_factors": {
+          "mcp_server_exists": {
+            "score": 0,
+            "max": 15,
+            "label": "MCP Server Exists",
+            "evidence": {
+              "reason": "No MCP server found"
+            }
+          },
+          "robots_txt_agent_policy": {
+            "score": 0,
+            "max": 5,
+            "label": "robots.txt Agent Policy",
+            "evidence": {
+              "reason": "robots.txt blocks automated access",
+              "url": "https://plaid.com/robots.txt"
+            }
+          },
+          "sitemap_discovery": {
+            "score": 5,
+            "max": 5,
+            "label": "Sitemap / Discovery",
+            "evidence": {
+              "reason": "Sitemap.xml with API documentation URLs",
+              "url": "https://plaid.com/sitemap.xml"
+            }
+          }
+        }
+      },
+      "trust_signals": {
+        "score": 25,
+        "max": 25,
+        "sub_factors": {
+          "success_rate_uptime": {
+            "score": 10,
+            "max": 10,
+            "label": "Success Rate & Uptime",
+            "evidence": {
+              "reason": "Public status page found with operational indicators",
+              "url": "https://status.plaid.com",
+              "github_bonus": 3,
+              "github_evidence": {
+                "github_org": "plaid",
+                "total_stars": 2779,
+                "top_repo": "plaid/quickstart",
+                "last_push": "2026-03-21T10:29:29Z",
+                "reason": "Active GitHub presence with 1000+ stars"
+              }
+            }
+          },
+          "documentation_quality": {
+            "score": 8,
+            "max": 8,
+            "label": "Documentation Quality",
+            "evidence": {
+              "reason": "Comprehensive documentation",
+              "url": "https://plaid.com/docs",
+              "signals": {
+                "api_reference": true,
+                "guides": true,
+                "changelog": true,
+                "code_examples": true,
+                "multi_language": true
+              }
+            }
+          },
+          "update_frequency": {
+            "score": 7,
+            "max": 7,
+            "label": "Update Frequency",
+            "evidence": {
+              "reason": "Updated within 30 days",
+              "url": "https://plaid.com/docs/changelog",
+              "last_modified": "Fri, 20 Mar 2026 21:30:40 GMT",
+              "days_ago": 2
+            }
+          }
+        }
+      }
+    },
+    "scan_id": "scn_1573cc3b72d4",
+    "scanned_at": "2026-03-23T14:40:09.058481+00:00"
+  },
+  {
     "url": "https://together.ai",
     "service_name": "Together AI",
     "clarvia_score": 55,
@@ -2125,6 +2460,176 @@
     },
     "scan_id": "scn_1869d5f4bd85",
     "scanned_at": "2026-03-23T13:27:28.768056+00:00"
+  },
+  {
+    "url": "https://slack.com",
+    "service_name": "Slack",
+    "clarvia_score": 54,
+    "rating": "Basic",
+    "dimensions": {
+      "api_accessibility": {
+        "score": 23,
+        "max": 25,
+        "sub_factors": {
+          "endpoint_existence": {
+            "score": 10,
+            "max": 10,
+            "label": "Endpoint Existence",
+            "evidence": {
+              "endpoint": "https://slack.com",
+              "status": 200,
+              "content_type": "text/html; charset=utf-8",
+              "reason": "Publicly reachable endpoint returning 2xx"
+            }
+          },
+          "response_speed": {
+            "score": 10,
+            "max": 10,
+            "label": "Response Speed",
+            "evidence": {
+              "p50_ms": 177,
+              "samples": [
+                4,
+                6,
+                177,
+                181,
+                231
+              ]
+            }
+          },
+          "auth_documentation": {
+            "score": 3,
+            "max": 5,
+            "label": "Auth Documentation",
+            "evidence": {
+              "reason": "Docs page with auth section found",
+              "url": "https://slack.com/api",
+              "keywords_found": [
+                "authentication",
+                "oauth"
+              ]
+            }
+          }
+        }
+      },
+      "data_structuring": {
+        "score": 5,
+        "max": 25,
+        "sub_factors": {
+          "schema_definition": {
+            "score": 0,
+            "max": 10,
+            "label": "Schema Definition",
+            "evidence": {
+              "reason": "No OpenAPI/Swagger spec found"
+            }
+          },
+          "pricing_quantified": {
+            "score": 5,
+            "max": 8,
+            "label": "Pricing Quantified",
+            "evidence": {
+              "reason": "Pricing page with clear tiers but not machine-readable",
+              "url": "https://slack.com/pricing",
+              "indicators": [
+                "enterprise",
+                "pricing"
+              ]
+            }
+          },
+          "error_structure": {
+            "score": 0,
+            "max": 7,
+            "label": "Error Structure",
+            "evidence": {
+              "reason": "Could not probe error responses (endpoints may require auth)"
+            }
+          }
+        }
+      },
+      "agent_compatibility": {
+        "score": 5,
+        "max": 25,
+        "sub_factors": {
+          "mcp_server_exists": {
+            "score": 0,
+            "max": 15,
+            "label": "MCP Server Exists",
+            "evidence": {
+              "reason": "No MCP server found"
+            }
+          },
+          "robots_txt_agent_policy": {
+            "score": 0,
+            "max": 5,
+            "label": "robots.txt Agent Policy",
+            "evidence": {
+              "reason": "robots.txt blocks automated access",
+              "url": "https://slack.com/robots.txt"
+            }
+          },
+          "sitemap_discovery": {
+            "score": 5,
+            "max": 5,
+            "label": "Sitemap / Discovery",
+            "evidence": {
+              "reason": ".well-known/ai-plugin.json found",
+              "url": "https://slack.com/.well-known/ai-plugin.json"
+            }
+          }
+        }
+      },
+      "trust_signals": {
+        "score": 21,
+        "max": 25,
+        "sub_factors": {
+          "success_rate_uptime": {
+            "score": 8,
+            "max": 10,
+            "label": "Success Rate & Uptime",
+            "evidence": {
+              "reason": "Public status page found with operational indicators",
+              "url": "https://status.slack.com",
+              "github_bonus": 1,
+              "github_evidence": {
+                "github_org": "slack",
+                "total_stars": 43,
+                "top_repo": "slack/dotfiles",
+                "last_push": "2025-10-13T03:38:05Z",
+                "reason": "GitHub presence with some activity"
+              }
+            }
+          },
+          "documentation_quality": {
+            "score": 8,
+            "max": 8,
+            "label": "Documentation Quality",
+            "evidence": {
+              "reason": "Comprehensive documentation",
+              "url": "https://slack.com/api",
+              "signals": {
+                "api_reference": true,
+                "guides": true,
+                "changelog": true,
+                "code_examples": true,
+                "multi_language": true
+              }
+            }
+          },
+          "update_frequency": {
+            "score": 5,
+            "max": 7,
+            "label": "Update Frequency",
+            "evidence": {
+              "reason": "Changelog/updates page found",
+              "url": "https://slack.com/changelog"
+            }
+          }
+        }
+      }
+    },
+    "scan_id": "scn_ad0b562b496f",
+    "scanned_at": "2026-03-23T14:41:03.251626+00:00"
   },
   {
     "url": "https://vercel.com",
@@ -2299,6 +2804,174 @@
     },
     "scan_id": "scn_4b8eb8c07b54",
     "scanned_at": "2026-03-23T13:42:21.088271+00:00"
+  },
+  {
+    "url": "https://squareup.com",
+    "service_name": "Square",
+    "clarvia_score": 53,
+    "rating": "Basic",
+    "dimensions": {
+      "api_accessibility": {
+        "score": 20,
+        "max": 25,
+        "sub_factors": {
+          "endpoint_existence": {
+            "score": 10,
+            "max": 10,
+            "label": "Endpoint Existence",
+            "evidence": {
+              "endpoint": "https://squareup.com",
+              "status": 200,
+              "content_type": "text/html; charset=utf-8",
+              "reason": "Publicly reachable endpoint returning 2xx"
+            }
+          },
+          "response_speed": {
+            "score": 10,
+            "max": 10,
+            "label": "Response Speed",
+            "evidence": {
+              "p50_ms": 47,
+              "samples": [
+                43,
+                46,
+                47,
+                64,
+                95
+              ]
+            }
+          },
+          "auth_documentation": {
+            "score": 0,
+            "max": 5,
+            "label": "Auth Documentation",
+            "evidence": {
+              "reason": "No auth documentation found"
+            }
+          }
+        }
+      },
+      "data_structuring": {
+        "score": 8,
+        "max": 25,
+        "sub_factors": {
+          "schema_definition": {
+            "score": 1,
+            "max": 10,
+            "label": "Schema Definition",
+            "evidence": {
+              "reason": "No OpenAPI/Swagger spec found",
+              "graphql_bonus": 1,
+              "graphql_evidence": {
+                "reason": "GraphQL endpoint found but introspection disabled or requires auth",
+                "url": "https://api.squareup.com/graphql"
+              }
+            }
+          },
+          "pricing_quantified": {
+            "score": 5,
+            "max": 8,
+            "label": "Pricing Quantified",
+            "evidence": {
+              "reason": "Pricing page with clear tiers but not machine-readable",
+              "url": "https://squareup.com/pricing",
+              "indicators": [
+                "per month",
+                "enterprise",
+                "pricing",
+                "plan"
+              ]
+            }
+          },
+          "error_structure": {
+            "score": 2,
+            "max": 7,
+            "label": "Error Structure",
+            "evidence": {
+              "reason": "Error response with some structure",
+              "probe_url": "https://api.squareup.com/nonexistent-resource-test-12345",
+              "method": "GET",
+              "status": 404,
+              "content_type": "text/plain"
+            }
+          }
+        }
+      },
+      "agent_compatibility": {
+        "score": 5,
+        "max": 25,
+        "sub_factors": {
+          "mcp_server_exists": {
+            "score": 0,
+            "max": 15,
+            "label": "MCP Server Exists",
+            "evidence": {
+              "reason": "No MCP server found"
+            }
+          },
+          "robots_txt_agent_policy": {
+            "score": 0,
+            "max": 5,
+            "label": "robots.txt Agent Policy",
+            "evidence": {
+              "reason": "robots.txt blocks automated access",
+              "url": "https://squareup.com/robots.txt"
+            }
+          },
+          "sitemap_discovery": {
+            "score": 5,
+            "max": 5,
+            "label": "Sitemap / Discovery",
+            "evidence": {
+              "reason": "Sitemap.xml with API documentation URLs",
+              "url": "https://squareup.com/sitemap.xml"
+            }
+          }
+        }
+      },
+      "trust_signals": {
+        "score": 20,
+        "max": 25,
+        "sub_factors": {
+          "success_rate_uptime": {
+            "score": 7,
+            "max": 10,
+            "label": "Success Rate & Uptime",
+            "evidence": {
+              "reason": "Public status page found with operational indicators",
+              "url": "https://squareup.statuspage.io"
+            }
+          },
+          "documentation_quality": {
+            "score": 8,
+            "max": 8,
+            "label": "Documentation Quality",
+            "evidence": {
+              "reason": "Comprehensive documentation",
+              "url": "https://developer.squareup.com",
+              "signals": {
+                "api_reference": true,
+                "guides": true,
+                "changelog": true,
+                "code_examples": true,
+                "multi_language": true
+              }
+            }
+          },
+          "update_frequency": {
+            "score": 5,
+            "max": 7,
+            "label": "Update Frequency",
+            "evidence": {
+              "reason": "Changelog/updates page found",
+              "url": "https://squareup.com/releases"
+            }
+          }
+        }
+      }
+    },
+    "scan_id": "scn_f2c2e59a817f",
+    "scanned_at": "2026-03-23T14:39:59.298549+00:00"
   },
   {
     "url": "https://mistral.ai",
@@ -3435,5 +4108,157 @@
     },
     "scan_id": "scn_dc6aa0ee5616",
     "scanned_at": "2026-03-23T14:38:31.893831+00:00"
+  },
+  {
+    "url": "https://coinbase.com",
+    "service_name": "Coinbase",
+    "clarvia_score": 32,
+    "rating": "Low",
+    "dimensions": {
+      "api_accessibility": {
+        "score": 20,
+        "max": 25,
+        "sub_factors": {
+          "endpoint_existence": {
+            "score": 10,
+            "max": 10,
+            "label": "Endpoint Existence",
+            "evidence": {
+              "endpoint": "https://coinbase.com",
+              "status": 403,
+              "reason": "Endpoint exists, requires authentication"
+            }
+          },
+          "response_speed": {
+            "score": 10,
+            "max": 10,
+            "label": "Response Speed",
+            "evidence": {
+              "p50_ms": 149,
+              "samples": [
+                140,
+                145,
+                149,
+                157,
+                169
+              ]
+            }
+          },
+          "auth_documentation": {
+            "score": 0,
+            "max": 5,
+            "label": "Auth Documentation",
+            "evidence": {
+              "reason": "No auth documentation found"
+            }
+          }
+        }
+      },
+      "data_structuring": {
+        "score": 2,
+        "max": 25,
+        "sub_factors": {
+          "schema_definition": {
+            "score": 0,
+            "max": 10,
+            "label": "Schema Definition",
+            "evidence": {
+              "reason": "No OpenAPI/Swagger spec found"
+            }
+          },
+          "pricing_quantified": {
+            "score": 0,
+            "max": 8,
+            "label": "Pricing Quantified",
+            "evidence": {
+              "reason": "No pricing information found"
+            }
+          },
+          "error_structure": {
+            "score": 2,
+            "max": 7,
+            "label": "Error Structure",
+            "evidence": {
+              "reason": "Error response with some structure",
+              "probe_url": "https://api.coinbase.com/nonexistent-resource-test-12345",
+              "method": "GET",
+              "status": 404,
+              "content_type": "text/plain; charset=utf-8"
+            }
+          }
+        }
+      },
+      "agent_compatibility": {
+        "score": 0,
+        "max": 25,
+        "sub_factors": {
+          "mcp_server_exists": {
+            "score": 0,
+            "max": 15,
+            "label": "MCP Server Exists",
+            "evidence": {
+              "reason": "No MCP server found"
+            }
+          },
+          "robots_txt_agent_policy": {
+            "score": 0,
+            "max": 5,
+            "label": "robots.txt Agent Policy",
+            "evidence": {
+              "reason": "Could not fetch robots.txt"
+            }
+          },
+          "sitemap_discovery": {
+            "score": 0,
+            "max": 5,
+            "label": "Sitemap / Discovery",
+            "evidence": {
+              "reason": "No discovery mechanism found"
+            }
+          }
+        }
+      },
+      "trust_signals": {
+        "score": 10,
+        "max": 25,
+        "sub_factors": {
+          "success_rate_uptime": {
+            "score": 10,
+            "max": 10,
+            "label": "Success Rate & Uptime",
+            "evidence": {
+              "reason": "Public status page found with operational indicators",
+              "url": "https://status.coinbase.com",
+              "github_bonus": 3,
+              "github_evidence": {
+                "github_org": "coinbase",
+                "total_stars": 11324,
+                "top_repo": "coinbase/x402",
+                "last_push": "2026-03-20T23:33:35Z",
+                "reason": "Active GitHub presence with 1000+ stars"
+              }
+            }
+          },
+          "documentation_quality": {
+            "score": 0,
+            "max": 8,
+            "label": "Documentation Quality",
+            "evidence": {
+              "reason": "No documentation found"
+            }
+          },
+          "update_frequency": {
+            "score": 0,
+            "max": 7,
+            "label": "Update Frequency",
+            "evidence": {
+              "reason": "No update frequency data available"
+            }
+          }
+        }
+      }
+    },
+    "scan_id": "scn_e427b57e4497",
+    "scanned_at": "2026-03-23T14:40:30.784786+00:00"
   }
 ]
