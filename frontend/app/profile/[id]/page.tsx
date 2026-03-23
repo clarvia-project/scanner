@@ -33,25 +33,31 @@ function scoreColor(score: number): string {
   return "text-score-red";
 }
 
-function scoreBgClass(score: number, max: number): string {
+function scoreGlowClass(score: number): string {
+  if (score >= 70) return "glow-green";
+  if (score >= 40) return "glow-yellow";
+  return "glow-red";
+}
+
+function scoreBgGradient(score: number, max: number): string {
   const pct = max > 0 ? score / max : 0;
-  if (pct >= 0.7) return "bg-score-green";
-  if (pct >= 0.4) return "bg-score-yellow";
-  return "bg-score-red";
+  if (pct >= 0.7) return "bar-gradient-green";
+  if (pct >= 0.4) return "bar-gradient-yellow";
+  return "bar-gradient-red";
 }
 
 function gradeBadgeClass(rating: string): string {
   switch (rating) {
     case "Exceptional":
     case "Strong":
-      return "bg-score-green/15 text-score-green border-score-green/30";
+      return "bg-score-green/10 text-score-green border-score-green/20";
     case "Moderate":
     case "Good":
-      return "bg-score-yellow/15 text-score-yellow border-score-yellow/30";
+      return "bg-score-yellow/10 text-score-yellow border-score-yellow/20";
     case "Basic":
-      return "bg-score-yellow/15 text-score-yellow border-score-yellow/30";
+      return "bg-score-yellow/10 text-score-yellow border-score-yellow/20";
     default:
-      return "bg-score-red/15 text-score-red border-score-red/30";
+      return "bg-score-red/10 text-score-red border-score-red/20";
   }
 }
 
@@ -66,16 +72,16 @@ function DimensionBar({
 }) {
   const pct = max > 0 ? (score / max) * 100 : 0;
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
         <span className="text-foreground/80">{label}</span>
         <span className="font-mono text-muted">
           {score}/{max}
         </span>
       </div>
-      <div className="h-2 bg-card-border rounded-full overflow-hidden">
+      <div className="h-2.5 bg-card-border/40 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-700 ease-out ${scoreBgClass(score, max)}`}
+          className={`h-full rounded-full transition-all duration-700 ease-out ${scoreBgGradient(score, max)}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -129,7 +135,6 @@ export default function ProfilePage() {
         throw new Error(data?.detail || `Scan failed (${res.status})`);
       }
 
-      // Refresh profile to get updated score
       await fetchProfile();
     } catch (err) {
       setScanError(err instanceof Error ? err.message : "Scan failed");
@@ -146,35 +151,31 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gradient-mesh">
       {/* Header */}
-      <header className="border-b border-card-border px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link
-              href="/"
-              className="font-mono text-sm tracking-widest text-muted uppercase hover:text-foreground transition-colors"
-            >
-              Clarvia
+      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                <div className="w-3 h-3 rounded-sm bg-accent" />
+              </div>
+              <span className="font-semibold text-base tracking-tight text-foreground">Clarvia</span>
             </Link>
-            <Link
-              href="/leaderboard"
-              className="text-xs text-muted hover:text-foreground transition-colors"
-            >
-              Leaderboard
-            </Link>
-            <Link
-              href="/register"
-              className="text-xs text-muted hover:text-foreground transition-colors"
-            >
-              Register
-            </Link>
+            <nav className="hidden sm:flex items-center gap-6">
+              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">
+                Leaderboard
+              </Link>
+              <Link href="/register" className="text-sm text-muted hover:text-foreground transition-colors">
+                Register
+              </Link>
+            </nav>
           </div>
-          <span className="text-xs text-muted">AEO Scanner v1.0</span>
+          <span className="text-xs text-muted/60 font-mono hidden sm:inline">v1.0</span>
         </div>
       </header>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-12">
         {loading && (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
@@ -183,6 +184,11 @@ export default function ProfilePage() {
 
         {error && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-score-red/10 flex items-center justify-center mb-2">
+              <svg className="w-8 h-8 text-score-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+            </div>
             <p className="text-score-red font-mono text-sm">{error}</p>
             <Link
               href="/"
@@ -196,16 +202,19 @@ export default function ProfilePage() {
         {profile && (
           <div className="space-y-8">
             {/* Service Header */}
-            <div className="text-center space-y-2">
-              <h1 className="text-2xl font-bold">{profile.name}</h1>
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
+                <span className="text-2xl font-bold text-accent">{profile.name.charAt(0).toUpperCase()}</span>
+              </div>
+              <h1 className="text-3xl font-bold">{profile.name}</h1>
               <p className="text-sm text-muted font-mono">{profile.url}</p>
-              <span className="inline-block px-2.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-wider bg-accent/15 text-accent border border-accent/30">
+              <span className="inline-block px-3 py-1.5 rounded-xl text-[10px] font-mono uppercase tracking-wider bg-accent/10 text-accent border border-accent/20">
                 {profile.category}
               </span>
             </div>
 
             {/* Description */}
-            <div className="bg-card-bg border border-card-border rounded-lg px-5 py-4">
+            <div className="glass-card rounded-2xl px-7 py-6 space-y-4">
               <p className="text-sm leading-relaxed text-foreground/80">
                 {profile.description}
               </p>
@@ -214,17 +223,20 @@ export default function ProfilePage() {
                   href={profile.github_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block mt-3 text-xs text-accent hover:text-accent-hover transition-colors"
+                  className="inline-flex items-center gap-2 text-xs text-accent hover:text-accent-hover transition-colors"
                 >
-                  View on GitHub &rarr;
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                  </svg>
+                  View on GitHub
                 </a>
               )}
               {profile.tags && profile.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-3">
+                <div className="flex flex-wrap gap-2 pt-2">
                   {profile.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2 py-0.5 rounded text-[10px] font-mono bg-card-border/50 text-muted"
+                      className="px-2.5 py-1 rounded-lg text-[10px] font-mono bg-card-border/30 text-muted border border-card-border/50"
                     >
                       {tag}
                     </span>
@@ -236,19 +248,19 @@ export default function ProfilePage() {
             {/* Clarvia Score */}
             {profile.clarvia_score != null && (
               <div className="space-y-4">
-                <h2 className="text-sm font-medium text-muted uppercase tracking-wider">
+                <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
                   Clarvia Score
                 </h2>
-                <div className="bg-card-bg border border-card-border rounded-lg px-5 py-6 text-center space-y-3">
+                <div className={`glass-card rounded-2xl px-7 py-8 text-center space-y-4 ${scoreGlowClass(profile.clarvia_score)}`}>
                   <span
-                    className={`text-5xl font-mono font-bold ${scoreColor(profile.clarvia_score)}`}
+                    className={`text-6xl font-mono font-bold ${scoreColor(profile.clarvia_score)}`}
                   >
                     {profile.clarvia_score}
                   </span>
-                  <span className="text-sm text-muted block">/ 100</span>
+                  <span className="text-sm text-muted block font-mono">/ 100</span>
                   {profile.rating && (
                     <span
-                      className={`inline-block px-3 py-1 rounded-full border text-xs font-mono uppercase tracking-wider ${gradeBadgeClass(profile.rating)}`}
+                      className={`inline-block px-4 py-1.5 rounded-xl border text-xs font-mono uppercase tracking-wider ${gradeBadgeClass(profile.rating)}`}
                     >
                       {profile.rating}
                     </span>
@@ -259,11 +271,11 @@ export default function ProfilePage() {
 
             {/* Dimension Bars */}
             {profile.dimensions && (
-              <div className="space-y-3">
-                <h2 className="text-sm font-medium text-muted uppercase tracking-wider">
+              <div className="space-y-4">
+                <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
                   Dimensions
                 </h2>
-                <div className="bg-card-bg border border-card-border rounded-lg px-5 py-4 space-y-4">
+                <div className="glass-card rounded-2xl px-7 py-6 space-y-5">
                   <DimensionBar
                     label="API Accessibility"
                     score={profile.dimensions.api_accessibility.score}
@@ -289,11 +301,11 @@ export default function ProfilePage() {
             )}
 
             {/* Run Scan */}
-            <div className="space-y-3">
-              <h2 className="text-sm font-medium text-muted uppercase tracking-wider">
+            <div className="space-y-4">
+              <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
                 Scan
               </h2>
-              <div className="bg-card-bg border border-card-border rounded-lg px-5 py-4 space-y-3">
+              <div className="glass-card rounded-2xl px-7 py-6 space-y-4">
                 <p className="text-sm text-muted">
                   {profile.clarvia_score != null
                     ? "Run a new scan to update your Clarvia Score."
@@ -302,7 +314,7 @@ export default function ProfilePage() {
                 <button
                   onClick={handleRunScan}
                   disabled={scanning}
-                  className="bg-accent hover:bg-accent-hover disabled:opacity-60 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                  className="btn-gradient text-white px-6 py-3 rounded-xl text-sm font-medium"
                 >
                   {scanning ? (
                     <span className="flex items-center gap-2">
@@ -322,31 +334,59 @@ export default function ProfilePage() {
             </div>
 
             {/* Badge Code */}
-            <div className="space-y-3">
-              <h2 className="text-sm font-medium text-muted uppercase tracking-wider">
+            <div className="space-y-4">
+              <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
                 Badge
               </h2>
-              <div className="bg-card-bg border border-card-border rounded-lg px-5 py-4 space-y-3">
+              <div className="glass-card rounded-2xl px-7 py-6 space-y-4">
                 <p className="text-sm text-muted">
                   Add a Clarvia Score badge to your README or website.
                 </p>
-                <div className="bg-background border border-card-border rounded-lg p-3 overflow-x-auto">
-                  <code className="text-xs text-foreground/70 font-mono whitespace-pre break-all">
+
+                {/* Badge Preview */}
+                <div className="flex justify-center py-3">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-card-bg border border-card-border">
+                    <div className="w-5 h-5 rounded-md bg-accent/10 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-sm bg-accent" />
+                    </div>
+                    <span className="text-xs font-mono text-muted">Clarvia Score:</span>
+                    <span className={`text-xs font-mono font-bold ${profile.clarvia_score != null ? scoreColor(profile.clarvia_score) : "text-muted"}`}>
+                      {profile.clarvia_score ?? "—"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-background/50 border border-card-border/50 rounded-xl p-4 overflow-x-auto">
+                  <code className="text-xs text-foreground/60 font-mono whitespace-pre break-all">
                     {`[![Clarvia Score](https://clarvia-api.onrender.com/v1/profiles/${profileId}/badge)](https://clarvia.art/profile/${profileId})`}
                   </code>
                 </div>
                 <button
                   onClick={handleCopyBadge}
-                  className="bg-card-bg border border-card-border hover:border-accent/50 text-foreground px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="inline-flex items-center gap-2 glass-card hover:border-accent/30 text-foreground px-5 py-2.5 rounded-xl text-sm font-medium transition-all"
                 >
-                  {badgeCopied ? "Copied!" : "Copy Badge Code"}
+                  {badgeCopied ? (
+                    <>
+                      <svg className="w-4 h-4 text-score-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                      </svg>
+                      Copy Badge Code
+                    </>
+                  )}
                 </button>
               </div>
             </div>
 
             {/* Metadata */}
             {profile.created_at && (
-              <div className="text-center text-xs text-muted/50 font-mono pb-6">
+              <div className="text-center text-xs text-muted/40 font-mono pb-6">
                 <p>
                   Registered{" "}
                   {new Date(profile.created_at).toLocaleString("en-US", {
@@ -361,11 +401,14 @@ export default function ProfilePage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-card-border px-6 py-6">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted">
-          <span>
-            Clarvia — Discovery & Trust standard for the agent economy
-          </span>
+      <footer className="border-t border-card-border/50 px-6 py-8">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 rounded-md bg-accent/10 flex items-center justify-center">
+              <div className="w-2 h-2 rounded-sm bg-accent" />
+            </div>
+            <span>Clarvia — Discovery & Trust standard for the agent economy</span>
+          </div>
           <a
             href="https://github.com/clarvia-project"
             target="_blank"

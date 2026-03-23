@@ -20,7 +20,6 @@ export default function ReportPage() {
     if (!scanId) return;
 
     async function fetchReport() {
-      // Retry a few times since webhook might be delayed
       let attempts = 0;
       while (attempts < 5) {
         try {
@@ -32,7 +31,6 @@ export default function ReportPage() {
             return;
           }
           if (res.status === 402) {
-            // Payment not yet confirmed, wait and retry
             attempts++;
             await new Promise((r) => setTimeout(r, 2000));
             continue;
@@ -56,23 +54,25 @@ export default function ReportPage() {
   }, [scanId]);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="border-b border-card-border px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Link
-            href="/"
-            className="font-mono text-sm tracking-widest text-muted uppercase hover:text-foreground transition-colors"
-          >
-            Clarvia
+    <div className="flex flex-col min-h-screen bg-gradient-mesh">
+      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+              <div className="w-3 h-3 rounded-sm bg-accent" />
+            </div>
+            <span className="font-semibold text-base tracking-tight text-foreground">Clarvia</span>
           </Link>
-          <span className="text-xs text-muted">Detailed Report</span>
+          <span className="text-xs text-muted font-mono">Detailed Report</span>
         </div>
       </header>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-12">
         {loading && (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-            <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center glow-accent">
+              <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            </div>
             <p className="text-muted text-sm">
               Confirming payment and generating your report...
             </p>
@@ -81,6 +81,11 @@ export default function ReportPage() {
 
         {error && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-score-red/10 flex items-center justify-center mb-2">
+              <svg className="w-8 h-8 text-score-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+            </div>
             <p className="text-score-red font-mono text-sm">{error}</p>
             <Link
               href={`/scan/${scanId}`}
@@ -92,12 +97,15 @@ export default function ReportPage() {
         )}
 
         {report && (
-          <div className="space-y-8">
-            <div className="text-center space-y-2">
-              <p className="text-score-green text-sm font-mono">
+          <div className="space-y-10">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-score-green/20 bg-score-green/5 text-xs text-score-green font-medium">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
                 Payment confirmed
-              </p>
-              <h1 className="text-2xl font-bold">
+              </div>
+              <h1 className="text-3xl font-bold">
                 {(report as Record<string, unknown>).service_name as string} — Full Report
               </h1>
               <p className="text-sm text-muted font-mono">
@@ -109,10 +117,10 @@ export default function ReportPage() {
             <div className="flex justify-center">
               <a
                 href={`${API_BASE}/api/report/${scanId}/pdf`}
-                className="bg-accent hover:bg-accent-hover text-white px-6 py-3 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
+                className="btn-gradient text-white px-8 py-4 rounded-xl text-sm font-medium transition-colors inline-flex items-center gap-3 group"
               >
                 <svg
-                  className="w-4 h-4"
+                  className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -129,7 +137,7 @@ export default function ReportPage() {
             </div>
 
             {/* Report content preview */}
-            <div className="bg-card-bg border border-card-border rounded-lg px-5 py-4">
+            <div className="glass-card rounded-2xl px-7 py-6">
               <p className="text-sm text-muted">
                 Your full report has been generated. Download the PDF above for
                 the complete analysis including all 13 sub-factors, 15
@@ -140,8 +148,11 @@ export default function ReportPage() {
             <div className="text-center">
               <Link
                 href={`/scan/${scanId}`}
-                className="text-accent hover:text-accent-hover text-sm transition-colors"
+                className="inline-flex items-center gap-2 text-accent hover:text-accent-hover text-sm transition-colors"
               >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
                 View free scan results
               </Link>
             </div>
@@ -149,11 +160,14 @@ export default function ReportPage() {
         )}
       </main>
 
-      <footer className="border-t border-card-border px-6 py-6">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted">
-          <span>
-            Clarvia — Discovery & Trust standard for the agent economy
-          </span>
+      <footer className="border-t border-card-border/50 px-6 py-8">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 rounded-md bg-accent/10 flex items-center justify-center">
+              <div className="w-2 h-2 rounded-sm bg-accent" />
+            </div>
+            <span>Clarvia — Discovery & Trust standard for the agent economy</span>
+          </div>
           <a
             href="https://github.com/clarvia-project"
             target="_blank"

@@ -38,12 +38,6 @@ function scoreColor(score: number) {
   return "text-score-red";
 }
 
-function scoreBorderColor(score: number) {
-  if (score >= 70) return "border-score-green/30";
-  if (score >= 40) return "border-score-yellow/30";
-  return "border-score-red/30";
-}
-
 function ScanningOverlay({ url }: { url: string }) {
   const [phase, setPhase] = useState(0);
 
@@ -58,17 +52,25 @@ function ScanningOverlay({ url }: { url: string }) {
   const progress = ((phase + 1) / SCAN_PHASES.length) * 100;
 
   return (
-    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-background/95 backdrop-blur-md z-50 flex items-center justify-center">
       <div className="w-full max-w-md px-6 space-y-6">
         <div className="text-center space-y-2">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-accent/10 flex items-center justify-center glow-accent">
+            <svg className="w-8 h-8 text-accent animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          </div>
           <p className="text-sm text-muted font-mono">Scanning</p>
           <p className="text-lg font-medium truncate">{url}</p>
         </div>
 
         <div className="h-1.5 bg-card-border rounded-full overflow-hidden">
           <div
-            className="h-full bg-accent rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${progress}%` }}
+            className="h-full rounded-full transition-all duration-700 ease-out"
+            style={{
+              width: `${progress}%`,
+              background: "linear-gradient(90deg, #3b82f6, #6366f1)",
+            }}
           />
         </div>
 
@@ -100,55 +102,62 @@ function ScanningOverlay({ url }: { url: string }) {
 /* ── Step icons for "How it works" ── */
 function IconUrl() {
   return (
-    <svg className="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 010 5.656l-2.828 2.828a4 4 0 01-5.657-5.656l1.415-1.415M10.172 13.828a4 4 0 010-5.656l2.828-2.828a4 4 0 015.657 5.656l-1.415 1.415" />
     </svg>
   );
 }
 function IconScore() {
   return (
-    <svg className="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
     </svg>
   );
 }
 function IconRocket() {
   return (
-    <svg className="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.63 8.41m5.96 5.96a14.926 14.926 0 01-5.84 2.58m0 0a6 6 0 01-7.38-5.84h4.8" />
     </svg>
   );
 }
 
-/* ── Dimension icons for "What we measure" ── */
+/* ── Dimension icons ── */
 function IconApi() {
   return (
-    <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5.636 18.364a9 9 0 1012.728 0M12 2v4m0 12v2" />
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
     </svg>
   );
 }
 function IconData() {
   return (
-    <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
     </svg>
   );
 }
 function IconAgent() {
   return (
-    <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 14.5M14.25 3.104c.251.023.501.05.75.082M19.8 14.5l-2.234 2.234a2.25 2.25 0 01-1.591.659H8.025a2.25 2.25 0 01-1.591-.659L4.2 14.5m15.6 0l.4.4a2.25 2.25 0 010 3.182l-.9.9a2.25 2.25 0 01-3.182 0l-.4-.4m-7.518 0l-.4.4a2.25 2.25 0 000 3.182l.9.9a2.25 2.25 0 003.182 0l.4-.4" />
     </svg>
   );
 }
 function IconTrust() {
   return (
-    <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
     </svg>
   );
 }
+
+const DIMENSION_COLORS = [
+  { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20" },
+  { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/20" },
+  { bg: "bg-cyan-500/10", text: "text-cyan-400", border: "border-cyan-500/20" },
+  { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20" },
+];
 
 export default function LandingPage() {
   const [url, setUrl] = useState("");
@@ -242,58 +251,87 @@ export default function LandingPage() {
       {loading && <ScanningOverlay url={scanningUrl} />}
 
       {/* Header */}
-      <header className="border-b border-card-border px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="font-mono text-sm tracking-widest text-muted uppercase">
-              Clarvia
-            </span>
-            <Link
-              href="/leaderboard"
-              className="text-xs text-muted hover:text-foreground transition-colors"
-            >
-              Leaderboard
+      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                <div className="w-3 h-3 rounded-sm bg-accent" />
+              </div>
+              <span className="font-semibold text-base tracking-tight text-foreground">
+                Clarvia
+              </span>
             </Link>
+            <nav className="hidden sm:flex items-center gap-6">
+              <Link
+                href="/leaderboard"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Leaderboard
+              </Link>
+              <Link
+                href="/register"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Register
+              </Link>
+            </nav>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="hidden sm:inline text-xs text-muted/60 font-mono">v1.0</span>
             <Link
               href="/register"
-              className="text-xs text-muted hover:text-foreground transition-colors"
+              className="text-xs btn-gradient text-white px-4 py-2 rounded-lg font-medium sm:hidden"
             >
               Register
             </Link>
           </div>
-          <span className="text-xs text-muted">AEO Scanner v1.0</span>
         </div>
       </header>
 
       <main className="flex-1">
         {/* ─── Hero ─── */}
-        <section className="flex flex-col items-center px-6 pt-24 pb-16">
-          <div className="max-w-2xl w-full text-center space-y-6">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight">
-              Is your service ready
-              <br />
-              for AI agents?
+        <section className="relative bg-gradient-hero px-6 pt-28 pb-24 overflow-hidden">
+          {/* Decorative grid */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{
+            backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+            backgroundSize: "60px 60px",
+          }} />
+
+          <div className="relative max-w-3xl w-full mx-auto text-center space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 bg-accent/5 text-xs text-accent font-medium animate-fade-in">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              The AEO standard for AI agents
+            </div>
+
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] animate-fade-in-up">
+              Is your service{" "}
+              <span className="text-gradient">ready for AI agents?</span>
             </h1>
-            <p className="text-lg text-muted max-w-xl mx-auto leading-relaxed">
+
+            <p className="text-lg md:text-xl text-muted max-w-xl mx-auto leading-relaxed opacity-0 animate-fade-in-up stagger-2">
               SEO made you visible to search engines.
               <br className="hidden sm:block" />
-              We make you visible to AI agents.
+              <span className="text-foreground/80">We make you visible to AI agents.</span>
             </p>
 
             {/* URL Input */}
-            <form onSubmit={handleSubmit} className="flex gap-3 max-w-lg mx-auto pt-2">
-              <input
-                type="text"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="Enter a URL (e.g. stripe.com)"
-                className="flex-1 bg-card-bg border border-card-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent transition-colors font-mono text-sm"
-                disabled={loading}
-              />
+            <form onSubmit={handleSubmit} className="flex gap-3 max-w-lg mx-auto pt-4 opacity-0 animate-fade-in-up stagger-3">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="Enter a URL (e.g. stripe.com)"
+                  className="w-full bg-card-bg/80 border border-card-border rounded-xl px-5 py-3.5 text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all font-mono text-sm"
+                  disabled={loading}
+                />
+              </div>
               <button
                 type="submit"
                 disabled={loading || !url.trim()}
-                className="bg-accent hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors text-sm whitespace-nowrap"
+                className="btn-gradient text-white px-7 py-3.5 rounded-xl font-medium text-sm whitespace-nowrap"
               >
                 Scan
               </button>
@@ -303,44 +341,58 @@ export default function LandingPage() {
               <p className="text-score-red text-sm font-mono">{error}</p>
             )}
 
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted/60 opacity-0 animate-fade-in stagger-4">
               Get your Clarvia Score — the AEO standard for agent discoverability and trust.
             </p>
           </div>
         </section>
 
         {/* ─── How It Works ─── */}
-        <section className="px-6 py-20 border-t border-card-border">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-center mb-12">How it works</h2>
+        <section className="relative px-6 py-24">
+          <div className="divider-gradient absolute top-0 left-0 right-0" />
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-16">
+              <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">Process</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">How it works</h2>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
                   icon: <IconUrl />,
-                  step: "1",
+                  step: "01",
                   title: "Enter your URL",
                   desc: "Paste any website or API endpoint to start the analysis.",
                 },
                 {
                   icon: <IconScore />,
-                  step: "2",
+                  step: "02",
                   title: "Get your AEO Score",
                   desc: "We probe your service across 4 dimensions agents care about.",
                 },
                 {
                   icon: <IconRocket />,
-                  step: "3",
+                  step: "03",
                   title: "Improve & get discovered",
                   desc: "Follow actionable recommendations and climb the leaderboard.",
                 },
-              ].map((item) => (
-                <div key={item.step} className="text-center space-y-3">
+              ].map((item, idx) => (
+                <div
+                  key={item.step}
+                  className="group relative glass-card rounded-2xl p-8 text-center space-y-4 transition-all duration-300 hover:-translate-y-1"
+                >
+                  {/* Step number */}
+                  <div className="absolute top-4 right-5 text-xs font-mono text-muted/30">{item.step}</div>
+
+                  {/* Connector line */}
+                  {idx < 2 && (
+                    <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-px bg-card-border z-10" />
+                  )}
+
                   <div className="flex justify-center">
-                    <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent/20 group-hover:scale-110 transition-all duration-300">
                       {item.icon}
                     </div>
                   </div>
-                  <div className="text-xs font-mono text-accent">Step {item.step}</div>
                   <h3 className="text-lg font-semibold">{item.title}</h3>
                   <p className="text-sm text-muted leading-relaxed">{item.desc}</p>
                 </div>
@@ -350,12 +402,16 @@ export default function LandingPage() {
         </section>
 
         {/* ─── What We Measure ─── */}
-        <section className="px-6 py-20 border-t border-card-border">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-center mb-4">What we measure</h2>
-            <p className="text-sm text-muted text-center mb-12 max-w-lg mx-auto">
-              Every service is evaluated across four dimensions that determine how well AI agents can discover, understand, and trust it.
-            </p>
+        <section className="relative px-6 py-24 bg-gradient-section">
+          <div className="divider-gradient absolute top-0 left-0 right-0" />
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-16">
+              <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">Dimensions</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">What we measure</h2>
+              <p className="text-sm text-muted max-w-lg mx-auto">
+                Every service is evaluated across four dimensions that determine how well AI agents can discover, understand, and trust it.
+              </p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {[
                 {
@@ -382,32 +438,43 @@ export default function LandingPage() {
                   desc: "Can agents trust your reliability?",
                   detail: "Uptime signals, HTTPS, security headers, rate limit documentation.",
                 },
-              ].map((dim) => (
-                <div
-                  key={dim.title}
-                  className="bg-card-bg border border-card-border rounded-xl p-6 space-y-3 hover:border-accent/30 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    {dim.icon}
-                    <h3 className="font-semibold">{dim.title}</h3>
+              ].map((dim, idx) => {
+                const color = DIMENSION_COLORS[idx];
+                return (
+                  <div
+                    key={dim.title}
+                    className={`glass-card rounded-2xl p-7 space-y-4 group transition-all duration-300 hover:-translate-y-1`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-xl ${color.bg} ${color.text} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                        {dim.icon}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">{dim.title}</h3>
+                        <p className={`text-xs ${color.text} font-medium`}>{dim.desc}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted leading-relaxed pl-14">{dim.detail}</p>
                   </div>
-                  <p className="text-sm text-accent font-medium">{dim.desc}</p>
-                  <p className="text-xs text-muted leading-relaxed">{dim.detail}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
 
         {/* ─── Leaderboard Preview ─── */}
-        <section className="px-6 py-20 border-t border-card-border">
+        <section className="relative px-6 py-24">
+          <div className="divider-gradient absolute top-0 left-0 right-0" />
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-center mb-4">Leaderboard</h2>
-            <p className="text-sm text-muted text-center mb-8">
-              Services ranked by agent-readiness. Where does yours stand?
-            </p>
-            <div className="bg-card-bg border border-card-border rounded-xl overflow-hidden">
-              <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-5 py-3 border-b border-card-border text-xs text-muted font-mono uppercase">
+            <div className="text-center mb-12">
+              <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">Rankings</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Leaderboard</h2>
+              <p className="text-sm text-muted">
+                Services ranked by agent-readiness. Where does yours stand?
+              </p>
+            </div>
+            <div className="glass-card rounded-2xl overflow-hidden">
+              <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-6 py-3.5 border-b border-card-border/50 text-xs text-muted font-mono uppercase tracking-wider">
                 <span>#</span>
                 <span>Service</span>
                 <span>Score</span>
@@ -422,10 +489,25 @@ export default function LandingPage() {
                       : handleScan(item.url)
                   }
                   disabled={loading}
-                  className="w-full grid grid-cols-[auto_1fr_auto_auto] gap-4 px-5 py-3.5 text-left hover:bg-card-border/30 transition-colors disabled:opacity-50 border-b border-card-border/50 last:border-b-0"
+                  className={`w-full grid grid-cols-[auto_1fr_auto_auto] gap-4 px-6 py-4 text-left transition-all duration-200 disabled:opacity-50 border-b border-card-border/30 last:border-b-0 group ${
+                    i === 0 ? "rank-gold-row hover:bg-yellow-500/5" :
+                    i === 1 ? "rank-silver-row hover:bg-gray-400/5" :
+                    i === 2 ? "rank-bronze-row hover:bg-orange-500/5" :
+                    "hover:bg-card-border/20"
+                  }`}
                 >
-                  <span className="text-sm text-muted font-mono w-6">{i + 1}</span>
-                  <span className="text-sm font-medium truncate">{item.name}</span>
+                  <span className="text-sm font-mono w-6">
+                    {i === 0 ? (
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full badge-gold text-[10px] font-bold">1</span>
+                    ) : i === 1 ? (
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full badge-silver text-[10px] font-bold">2</span>
+                    ) : i === 2 ? (
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full badge-bronze text-[10px] font-bold">3</span>
+                    ) : (
+                      <span className="text-muted">{i + 1}</span>
+                    )}
+                  </span>
+                  <span className="text-sm font-medium truncate group-hover:text-accent transition-colors">{item.name}</span>
                   <span className={`text-sm font-mono font-bold ${scoreColor(item.score)}`}>
                     {item.score}
                   </span>
@@ -433,70 +515,97 @@ export default function LandingPage() {
                 </button>
               ))}
             </div>
-            <div className="text-center mt-6">
+            <div className="text-center mt-8">
               <Link
                 href="/leaderboard"
-                className="text-sm text-accent hover:text-accent-hover transition-colors font-medium"
+                className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent-hover transition-colors font-medium group"
               >
-                View full leaderboard &rarr;
+                View full leaderboard
+                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
               </Link>
             </div>
           </div>
         </section>
 
         {/* ─── For Developers CTA ─── */}
-        <section className="px-6 py-20 border-t border-card-border">
-          <div className="max-w-3xl mx-auto text-center space-y-6">
-            <h2 className="text-2xl font-bold">For Developers</h2>
-            <div className="flex flex-wrap justify-center gap-3 text-sm text-muted">
-              <span className="bg-card-bg border border-card-border rounded-lg px-4 py-2">Register your MCP server or API</span>
-              <span className="text-accent">&rarr;</span>
-              <span className="bg-card-bg border border-card-border rounded-lg px-4 py-2">Get scored</span>
-              <span className="text-accent">&rarr;</span>
-              <span className="bg-card-bg border border-card-border rounded-lg px-4 py-2">Add badge to README</span>
-              <span className="text-accent">&rarr;</span>
-              <span className="bg-card-bg border border-card-border rounded-lg px-4 py-2">Get discovered by agents</span>
+        <section className="relative px-6 py-24 bg-gradient-section">
+          <div className="divider-gradient absolute top-0 left-0 right-0" />
+          <div className="max-w-4xl mx-auto text-center space-y-10">
+            <div>
+              <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">For developers</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Ship agent-ready services</h2>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4 text-sm">
+              {[
+                { label: "Register your MCP server or API", step: "1" },
+                { label: "Get scored automatically", step: "2" },
+                { label: "Add badge to README", step: "3" },
+                { label: "Get discovered by agents", step: "4" },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  {idx > 0 && (
+                    <svg className="w-4 h-4 text-accent/40 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                  )}
+                  <span className="glass-card rounded-xl px-5 py-3 text-muted flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-md bg-accent/10 text-accent text-[10px] font-bold flex items-center justify-center">{item.step}</span>
+                    {item.label}
+                  </span>
+                </div>
+              ))}
             </div>
             <div className="pt-2">
               <Link
                 href="/register"
-                className="inline-block bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-lg font-medium transition-colors text-sm"
+                className="inline-flex items-center gap-2 btn-gradient text-white px-8 py-3.5 rounded-xl font-medium text-sm group"
               >
-                Register now &rarr;
+                Register now
+                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
               </Link>
             </div>
           </div>
         </section>
 
         {/* ─── Waitlist ─── */}
-        <section className="px-6 py-20 border-t border-card-border">
-          <div className="max-w-lg mx-auto text-center space-y-4">
-            <h2 className="text-2xl font-bold">Stay in the loop</h2>
+        <section className="relative px-6 py-24">
+          <div className="divider-gradient absolute top-0 left-0 right-0" />
+          <div className="max-w-lg mx-auto text-center space-y-6">
+            <div>
+              <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">Coming soon</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Stay in the loop</h2>
+            </div>
             <p className="text-sm text-muted">
               Get notified when we launch enterprise features: continuous
               monitoring, CI/CD integration, and team dashboards.
             </p>
             {waitlistStatus === "done" ? (
-              <p className="text-score-green text-sm font-mono pt-2">
-                You&apos;re on the list! We&apos;ll be in touch.
-              </p>
+              <div className="glass-card rounded-xl p-6">
+                <p className="text-score-green text-sm font-mono">
+                  You&apos;re on the list! We&apos;ll be in touch.
+                </p>
+              </div>
             ) : (
               <form
                 onSubmit={handleWaitlist}
-                className="flex gap-2 max-w-sm mx-auto pt-2"
+                className="flex gap-3 max-w-sm mx-auto pt-2"
               >
                 <input
                   type="email"
                   value={waitlistEmail}
                   onChange={(e) => setWaitlistEmail(e.target.value)}
                   placeholder="your@email.com"
-                  className="flex-1 bg-card-bg border border-card-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent transition-colors text-sm"
+                  className="flex-1 bg-card-bg/80 border border-card-border rounded-xl px-5 py-3 text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all text-sm"
                   required
                 />
                 <button
                   type="submit"
                   disabled={waitlistStatus === "sending"}
-                  className="bg-card-bg border border-card-border hover:border-accent/50 text-foreground px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-50"
+                  className="glass-card hover:border-accent/50 text-foreground px-5 py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap disabled:opacity-50"
                 >
                   {waitlistStatus === "sending" ? "..." : "Notify me"}
                 </button>
@@ -511,9 +620,10 @@ export default function LandingPage() {
         </section>
 
         {/* ─── Disclaimer ─── */}
-        <section className="px-6 py-10 border-t border-card-border">
+        <section className="px-6 py-12">
+          <div className="divider-gradient mb-12" />
           <div className="max-w-3xl mx-auto text-center">
-            <p className="text-xs text-muted/60 leading-relaxed">
+            <p className="text-xs text-muted/50 leading-relaxed">
               Clarvia Score does not measure a company&apos;s size or quality.
               It measures how easily AI agents can discover and use this service.
             </p>
@@ -522,10 +632,15 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-card-border px-6 py-8">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
-          <span>Built for the agent economy</span>
-          <div className="flex items-center gap-6">
+      <footer className="border-t border-card-border/50 px-6 py-10">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-md bg-accent/10 flex items-center justify-center">
+              <div className="w-2.5 h-2.5 rounded-sm bg-accent" />
+            </div>
+            <span className="text-xs text-muted">Built for the agent economy</span>
+          </div>
+          <div className="flex items-center gap-8 text-xs text-muted">
             <a
               href="https://x.com/clarvia_ai"
               target="_blank"
