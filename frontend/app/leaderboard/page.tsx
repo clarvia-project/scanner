@@ -174,6 +174,12 @@ export default function LeaderboardPage() {
             >
               Leaderboard
             </Link>
+            <Link
+              href="/register"
+              className="text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Register
+            </Link>
           </div>
           <span className="text-xs text-muted">AEO Scanner v1.0</span>
         </div>

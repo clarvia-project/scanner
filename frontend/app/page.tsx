@@ -205,6 +205,12 @@ export default function LandingPage() {
             >
               Leaderboard
             </Link>
+            <Link
+              href="/register"
+              className="text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Register
+            </Link>
           </div>
           <span className="text-xs text-muted">AEO Scanner v1.0</span>
         </div>
@@ -280,6 +286,16 @@ export default function LandingPage() {
               className="inline-block text-xs text-accent hover:text-accent-hover transition-colors"
             >
               View full leaderboard &rarr;
+            </Link>
+          </div>
+
+          {/* MCP Developer CTA */}
+          <div className="pt-8">
+            <Link
+              href="/register"
+              className="inline-block text-sm text-accent hover:text-accent-hover transition-colors"
+            >
+              Are you an MCP developer? Register your service &rarr;
             </Link>
           </div>
 
