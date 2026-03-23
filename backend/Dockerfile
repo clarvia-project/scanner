@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 COPY schema.sql .
 
+# Copy prebuilt scan data
+COPY data/ ./data/
+
 # Create non-root user
 RUN useradd --create-home appuser
 USER appuser

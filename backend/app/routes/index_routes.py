@@ -77,9 +77,20 @@ class SortOrder(str, Enum):
 
 def _load_data() -> None:
     global _services, _by_scan_id
-    data_path = Path(__file__).resolve().parents[3] / "data" / "prebuilt-scans.json"
-    if not data_path.exists():
-        logger.error("prebuilt-scans.json not found at %s", data_path)
+    # Try multiple paths: Docker (/app/data/), local dev (../../data/, ../../../data/)
+    candidates = [
+        Path("/app/data/prebuilt-scans.json"),
+        Path(__file__).resolve().parents[2] / "data" / "prebuilt-scans.json",
+        Path(__file__).resolve().parents[3] / "data" / "prebuilt-scans.json",
+        Path(__file__).resolve().parents[4] / "data" / "prebuilt-scans.json",
+    ]
+    data_path = None
+    for p in candidates:
+        if p.exists():
+            data_path = p
+            break
+    if data_path is None:
+        logger.error("prebuilt-scans.json not found in any candidate path")
         return
     with open(data_path, "r") as f:
         raw = json.load(f)
