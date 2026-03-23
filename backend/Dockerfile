@@ -18,8 +18,8 @@ COPY schema.sql .
 # Copy prebuilt scan data
 COPY data/ ./data/
 
-# Create non-root user
-RUN useradd --create-home appuser
+# Create non-root user and ensure data dir is writable (for profiles.json)
+RUN useradd --create-home appuser && chown -R appuser:appuser /app/data
 USER appuser
 
 # Expose port
