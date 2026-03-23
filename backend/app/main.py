@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from .config import settings
 from .middleware import RateLimitMiddleware
 from .models import ErrorResponse, ScanRequest, ScanResponse, WaitlistRequest
+from .routes.index_routes import router as index_router
 from .scanner import cleanup_cache, get_cached_scan, run_scan
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ app = FastAPI(
 # CORS for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -51,6 +52,8 @@ except ImportError:
     logger.info("Supabase client not available (missing supabase package)")
 
 # Mount optional routers
+app.include_router(index_router)
+
 if _stripe_router:
     app.include_router(_stripe_router, prefix="/api/report")
 
