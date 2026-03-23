@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # CORS
-    cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "https://clarvia.art", "https://www.clarvia.art"]
 
     # HTTP probing
     http_timeout: float = 10.0
