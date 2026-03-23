@@ -133,3 +133,37 @@ async def cache_cleanup():
     """Remove expired cache entries."""
     removed = cleanup_cache()
     return {"removed": removed}
+
+
+# ---------------------------------------------------------------------------
+# Monitor lifecycle
+# ---------------------------------------------------------------------------
+
+@app.on_event("startup")
+async def _start_monitor():
+    """Start the background monitoring service if enabled."""
+    import os
+    if os.environ.get("SCANNER_MONITOR_ENABLED", "").lower() in ("1", "true", "yes"):
+        try:
+            from .services.monitor import get_monitor
+            interval = int(os.environ.get("SCANNER_MONITOR_INTERVAL", "86400"))
+            webhook_url = os.environ.get("SCANNER_MONITOR_WEBHOOK_URL")
+            monitor = get_monitor(
+                interval_seconds=interval,
+                webhook_url=webhook_url,
+            )
+            await monitor.start()
+            logger.info("Background monitor started (interval=%ds)", interval)
+        except Exception as e:
+            logger.warning("Failed to start monitor: %s", e)
+
+
+@app.on_event("shutdown")
+async def _stop_monitor():
+    """Stop the background monitoring service."""
+    try:
+        from .services.monitor import _monitor
+        if _monitor:
+            await _monitor.stop()
+    except Exception:
+        pass

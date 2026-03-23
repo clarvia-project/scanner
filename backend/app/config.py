@@ -40,7 +40,12 @@ class Settings(BaseSettings):
     # Frontend URL (for Stripe redirects)
     frontend_url: str = "http://localhost:3000"
 
-    model_config = {"env_prefix": "SCANNER_"}
+    model_config = {
+        "env_prefix": "SCANNER_",
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
 
 settings = Settings()
