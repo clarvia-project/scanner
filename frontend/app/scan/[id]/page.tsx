@@ -431,12 +431,20 @@ export default function ScanResultPage() {
       {/* Header */}
       <header className="border-b border-card-border px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Link
-            href="/"
-            className="font-mono text-sm tracking-widest text-muted uppercase hover:text-foreground transition-colors"
-          >
-            Clarvia
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link
+              href="/"
+              className="font-mono text-sm tracking-widest text-muted uppercase hover:text-foreground transition-colors"
+            >
+              Clarvia
+            </Link>
+            <Link
+              href="/leaderboard"
+              className="text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Leaderboard
+            </Link>
+          </div>
           <span className="text-xs text-muted">AEO Scanner v1.0</span>
         </div>
       </header>
@@ -476,6 +484,11 @@ export default function ScanResultPage() {
               >
                 {result.rating}
               </span>
+              <p className="text-sm text-muted italic text-center max-w-md mx-auto pt-2">
+                Clarvia Score does not measure a company&apos;s size or quality.
+                It measures how easily AI agents can discover and use this
+                service.
+              </p>
             </div>
 
             {/* Dimensions */}
