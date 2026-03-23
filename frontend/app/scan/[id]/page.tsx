@@ -60,47 +60,60 @@ function scoreTextClass(score: number): string {
   return "text-score-red";
 }
 
-function scoreBgClass(score: number, max: number): string {
+function scoreBgGradient(score: number, max: number): string {
   const pct = max > 0 ? score / max : 0;
-  if (pct >= 0.7) return "bg-score-green";
-  if (pct >= 0.4) return "bg-score-yellow";
-  return "bg-score-red";
+  if (pct >= 0.7) return "bar-gradient-green";
+  if (pct >= 0.4) return "bar-gradient-yellow";
+  return "bar-gradient-red";
+}
+
+function scoreGlowClass(score: number): string {
+  if (score >= 70) return "glow-green";
+  if (score >= 40) return "glow-yellow";
+  return "glow-red";
 }
 
 function gradeBadgeClass(rating: string): string {
   switch (rating) {
     case "Exceptional":
     case "Strong":
-      return "bg-score-green/15 text-score-green border-score-green/30";
+      return "bg-score-green/10 text-score-green border-score-green/20";
     case "Moderate":
     case "Good":
-      return "bg-score-yellow/15 text-score-yellow border-score-yellow/30";
+      return "bg-score-yellow/10 text-score-yellow border-score-yellow/20";
     case "Basic":
-      return "bg-score-yellow/15 text-score-yellow border-score-yellow/30";
+      return "bg-score-yellow/10 text-score-yellow border-score-yellow/20";
     default:
-      return "bg-score-red/15 text-score-red border-score-red/30";
+      return "bg-score-red/10 text-score-red border-score-red/20";
   }
 }
 
-const DIMENSION_LABELS: Record<string, { label: string; description: string }> =
-  {
-    api_accessibility: {
-      label: "API Accessibility",
-      description: "How easily agents can reach and authenticate with your API",
-    },
-    data_structuring: {
-      label: "Data Structuring",
-      description: "Schema definition, pricing clarity, and error handling",
-    },
-    agent_compatibility: {
-      label: "Agent Compatibility",
-      description: "MCP support, robot policies, and discovery mechanisms",
-    },
-    trust_signals: {
-      label: "Trust Signals",
-      description: "Uptime, documentation quality, and update frequency",
-    },
-  };
+const DIMENSION_META: Record<string, { label: string; description: string; color: string; iconColor: string }> = {
+  api_accessibility: {
+    label: "API Accessibility",
+    description: "How easily agents can reach and authenticate with your API",
+    color: "blue",
+    iconColor: "text-blue-400",
+  },
+  data_structuring: {
+    label: "Data Structuring",
+    description: "Schema definition, pricing clarity, and error handling",
+    color: "purple",
+    iconColor: "text-purple-400",
+  },
+  agent_compatibility: {
+    label: "Agent Compatibility",
+    description: "MCP support, robot policies, and discovery mechanisms",
+    color: "cyan",
+    iconColor: "text-cyan-400",
+  },
+  trust_signals: {
+    label: "Trust Signals",
+    description: "Uptime, documentation quality, and update frequency",
+    color: "emerald",
+    iconColor: "text-emerald-400",
+  },
+};
 
 function priorityIcon(index: number): string {
   if (index === 0) return "!!!";
@@ -112,6 +125,12 @@ function priorityColorClass(index: number): string {
   if (index === 0) return "text-score-red";
   if (index < 3) return "text-score-yellow";
   return "text-muted";
+}
+
+function priorityBgClass(index: number): string {
+  if (index === 0) return "border-score-red/20 bg-score-red/5";
+  if (index < 3) return "border-score-yellow/20 bg-score-yellow/5";
+  return "border-card-border bg-card-bg";
 }
 
 function formatEvidence(evidence: Record<string, unknown>): string[] {
@@ -158,7 +177,6 @@ function useAnimatedNumber(target: number, duration: number = 1200): number {
     function tick(now: number) {
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setCurrent(Math.round(from + (target - from) * eased));
 
@@ -181,39 +199,45 @@ function ScoreGauge({ score }: { score: number }) {
   const color = scoreColor(animatedScore);
   const circumference = 2 * Math.PI * 54;
   const progress = (animatedScore / 100) * circumference;
+  const glowClass = scoreGlowClass(animatedScore);
 
   return (
-    <div className="relative w-40 h-40 mx-auto">
+    <div className={`relative w-44 h-44 mx-auto ${glowClass} rounded-full`}>
       <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+        {/* Background track */}
         <circle
           cx="60"
           cy="60"
           r="54"
           fill="none"
-          stroke="#1e2a3a"
-          strokeWidth="8"
+          stroke="rgba(30, 42, 58, 0.5)"
+          strokeWidth="7"
         />
+        {/* Progress arc */}
         <circle
           cx="60"
           cy="60"
           r="54"
           fill="none"
           stroke={color}
-          strokeWidth="8"
+          strokeWidth="7"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference - progress}
           className="transition-[stroke] duration-300"
+          style={{
+            filter: `drop-shadow(0 0 6px ${color}40)`,
+          }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span
-          className="text-4xl font-mono font-bold transition-[color] duration-300"
+          className="text-5xl font-mono font-bold transition-[color] duration-300"
           style={{ color }}
         >
           {animatedScore}
         </span>
-        <span className="text-xs text-muted mt-1">/ 100</span>
+        <span className="text-xs text-muted mt-1 font-mono">/ 100</span>
       </div>
     </div>
   );
@@ -229,25 +253,27 @@ function DimensionBar({
   dimension: Dimension;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const meta = DIMENSION_LABELS[dimKey];
+  const meta = DIMENSION_META[dimKey];
   const pct = dimension.max > 0 ? (dimension.score / dimension.max) * 100 : 0;
 
   return (
-    <div className="bg-card-bg border border-card-border rounded-lg overflow-hidden transition-all duration-300">
+    <div className="glass-card rounded-xl overflow-hidden transition-all duration-300">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-5 py-4 text-left flex items-center gap-4 hover:bg-card-border/20 transition-colors"
+        className="w-full px-6 py-5 text-left flex items-center gap-4 hover:bg-card-border/10 transition-colors"
       >
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">{meta?.label || dimKey}</span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-semibold ${meta?.iconColor || "text-foreground"}`}>{meta?.label || dimKey}</span>
+            </div>
             <span className="font-mono text-sm text-muted">
               {dimension.score}/{dimension.max}
             </span>
           </div>
-          <div className="h-2 bg-card-border rounded-full overflow-hidden">
+          <div className="h-2.5 bg-card-border/40 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-700 ease-out ${scoreBgClass(dimension.score, dimension.max)}`}
+              className={`h-full rounded-full transition-all duration-700 ease-out ${scoreBgGradient(dimension.score, dimension.max)}`}
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -268,27 +294,27 @@ function DimensionBar({
           expanded ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <div className="px-5 pb-4 space-y-3 border-t border-card-border pt-3">
+        <div className="px-6 pb-5 space-y-4 border-t border-card-border/30 pt-4">
           <p className="text-xs text-muted">{meta?.description}</p>
           {Object.entries(dimension.sub_factors).map(([key, sf]) => {
             const sfPct = sf.max > 0 ? (sf.score / sf.max) * 100 : 0;
             const evidenceLines = formatEvidence(sf.evidence);
             return (
-              <div key={key} className="space-y-1.5">
+              <div key={key} className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-foreground/80">{sf.label}</span>
                   <span className="font-mono text-muted">
                     {sf.score}/{sf.max}
                   </span>
                 </div>
-                <div className="h-1.5 bg-card-border rounded-full overflow-hidden">
+                <div className="h-1.5 bg-card-border/40 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${scoreBgClass(sf.score, sf.max)}`}
+                    className={`h-full rounded-full transition-all duration-500 ${scoreBgGradient(sf.score, sf.max)}`}
                     style={{ width: `${sfPct}%` }}
                   />
                 </div>
                 {evidenceLines.length > 0 && (
-                  <div className="text-xs text-muted/70 space-y-0.5 pl-2 border-l border-card-border">
+                  <div className="text-xs text-muted/70 space-y-0.5 pl-3 border-l-2 border-card-border/50 ml-1">
                     {evidenceLines.map((line, i) => (
                       <p key={i}>{line}</p>
                     ))}
@@ -330,10 +356,13 @@ function ScanningView() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 px-6">
       <div className="w-full max-w-md space-y-4">
-        <div className="h-1.5 bg-card-border rounded-full overflow-hidden">
+        <div className="h-1.5 bg-card-border/50 rounded-full overflow-hidden">
           <div
-            className="h-full bg-accent rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
+            className="h-full rounded-full transition-all duration-500 ease-out"
+            style={{
+              width: `${progress}%`,
+              background: "linear-gradient(90deg, #3b82f6, #6366f1)",
+            }}
           />
         </div>
         <div className="space-y-1.5">
@@ -360,6 +389,61 @@ function ScanningView() {
   );
 }
 
+// ----- Share Buttons -----
+
+function ShareButtons({ result }: { result: ScanResult }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopyUrl() {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleShareTwitter() {
+    const text = `${result.service_name} scored ${result.clarvia_score}/100 on the Clarvia AEO Scanner! How agent-ready is your service?`;
+    const url = window.location.href;
+    window.open(
+      `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      "_blank"
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-3">
+      <button
+        onClick={handleCopyUrl}
+        className="flex-1 min-w-[140px] glass-card hover:border-accent/30 text-foreground px-5 py-3 rounded-xl text-sm font-medium transition-all text-center inline-flex items-center justify-center gap-2"
+      >
+        {copied ? (
+          <>
+            <svg className="w-4 h-4 text-score-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+            Copied!
+          </>
+        ) : (
+          <>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-3.07a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L5.25 9" />
+            </svg>
+            Copy link
+          </>
+        )}
+      </button>
+      <button
+        onClick={handleShareTwitter}
+        className="flex-1 min-w-[140px] glass-card hover:border-accent/30 text-foreground px-5 py-3 rounded-xl text-sm font-medium transition-all text-center inline-flex items-center justify-center gap-2"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+        Share on X
+      </button>
+    </div>
+  );
+}
+
 // ----- Main Results Page -----
 
 export default function ScanResultPage() {
@@ -369,7 +453,6 @@ export default function ScanResultPage() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [appeared, setAppeared] = useState(false);
 
@@ -386,14 +469,12 @@ export default function ScanResultPage() {
           return;
         }
 
-        // Backend miss (404 etc) — try prebuilt static data
         const fallbackRes = await fetch("/data/prebuilt-scans.json");
         if (!fallbackRes.ok) throw new Error(`Failed to load scan (${res.status})`);
         const scans: ScanResult[] = await fallbackRes.json();
         const match = scans.find((s) => s.scan_id === scanId);
         if (!match) throw new Error(`Scan not found (${scanId})`);
 
-        // Fill optional fields that prebuilt data may lack
         if (!match.top_recommendations) match.top_recommendations = [];
         if (!match.scan_duration_ms) match.scan_duration_ms = 0;
         if (!match.onchain_bonus) {
@@ -411,12 +492,6 @@ export default function ScanResultPage() {
 
     fetchResult();
   }, [scanId]);
-
-  function handleCopyUrl() {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
 
   async function handleGetReport() {
     if (!result) return;
@@ -445,39 +520,40 @@ export default function ScanResultPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gradient-mesh">
       {/* Header */}
-      <header className="border-b border-card-border px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link
-              href="/"
-              className="font-mono text-sm tracking-widest text-muted uppercase hover:text-foreground transition-colors"
-            >
-              Clarvia
+      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                <div className="w-3 h-3 rounded-sm bg-accent" />
+              </div>
+              <span className="font-semibold text-base tracking-tight text-foreground">Clarvia</span>
             </Link>
-            <Link
-              href="/leaderboard"
-              className="text-xs text-muted hover:text-foreground transition-colors"
-            >
-              Leaderboard
-            </Link>
-            <Link
-              href="/register"
-              className="text-xs text-muted hover:text-foreground transition-colors"
-            >
-              Register
-            </Link>
+            <nav className="hidden sm:flex items-center gap-6">
+              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">
+                Leaderboard
+              </Link>
+              <Link href="/register" className="text-sm text-muted hover:text-foreground transition-colors">
+                Register
+              </Link>
+            </nav>
           </div>
-          <span className="text-xs text-muted">AEO Scanner v1.0</span>
+          <span className="text-xs text-muted/60 font-mono hidden sm:inline">v1.0</span>
         </div>
       </header>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-12">
         {loading && <ScanningView />}
 
         {error && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-score-red/10 flex items-center justify-center mb-2">
+              <svg className="w-8 h-8 text-score-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+            </div>
             <p className="text-score-red font-mono text-sm">{error}</p>
             <Link
               href="/"
@@ -490,34 +566,33 @@ export default function ScanResultPage() {
 
         {result && (
           <div
-            className={`space-y-8 transition-all duration-700 ${
+            className={`space-y-10 transition-all duration-700 ${
               appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             }`}
           >
             {/* Service header */}
-            <div className="text-center space-y-2">
-              <h1 className="text-2xl font-bold">{result.service_name}</h1>
+            <div className="text-center space-y-3">
+              <h1 className="text-3xl font-bold">{result.service_name}</h1>
               <p className="text-sm text-muted font-mono">{result.url}</p>
             </div>
 
             {/* Score + Grade */}
-            <div className="flex flex-col items-center space-y-4">
+            <div className="flex flex-col items-center space-y-5">
               <ScoreGauge score={result.clarvia_score} />
               <span
-                className={`inline-block px-3 py-1 rounded-full border text-xs font-mono uppercase tracking-wider ${gradeBadgeClass(result.rating)}`}
+                className={`inline-block px-4 py-1.5 rounded-xl border text-xs font-mono uppercase tracking-wider ${gradeBadgeClass(result.rating)}`}
               >
                 {result.rating}
               </span>
-              <p className="text-sm text-muted italic text-center max-w-md mx-auto pt-2">
+              <p className="text-xs text-muted/60 italic text-center max-w-md mx-auto pt-2">
                 Clarvia Score does not measure a company&apos;s size or quality.
-                It measures how easily AI agents can discover and use this
-                service.
+                It measures how easily AI agents can discover and use this service.
               </p>
             </div>
 
             {/* Dimensions */}
-            <div className="space-y-3">
-              <h2 className="text-sm font-medium text-muted uppercase tracking-wider">
+            <div className="space-y-4">
+              <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
                 Dimensions
               </h2>
               {Object.entries(result.dimensions).map(([key, dim]) => (
@@ -527,22 +602,22 @@ export default function ScanResultPage() {
 
             {/* Onchain bonus */}
             {result.onchain_bonus && (
-              <div className="space-y-3">
-                <h2 className="text-sm font-medium text-muted uppercase tracking-wider">
+              <div className="space-y-4">
+                <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
                   Onchain Bonus
                 </h2>
-                <div className="bg-card-bg border border-card-border rounded-lg px-5 py-4">
+                <div className="glass-card rounded-xl px-6 py-5">
                   {result.onchain_bonus.applicable ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between text-sm">
                         <span>Onchain Score</span>
                         <span className="font-mono text-muted">
                           {result.onchain_bonus.score}/{result.onchain_bonus.max}
                         </span>
                       </div>
-                      <div className="h-2 bg-card-border rounded-full overflow-hidden">
+                      <div className="h-2.5 bg-card-border/40 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${scoreBgClass(result.onchain_bonus.score, result.onchain_bonus.max)}`}
+                          className={`h-full rounded-full ${scoreBgGradient(result.onchain_bonus.score, result.onchain_bonus.max)}`}
                           style={{
                             width: `${(result.onchain_bonus.score / result.onchain_bonus.max) * 100}%`,
                           }}
@@ -561,15 +636,15 @@ export default function ScanResultPage() {
 
             {/* Recommendations */}
             {result.top_recommendations.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="text-sm font-medium text-muted uppercase tracking-wider">
+              <div className="space-y-4">
+                <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
                   Top Recommendations
                 </h2>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {result.top_recommendations.map((rec, i) => (
                     <div
                       key={i}
-                      className="bg-card-bg border border-card-border rounded-lg px-5 py-3 flex gap-3 items-start"
+                      className={`rounded-xl px-6 py-4 flex gap-4 items-start border transition-all duration-200 hover:-translate-y-0.5 ${priorityBgClass(i)}`}
                     >
                       <span
                         className={`font-mono text-xs font-bold shrink-0 mt-0.5 ${priorityColorClass(i)}`}
@@ -583,18 +658,34 @@ export default function ScanResultPage() {
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <button
-                onClick={handleCopyUrl}
-                className="flex-1 bg-card-bg border border-card-border hover:border-accent/50 text-foreground px-5 py-3 rounded-lg text-sm font-medium transition-colors text-center"
-              >
-                {copied ? "Copied!" : "Share this score"}
-              </button>
+            {/* Share + Actions */}
+            <div className="space-y-4">
+              <h2 className="text-xs font-mono text-accent uppercase tracking-widest">Share</h2>
+              <ShareButtons result={result} />
+            </div>
+
+            {/* Report CTA */}
+            <div className="glass-card rounded-xl px-6 py-6 space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold mb-1">Unlock the full report</p>
+                  <ul className="text-xs text-muted space-y-1">
+                    <li>All 13 sub-factors with detailed evidence</li>
+                    <li>15 prioritized recommendations with implementation steps</li>
+                    <li>Competitive benchmark data</li>
+                    <li>Downloadable PDF report</li>
+                  </ul>
+                </div>
+              </div>
               <button
                 onClick={handleGetReport}
                 disabled={checkoutLoading}
-                className="flex-1 bg-accent hover:bg-accent-hover disabled:opacity-60 text-white px-5 py-3 rounded-lg text-sm font-medium transition-colors text-center"
+                className="w-full btn-gradient text-white px-5 py-3.5 rounded-xl text-sm font-medium text-center"
               >
                 {checkoutLoading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -607,21 +698,8 @@ export default function ScanResultPage() {
               </button>
             </div>
 
-            {/* Report upsell */}
-            <div className="bg-card-bg border border-card-border rounded-lg px-5 py-4 space-y-2">
-              <p className="text-sm font-medium">
-                Unlock the full report
-              </p>
-              <ul className="text-xs text-muted space-y-1">
-                <li>All 13 sub-factors with detailed evidence</li>
-                <li>15 prioritized recommendations with implementation steps</li>
-                <li>Competitive benchmark data</li>
-                <li>Downloadable PDF report</li>
-              </ul>
-            </div>
-
             {/* Metadata */}
-            <div className="text-center text-xs text-muted/50 font-mono space-y-1 pb-6">
+            <div className="text-center text-xs text-muted/40 font-mono space-y-1 pb-6">
               <p>
                 Scanned at{" "}
                 {new Date(result.scanned_at).toLocaleString("en-US", {
@@ -638,11 +716,14 @@ export default function ScanResultPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-card-border px-6 py-6">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted">
-          <span>
-            Clarvia — Discovery & Trust standard for the agent economy
-          </span>
+      <footer className="border-t border-card-border/50 px-6 py-8">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 rounded-md bg-accent/10 flex items-center justify-center">
+              <div className="w-2 h-2 rounded-sm bg-accent" />
+            </div>
+            <span>Clarvia — Discovery & Trust standard for the agent economy</span>
+          </div>
           <a
             href="https://github.com/clarvia-project"
             target="_blank"

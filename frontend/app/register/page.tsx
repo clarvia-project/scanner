@@ -17,10 +17,17 @@ const CATEGORIES = [
   "MCP",
 ];
 
+const STEPS = [
+  { label: "Service Info", description: "Basic details" },
+  { label: "Category & Links", description: "Classification" },
+  { label: "Contact", description: "Optional details" },
+];
+
 export default function RegisterPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [currentStep, setCurrentStep] = useState(0);
 
   const [form, setForm] = useState({
     name: "",
@@ -34,6 +41,16 @@ export default function RegisterPage() {
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function canAdvance(): boolean {
+    if (currentStep === 0) {
+      return !!(form.name.trim() && form.url.trim() && form.description.trim());
+    }
+    if (currentStep === 1) {
+      return !!form.category;
+    }
+    return true;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -83,197 +100,294 @@ export default function RegisterPage() {
   }
 
   const inputClass =
-    "w-full bg-card-bg border border-card-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent transition-colors text-sm";
+    "w-full bg-card-bg/80 border border-card-border rounded-xl px-5 py-3.5 text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all text-sm";
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gradient-mesh">
       {/* Header */}
-      <header className="border-b border-card-border px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link
-              href="/"
-              className="font-mono text-sm tracking-widest text-muted uppercase hover:text-foreground transition-colors"
-            >
-              Clarvia
+      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                <div className="w-3 h-3 rounded-sm bg-accent" />
+              </div>
+              <span className="font-semibold text-base tracking-tight text-foreground">Clarvia</span>
             </Link>
-            <Link
-              href="/leaderboard"
-              className="text-xs text-muted hover:text-foreground transition-colors"
-            >
-              Leaderboard
-            </Link>
-            <Link
-              href="/register"
-              className="text-xs text-foreground font-medium hover:text-accent transition-colors"
-            >
-              Register
-            </Link>
+            <nav className="hidden sm:flex items-center gap-6">
+              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">
+                Leaderboard
+              </Link>
+              <Link href="/register" className="text-sm text-foreground font-medium">
+                Register
+              </Link>
+            </nav>
           </div>
-          <span className="text-xs text-muted">AEO Scanner v1.0</span>
+          <span className="text-xs text-muted/60 font-mono hidden sm:inline">v1.0</span>
         </div>
       </header>
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-6 py-10">
-        <div className="text-center space-y-3 mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-6 py-12">
+        <div className="text-center space-y-4 mb-12">
+          <p className="text-xs font-mono text-accent uppercase tracking-widest">Get started</p>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             Register Your Service
           </h1>
           <p className="text-muted text-sm md:text-base max-w-lg mx-auto">
-            Add your MCP service to the Clarvia directory and get your AEO
-            score.
+            Add your MCP service to the Clarvia directory and get your AEO score.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Service Name */}
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted uppercase tracking-wider font-medium">
-              Service Name <span className="text-score-red">*</span>
-            </label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => updateField("name", e.target.value)}
-              placeholder="e.g. My MCP Service"
-              className={inputClass}
-              required
-            />
-          </div>
+        {/* Progress Steps */}
+        <div className="flex items-center justify-center gap-2 mb-10">
+          {STEPS.map((step, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => idx <= currentStep && setCurrentStep(idx)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200 ${
+                  idx === currentStep
+                    ? "btn-gradient text-white shadow-md shadow-accent/10"
+                    : idx < currentStep
+                      ? "bg-score-green/10 text-score-green border border-score-green/20 cursor-pointer"
+                      : "bg-card-bg/60 text-muted border border-card-border cursor-default"
+                }`}
+              >
+                <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${
+                  idx < currentStep ? "bg-score-green/20" : idx === currentStep ? "bg-white/20" : "bg-card-border/50"
+                }`}>
+                  {idx < currentStep ? (
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  ) : (
+                    idx + 1
+                  )}
+                </span>
+                <span className="hidden sm:inline">{step.label}</span>
+              </button>
+              {idx < STEPS.length - 1 && (
+                <div className={`w-8 h-px ${idx < currentStep ? "bg-score-green/30" : "bg-card-border"}`} />
+              )}
+            </div>
+          ))}
+        </div>
 
-          {/* URL */}
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted uppercase tracking-wider font-medium">
-              URL <span className="text-score-red">*</span>
-            </label>
-            <input
-              type="url"
-              value={form.url}
-              onChange={(e) => updateField("url", e.target.value)}
-              placeholder="https://api.example.com"
-              className={inputClass}
-              required
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Step 1: Service Info */}
+          <div className={`space-y-5 transition-all duration-300 ${currentStep === 0 ? "block" : "hidden"}`}>
+            <div className="glass-card rounded-2xl p-8 space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs text-muted uppercase tracking-wider font-medium flex items-center gap-1">
+                  Service Name <span className="text-score-red">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => updateField("name", e.target.value)}
+                  placeholder="e.g. My MCP Service"
+                  className={inputClass}
+                  required
+                />
+              </div>
 
-          {/* Description */}
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted uppercase tracking-wider font-medium">
-              Description <span className="text-score-red">*</span>
-            </label>
-            <textarea
-              value={form.description}
-              onChange={(e) => updateField("description", e.target.value)}
-              placeholder="Brief description of what your service does and how agents can use it."
-              rows={4}
-              className={`${inputClass} resize-none`}
-              required
-            />
-          </div>
+              <div className="space-y-2">
+                <label className="text-xs text-muted uppercase tracking-wider font-medium flex items-center gap-1">
+                  URL <span className="text-score-red">*</span>
+                </label>
+                <input
+                  type="url"
+                  value={form.url}
+                  onChange={(e) => updateField("url", e.target.value)}
+                  placeholder="https://api.example.com"
+                  className={inputClass}
+                  required
+                />
+              </div>
 
-          {/* Category */}
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted uppercase tracking-wider font-medium">
-              Category <span className="text-score-red">*</span>
-            </label>
-            <select
-              value={form.category}
-              onChange={(e) => updateField("category", e.target.value)}
-              className={`${inputClass} appearance-none cursor-pointer`}
-              required
+              <div className="space-y-2">
+                <label className="text-xs text-muted uppercase tracking-wider font-medium flex items-center gap-1">
+                  Description <span className="text-score-red">*</span>
+                </label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => updateField("description", e.target.value)}
+                  placeholder="Brief description of what your service does and how agents can use it."
+                  rows={4}
+                  className={`${inputClass} resize-none`}
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => canAdvance() && setCurrentStep(1)}
+              disabled={!canAdvance()}
+              className="w-full btn-gradient text-white px-6 py-3.5 rounded-xl font-medium text-sm"
             >
-              <option value="" disabled>
-                Select a category
-              </option>
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+              Continue
+            </button>
           </div>
 
-          {/* GitHub URL */}
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted uppercase tracking-wider font-medium">
-              GitHub URL{" "}
-              <span className="text-muted/50 normal-case">(optional)</span>
-            </label>
-            <input
-              type="url"
-              value={form.github_url}
-              onChange={(e) => updateField("github_url", e.target.value)}
-              placeholder="https://github.com/your-org/your-repo"
-              className={inputClass}
-            />
+          {/* Step 2: Category & Links */}
+          <div className={`space-y-5 transition-all duration-300 ${currentStep === 1 ? "block" : "hidden"}`}>
+            <div className="glass-card rounded-2xl p-8 space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs text-muted uppercase tracking-wider font-medium flex items-center gap-1">
+                  Category <span className="text-score-red">*</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => updateField("category", cat)}
+                      className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 border text-center ${
+                        form.category === cat
+                          ? "btn-gradient text-white border-transparent"
+                          : "bg-card-bg/60 text-muted border-card-border hover:border-accent/30"
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs text-muted uppercase tracking-wider font-medium">
+                  GitHub URL <span className="text-muted/50 normal-case">(optional)</span>
+                </label>
+                <input
+                  type="url"
+                  value={form.github_url}
+                  onChange={(e) => updateField("github_url", e.target.value)}
+                  placeholder="https://github.com/your-org/your-repo"
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs text-muted uppercase tracking-wider font-medium">
+                  Tags <span className="text-muted/50 normal-case">(optional, comma separated)</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.tags}
+                  onChange={(e) => updateField("tags", e.target.value)}
+                  placeholder="e.g. mcp, ai, tools"
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(0)}
+                className="flex-1 glass-card hover:border-accent/30 text-foreground px-6 py-3.5 rounded-xl font-medium text-sm transition-all text-center"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => canAdvance() && setCurrentStep(2)}
+                disabled={!canAdvance()}
+                className="flex-1 btn-gradient text-white px-6 py-3.5 rounded-xl font-medium text-sm"
+              >
+                Continue
+              </button>
+            </div>
           </div>
 
-          {/* Tags */}
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted uppercase tracking-wider font-medium">
-              Tags{" "}
-              <span className="text-muted/50 normal-case">
-                (optional, comma separated)
-              </span>
-            </label>
-            <input
-              type="text"
-              value={form.tags}
-              onChange={(e) => updateField("tags", e.target.value)}
-              placeholder="e.g. mcp, ai, tools"
-              className={inputClass}
-            />
-          </div>
+          {/* Step 3: Contact */}
+          <div className={`space-y-5 transition-all duration-300 ${currentStep === 2 ? "block" : "hidden"}`}>
+            <div className="glass-card rounded-2xl p-8 space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs text-muted uppercase tracking-wider font-medium">
+                  Contact Email <span className="text-muted/50 normal-case">(optional)</span>
+                </label>
+                <input
+                  type="email"
+                  value={form.contact_email}
+                  onChange={(e) => updateField("contact_email", e.target.value)}
+                  placeholder="you@example.com"
+                  className={inputClass}
+                />
+                <p className="text-xs text-muted/50 mt-1">
+                  We&apos;ll notify you when your service is scanned or when important updates are available.
+                </p>
+              </div>
 
-          {/* Contact Email */}
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted uppercase tracking-wider font-medium">
-              Contact Email{" "}
-              <span className="text-muted/50 normal-case">(optional)</span>
-            </label>
-            <input
-              type="email"
-              value={form.contact_email}
-              onChange={(e) => updateField("contact_email", e.target.value)}
-              placeholder="you@example.com"
-              className={inputClass}
-            />
-          </div>
+              {/* Review summary */}
+              <div className="border-t border-card-border/30 pt-5">
+                <p className="text-xs text-muted uppercase tracking-wider font-medium mb-3">Review</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted">Name</span>
+                    <span className="font-medium">{form.name || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted">URL</span>
+                    <span className="font-mono text-xs">{form.url || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted">Category</span>
+                    <span>{form.category || "—"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          {error && (
-            <p className="text-score-red text-sm font-mono">{error}</p>
-          )}
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={
-              submitting ||
-              !form.name.trim() ||
-              !form.url.trim() ||
-              !form.description.trim() ||
-              !form.category
-            }
-            className="w-full bg-accent hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors text-sm"
-          >
-            {submitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Registering...
-              </span>
-            ) : (
-              "Register Service"
+            {error && (
+              <div className="glass-card rounded-xl p-4 border-score-red/20 bg-score-red/5">
+                <p className="text-score-red text-sm font-mono">{error}</p>
+              </div>
             )}
-          </button>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(1)}
+                className="flex-1 glass-card hover:border-accent/30 text-foreground px-6 py-3.5 rounded-xl font-medium text-sm transition-all text-center"
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                disabled={
+                  submitting ||
+                  !form.name.trim() ||
+                  !form.url.trim() ||
+                  !form.description.trim() ||
+                  !form.category
+                }
+                className="flex-1 btn-gradient text-white px-6 py-3.5 rounded-xl font-medium text-sm"
+              >
+                {submitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Registering...
+                  </span>
+                ) : (
+                  "Register Service"
+                )}
+              </button>
+            </div>
+          </div>
         </form>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-card-border px-6 py-6">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted">
-          <span>
-            Clarvia — Discovery & Trust standard for the agent economy
-          </span>
+      <footer className="border-t border-card-border/50 px-6 py-8">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 rounded-md bg-accent/10 flex items-center justify-center">
+              <div className="w-2 h-2 rounded-sm bg-accent" />
+            </div>
+            <span>Clarvia — Discovery & Trust standard for the agent economy</span>
+          </div>
           <a
             href="https://github.com/clarvia-project"
             target="_blank"
