@@ -1,14 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-const EXAMPLE_SCORES = [
-  { name: "Stripe", url: "stripe.com", score: 47, rating: "Basic" },
-  { name: "GitHub", url: "github.com", score: 53, rating: "Basic" },
-  { name: "Notion", url: "notion.so", score: 62, rating: "Moderate" },
+interface TopScore {
+  name: string;
+  url: string;
+  score: number;
+  rating: string;
+  scan_id: string;
+}
+
+const FALLBACK_SCORES: TopScore[] = [
+  { name: "Replicate", url: "replicate.com", score: 80, rating: "Strong", scan_id: "" },
+  { name: "Helius", url: "helius.dev", score: 72, rating: "Moderate", scan_id: "" },
+  { name: "Hugging Face", url: "huggingface.co", score: 70, rating: "Moderate", scan_id: "" },
 ];
 
 const SCAN_PHASES = [
@@ -96,7 +105,27 @@ export default function LandingPage() {
   const [waitlistStatus, setWaitlistStatus] = useState<
     "idle" | "sending" | "done" | "error"
   >("idle");
+  const [topScores, setTopScores] = useState<TopScore[]>(FALLBACK_SCORES);
   const router = useRouter();
+
+  useEffect(() => {
+    fetch("/data/prebuilt-scans.json")
+      .then((res) => res.json())
+      .then((json: { service_name: string; url: string; clarvia_score: number; rating: string; scan_id: string }[]) => {
+        const sorted = [...json]
+          .sort((a, b) => b.clarvia_score - a.clarvia_score)
+          .slice(0, 3)
+          .map((s) => ({
+            name: s.service_name,
+            url: s.url.replace(/^https?:\/\//, ""),
+            score: s.clarvia_score,
+            rating: s.rating,
+            scan_id: s.scan_id,
+          }));
+        setTopScores(sorted);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleScan(targetUrl?: string) {
     const scanUrl = targetUrl || url.trim();
@@ -166,9 +195,17 @@ export default function LandingPage() {
       {/* Header */}
       <header className="border-b border-card-border px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <span className="font-mono text-sm tracking-widest text-muted uppercase">
-            Clarvia
-          </span>
+          <div className="flex items-center gap-6">
+            <span className="font-mono text-sm tracking-widest text-muted uppercase">
+              Clarvia
+            </span>
+            <Link
+              href="/leaderboard"
+              className="text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Leaderboard
+            </Link>
+          </div>
           <span className="text-xs text-muted">AEO Scanner v1.0</span>
         </div>
       </header>
@@ -211,16 +248,20 @@ export default function LandingPage() {
             <p className="text-score-red text-sm font-mono">{error}</p>
           )}
 
-          {/* Example Scores */}
+          {/* Top Scores */}
           <div className="pt-8 space-y-4">
             <p className="text-xs text-muted uppercase tracking-wider">
-              Example Scores
+              Top Scores
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto">
-              {EXAMPLE_SCORES.map((ex) => (
+              {topScores.map((ex) => (
                 <button
                   key={ex.name}
-                  onClick={() => handleExampleClick(ex.url)}
+                  onClick={() =>
+                    ex.scan_id
+                      ? router.push(`/scan/${ex.scan_id}`)
+                      : handleExampleClick(ex.url)
+                  }
                   disabled={loading}
                   className={`bg-card-bg border ${scoreBorderColor(ex.score)} rounded-lg p-4 text-left hover:border-accent/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
@@ -234,6 +275,12 @@ export default function LandingPage() {
                 </button>
               ))}
             </div>
+            <Link
+              href="/leaderboard"
+              className="inline-block text-xs text-accent hover:text-accent-hover transition-colors"
+            >
+              View full leaderboard &rarr;
+            </Link>
           </div>
 
           {/* Waitlist */}
