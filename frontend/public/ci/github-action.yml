@@ -1,0 +1,20 @@
+name: AEO Score Check
+on: [pull_request]
+
+jobs:
+  aeo-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check AEO Score
+        run: |
+          RESULT=$(curl -s -H "X-Clarvia-Key: ${{ secrets.CLARVIA_API_KEY }}" \
+            -X POST https://clarvia-api.onrender.com/api/v1/ci/check \
+            -H "Content-Type: application/json" \
+            -d '{"url": "${{ vars.API_URL }}", "min_score": 60}')
+          PASSED=$(echo $RESULT | jq -r '.passed')
+          SCORE=$(echo $RESULT | jq -r '.score')
+          echo "AEO Score: $SCORE"
+          if [ "$PASSED" != "true" ]; then
+            echo "::error::AEO Score $SCORE is below minimum threshold"
+            exit 1
+          fi

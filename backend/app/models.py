@@ -10,6 +10,12 @@ from pydantic import BaseModel, Field, HttpUrl
 
 class ScanRequest(BaseModel):
     url: str = Field(..., description="URL to scan (website, API base, or docs URL)")
+    auth_headers: dict[str, str] | None = Field(
+        default=None,
+        description="Optional auth headers to forward when scanning the target API "
+        "(e.g. {'Authorization': 'Bearer sk-xxx', 'X-API-Key': 'my-key'}). "
+        "These are forwarded to the target but never stored or logged.",
+    )
 
 
 # --- Sub-models ---
@@ -47,6 +53,10 @@ class ScanResponse(BaseModel):
     top_recommendations: list[str]
     scanned_at: datetime
     scan_duration_ms: int
+    authenticated_scan: bool = Field(
+        default=False,
+        description="Whether this scan used authenticated headers to access the target API.",
+    )
 
 
 class ErrorResponse(BaseModel):

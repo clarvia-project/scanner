@@ -1,16 +1,28 @@
 """API Accessibility checks (25 points).
 
+# Scoring Methodology v1.1 (2026-03-25)
+# Weights are based on agent-builder pain frequency:
+# - Rate limits: #1 cause of agent failures in production (6pts)
+# - Response speed: agents timeout at 30s, target <200ms (6pts)
+# - Endpoint existence: fundamental reachability (7pts)
+# - Auth documentation: agents need to know how to authenticate (3pts)
+# - Versioning: nice-to-have, agents can adapt (1pt)
+# - SDK availability: nice-to-have, raw HTTP works (1pt)
+# - Free tier: minor signal (1pt)
+# Full methodology: clarvia.art/methodology
+
 Sub-factors:
 - Endpoint Existence (7 pts)
-- Response Speed (7 pts)
+- Response Speed (6 pts)
 - Auth Documentation (3 pts)
-- Rate Limit Info (3 pts)
-- API Versioning (2 pts)
-- SDK Availability (2 pts)
+- Rate Limit Info (6 pts)  — #1 agent failure cause (429s)
+- API Versioning (1 pt)
+- SDK Availability (1 pt)
 - Free Tier / Trial (1 pt)
 """
 
 import asyncio
+import math
 import time
 from typing import Any
 
@@ -47,18 +59,58 @@ async def check_endpoint_existence(
                 status = resp.status
 
                 if status < 300:
-                    return (7, {
-                        "endpoint": probe_url,
-                        "status": status,
-                        "content_type": ct,
-                        "reason": "Publicly reachable endpoint returning 2xx",
-                    })
+                    # Differentiate JSON API endpoints from HTML pages
+                    is_api = "json" in ct or "xml" in ct or "graphql" in ct
+
+                    # --- Response quality check ---
+                    response_quality = "empty"
+                    try:
+                        body = await resp.read()
+                        if body:
+                            has_json_ct = "application/json" in ct
+                            if has_json_ct:
+                                import json as _json
+                                _json.loads(body)
+                                response_quality = "json_valid"
+                            elif is_api:
+                                # structured but not json content-type
+                                response_quality = "json_valid"
+                            else:
+                                response_quality = "html_only"
+                    except Exception:
+                        if response_quality == "empty" and body:
+                            response_quality = "html_only"
+
+                    if is_api:
+                        return (7, {
+                            "endpoint": probe_url,
+                            "status": status,
+                            "content_type": ct,
+                            "response_quality": response_quality,
+                            "reason": "Publicly reachable API endpoint returning structured data",
+                        })
+                    else:
+                        return (6, {
+                            "endpoint": probe_url,
+                            "status": status,
+                            "content_type": ct,
+                            "response_quality": response_quality,
+                            "reason": "Publicly reachable endpoint returning 2xx (HTML/other)",
+                        })
                 elif status in (401, 403):
                     return (7, {
                         "endpoint": probe_url,
                         "status": status,
-                        "reason": "Endpoint exists, requires authentication",
+                        "reason": "Endpoint exists, requires authentication (API confirmed)",
                     })
+                elif status == 404 and "json" in ct and best_score < 5:
+                    # 404 with JSON response shows a well-structured API
+                    best_score = 5
+                    best_evidence = {
+                        "endpoint": probe_url,
+                        "status": status,
+                        "reason": "API endpoint with structured 404 response",
+                    }
                 elif status >= 500 and best_score < 3:
                     best_score = 3
                     best_evidence = {
@@ -75,7 +127,7 @@ async def check_endpoint_existence(
 async def measure_latency(
     session: aiohttp.ClientSession, endpoint: str
 ) -> tuple[int, dict[str, Any]]:
-    """Measure p50 latency with HEAD requests (7 pts max)."""
+    """Measure p50 latency with HEAD requests (6 pts max)."""
     latencies: list[float] = []
 
     for _ in range(settings.latency_samples):
@@ -98,18 +150,35 @@ async def measure_latency(
     latencies.sort()
     p50 = latencies[len(latencies) // 2]
 
-    if p50 < 200:
-        score = 7
-    elif p50 < 500:
-        score = 5
+    # Graduated latency scoring (6 pts max)
+    if p50 < 100:
+        score = 6   # Exceptional: <100ms
+    elif p50 < 200:
+        score = 5   # Excellent: <200ms
+    elif p50 < 400:
+        score = 4   # Good: <400ms
+    elif p50 < 700:
+        score = 3   # Acceptable: <700ms
     elif p50 < 1000:
-        score = 3
-    elif p50 < 3000:
-        score = 1
+        score = 2   # Slow: <1s
+    elif p50 < 2000:
+        score = 1   # Very slow: <2s
     else:
-        score = 0
+        score = 0   # Poor: 2s+
 
-    return (score, {"p50_ms": round(p50), "samples": [round(x) for x in latencies]})
+    # --- Consistency check via standard deviation ---
+    evidence: dict[str, Any] = {"p50_ms": round(p50), "samples": [round(x) for x in latencies]}
+    if len(latencies) >= 2:
+        mean = sum(latencies) / len(latencies)
+        variance = sum((x - mean) ** 2 for x in latencies) / len(latencies)
+        stddev = math.sqrt(variance)
+        evidence["stddev_ms"] = round(stddev)
+        if stddev > 500:
+            evidence["latency_unstable"] = True
+        elif stddev < 100:
+            evidence["latency_consistent"] = True
+
+    return (score, evidence)
 
 
 async def check_auth_documentation(
@@ -148,7 +217,18 @@ async def check_auth_documentation(
                         "bearer token", "oauth", "api_key", "access token",
                     ]
                     matches = [kw for kw in auth_keywords if kw in text_lower]
-                    if len(matches) >= 2:
+                    # Check for code examples in auth docs
+                    has_code_examples = any(kw in text_lower for kw in [
+                        "curl", "authorization: bearer", "x-api-key",
+                        "```", "code example", "import ",
+                    ])
+                    if len(matches) >= 3 and has_code_examples:
+                        return (3, {
+                            "reason": "Comprehensive auth documentation with code examples",
+                            "url": path,
+                            "keywords_found": matches[:5],
+                        })
+                    elif len(matches) >= 2:
                         return (2, {
                             "reason": "Docs page with auth section found",
                             "url": path,
@@ -166,13 +246,88 @@ async def check_auth_documentation(
     return (0, {"reason": "No auth documentation found"})
 
 
+async def _verify_ratelimit_dynamic(
+    session: aiohttp.ClientSession, probe_url: str, first_headers: dict[str, str],
+) -> dict[str, Any]:
+    """Make a second request after 100ms to verify rate limit headers update."""
+    # Find the 'remaining' header from the first response
+    remaining_key = None
+    first_remaining: int | None = None
+    for key in ("x-ratelimit-remaining", "x-rate-limit-remaining", "ratelimit-remaining"):
+        if key in first_headers:
+            remaining_key = key
+            try:
+                first_remaining = int(first_headers[key])
+            except (ValueError, TypeError):
+                pass
+            break
+
+    if first_remaining is None:
+        return {"dynamic_verified": False, "dynamic_note": "No parseable remaining header in first response"}
+
+    await asyncio.sleep(0.1)  # 100ms delay
+
+    try:
+        async with session.get(
+            probe_url,
+            timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
+            allow_redirects=True, ssl=False,
+        ) as resp2:
+            resp2_headers_lower = {k.lower(): v for k, v in resp2.headers.items()}
+            second_val = resp2_headers_lower.get(remaining_key)  # type: ignore[arg-type]
+            if second_val is not None:
+                try:
+                    second_remaining = int(second_val)
+                    if second_remaining < first_remaining:
+                        return {"dynamic_verified": True, "remaining_delta": first_remaining - second_remaining}
+                    else:
+                        return {"dynamic_verified": False, "dynamic_note": "Remaining did not decrease between requests"}
+                except (ValueError, TypeError):
+                    return {"dynamic_verified": False, "dynamic_note": "Second remaining header not parseable"}
+            return {"dynamic_verified": False, "dynamic_note": "Remaining header absent in second response"}
+    except (aiohttp.ClientError, asyncio.TimeoutError):
+        return {"dynamic_verified": False, "dynamic_note": "Second request failed"}
+
+
+async def _check_connection_quality(
+    session: aiohttp.ClientSession, endpoint: str,
+) -> dict[str, Any]:
+    """Check keep-alive and compression support (informational, not score-affecting)."""
+    result: dict[str, Any] = {}
+    try:
+        async with session.get(
+            endpoint,
+            timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
+            allow_redirects=True, ssl=False,
+            headers={"Accept-Encoding": "gzip, deflate, br"},
+        ) as resp:
+            # Keep-alive
+            conn_header = resp.headers.get("Connection", "").lower()
+            result["keep_alive"] = "close" not in conn_header
+
+            # Compression
+            content_encoding = resp.headers.get("Content-Encoding", "").lower()
+            result["compression"] = content_encoding if content_encoding else None
+    except (aiohttp.ClientError, asyncio.TimeoutError):
+        result["keep_alive"] = None
+        result["compression"] = None
+
+    return result
+
+
 async def check_rate_limit_info(
     session: aiohttp.ClientSession, base_url: str
 ) -> tuple[int, dict[str, Any]]:
-    """Check if rate limit info is publicly exposed (3 pts max).
+    """Check if rate limit info is publicly exposed (6 pts max).
 
-    3 pts = X-RateLimit-* headers present in responses
-    2 pts = Rate limit documented on docs pages
+    Rate limits are the #1 cause of agent failures in production (429 errors).
+    Agents MUST know limits to self-throttle effectively.
+
+    6 pts = X-RateLimit-* headers + Retry-After header present
+    5 pts = X-RateLimit-* headers (limit, remaining, reset) present
+    4 pts = Partial rate limit headers (e.g., only limit or only retry-after)
+    3 pts = Rate limit documented in docs with specific numbers
+    2 pts = Rate limit mentioned in docs (general)
     0 pts = No rate limit info
     """
     # Check headers on actual API responses
@@ -183,12 +338,12 @@ async def check_rate_limit_info(
         f"{base_url}/v1",
     ]
 
-    rate_limit_headers = [
+    ratelimit_header_names = [
         "x-ratelimit-limit", "x-ratelimit-remaining", "x-ratelimit-reset",
         "x-rate-limit-limit", "x-rate-limit-remaining", "x-rate-limit-reset",
         "ratelimit-limit", "ratelimit-remaining", "ratelimit-reset",
-        "retry-after",
     ]
+    retry_after_names = ["retry-after"]
 
     for probe_url in probe_urls:
         try:
@@ -196,16 +351,40 @@ async def check_rate_limit_info(
                 probe_url, timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
                 allow_redirects=True, ssl=False,
             ) as resp:
-                found_headers = {
-                    h: resp.headers[h]
-                    for h in rate_limit_headers
-                    if h in {k.lower() for k in resp.headers}
+                resp_headers_lower = {k.lower(): v for k, v in resp.headers.items()}
+                found_rl = {
+                    h: resp_headers_lower[h]
+                    for h in ratelimit_header_names
+                    if h in resp_headers_lower
                 }
-                if found_headers:
-                    return (3, {
+                has_retry_after = any(
+                    h in resp_headers_lower for h in retry_after_names
+                )
+
+                if found_rl and has_retry_after:
+                    dynamic = await _verify_ratelimit_dynamic(session, probe_url, found_rl)
+                    return (6, {
+                        "reason": "Full rate limit headers + Retry-After for safe agent throttling",
+                        "url": probe_url,
+                        "headers": {**found_rl, "retry-after": resp_headers_lower.get("retry-after", "")},
+                        **dynamic,
+                    })
+                elif len(found_rl) >= 2:
+                    dynamic = await _verify_ratelimit_dynamic(session, probe_url, found_rl)
+                    return (5, {
                         "reason": "Rate limit headers exposed in API response",
                         "url": probe_url,
-                        "headers": found_headers,
+                        "headers": found_rl,
+                        **dynamic,
+                    })
+                elif found_rl or has_retry_after:
+                    headers = found_rl.copy()
+                    if has_retry_after:
+                        headers["retry-after"] = resp_headers_lower.get("retry-after", "")
+                    return (4, {
+                        "reason": "Partial rate limit headers found",
+                        "url": probe_url,
+                        "headers": headers,
                     })
         except (aiohttp.ClientError, asyncio.TimeoutError):
             continue
@@ -226,9 +405,17 @@ async def check_rate_limit_info(
                 if resp.status < 300:
                     text = (await resp.text()).lower()
                     rl_keywords = ["rate limit", "rate-limit", "ratelimit", "throttl", "requests per"]
-                    if any(kw in text for kw in rl_keywords):
+                    specific_keywords = ["per second", "per minute", "per hour", "requests/", "req/s", "rpm", "rps"]
+                    has_general = any(kw in text for kw in rl_keywords)
+                    has_specific = any(kw in text for kw in specific_keywords)
+                    if has_general and has_specific:
+                        return (3, {
+                            "reason": "Rate limit documented with specific numbers",
+                            "url": path,
+                        })
+                    elif has_general:
                         return (2, {
-                            "reason": "Rate limit info documented",
+                            "reason": "Rate limit info documented (general)",
                             "url": path,
                         })
         except (aiohttp.ClientError, asyncio.TimeoutError):
@@ -240,10 +427,9 @@ async def check_rate_limit_info(
 async def check_api_versioning(
     session: aiohttp.ClientSession, base_url: str
 ) -> tuple[int, dict[str, Any]]:
-    """Check for API versioning patterns (2 pts max).
+    """Check for API versioning patterns (1 pt max).
 
-    2 pts = Multiple versioned endpoints (v1, v2) or version header
-    1 pt  = Single version in URL
+    1 pt  = Versioned endpoints or version header detected
     0 pts = No versioning detected
     """
     version_paths = [
@@ -267,7 +453,7 @@ async def check_api_versioning(
                     # Check for API-Version header
                     api_version = resp.headers.get("api-version") or resp.headers.get("x-api-version")
                     if api_version:
-                        return (2, {
+                        return (1, {
                             "reason": "API versioning with version header",
                             "versions": found_versions,
                             "header_version": api_version,
@@ -275,14 +461,9 @@ async def check_api_versioning(
         except (aiohttp.ClientError, asyncio.TimeoutError):
             continue
 
-    if len(found_versions) >= 2:
-        return (2, {
-            "reason": "Multiple API versions detected",
-            "versions": found_versions,
-        })
-    elif found_versions:
+    if found_versions:
         return (1, {
-            "reason": "Single API version in URL",
+            "reason": "API versioning detected",
             "versions": found_versions,
         })
 
@@ -292,10 +473,9 @@ async def check_api_versioning(
 async def check_sdk_availability(
     session: aiohttp.ClientSession, base_url: str
 ) -> tuple[int, dict[str, Any]]:
-    """Check if official SDKs exist on PyPI/npm (2 pts max).
+    """Check if official SDKs exist on PyPI/npm (1 pt max).
 
-    2 pts = SDK found on PyPI or npm
-    1 pt  = SDK mentioned in docs
+    1 pt  = SDK found on PyPI/npm or mentioned in docs
     0 pts = No SDK detected
     """
     from urllib.parse import urlparse
@@ -319,7 +499,7 @@ async def check_sdk_availability(
                 allow_redirects=True, ssl=False,
             ) as resp:
                 if resp.status < 300:
-                    return (2, {
+                    return (1, {
                         "reason": f"Official SDK found on {registry}",
                         "url": url,
                         "registry": registry,
@@ -397,14 +577,19 @@ async def run_api_accessibility(
     # Run remaining checks concurrently
     (latency_score, latency_ev), (auth_score, auth_ev), \
         (rate_score, rate_ev), (ver_score, ver_ev), \
-        (sdk_score, sdk_ev), (free_score, free_ev) = await asyncio.gather(
+        (sdk_score, sdk_ev), (free_score, free_ev), \
+        conn_quality = await asyncio.gather(
         measure_latency(session, latency_endpoint),
         check_auth_documentation(session, base_url, openapi_spec),
         check_rate_limit_info(session, base_url),
         check_api_versioning(session, base_url),
         check_sdk_availability(session, base_url),
         check_free_tier(session, base_url),
+        _check_connection_quality(session, latency_endpoint),
     )
+
+    # Merge connection quality info into latency evidence (informational only)
+    latency_ev["connection_quality"] = conn_quality
 
     total = endpoint_score + latency_score + auth_score + rate_score + ver_score + sdk_score + free_score
 
@@ -420,7 +605,7 @@ async def run_api_accessibility(
             },
             "response_speed": {
                 "score": latency_score,
-                "max": 7,
+                "max": 6,
                 "label": "Response Speed",
                 "evidence": latency_ev,
             },
@@ -432,19 +617,19 @@ async def run_api_accessibility(
             },
             "rate_limit_info": {
                 "score": rate_score,
-                "max": 3,
+                "max": 6,
                 "label": "Rate Limit Transparency",
                 "evidence": rate_ev,
             },
             "api_versioning": {
                 "score": ver_score,
-                "max": 2,
+                "max": 1,
                 "label": "API Versioning",
                 "evidence": ver_ev,
             },
             "sdk_availability": {
                 "score": sdk_score,
-                "max": 2,
+                "max": 1,
                 "label": "SDK Availability",
                 "evidence": sdk_ev,
             },

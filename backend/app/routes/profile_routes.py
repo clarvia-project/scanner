@@ -11,6 +11,8 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
+from ..auth import ApiKeyDep
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1", tags=["profiles"])
@@ -150,8 +152,8 @@ def _make_badge_svg(score: int | None) -> str:
 # ---------------------------------------------------------------------------
 
 @router.post("/profiles")
-async def create_profile(req: ProfileCreateRequest):
-    """Register a new MCP service profile."""
+async def create_profile(req: ProfileCreateRequest, _key: ApiKeyDep):
+    """Register a new MCP service profile. Requires API key."""
     # Check for duplicate URL
     for p in _profiles.values():
         if p["url"] == req.url:
@@ -259,8 +261,8 @@ async def get_profile(profile_id: str):
 
 
 @router.put("/profiles/{profile_id}")
-async def update_profile(profile_id: str, req: ProfileUpdateRequest):
-    """Update an existing profile."""
+async def update_profile(profile_id: str, req: ProfileUpdateRequest, _key: ApiKeyDep):
+    """Update an existing profile. Requires API key."""
     profile = _profiles.get(profile_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
@@ -279,8 +281,8 @@ async def update_profile(profile_id: str, req: ProfileUpdateRequest):
 
 
 @router.post("/profiles/{profile_id}/scan")
-async def scan_profile(profile_id: str):
-    """Trigger a scan for the profile's URL and update its Clarvia Score."""
+async def scan_profile(profile_id: str, _key: ApiKeyDep):
+    """Trigger a scan for the profile's URL and update its Clarvia Score. Requires API key."""
     profile = _profiles.get(profile_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")

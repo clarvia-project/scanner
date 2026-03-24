@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { API_BASE } from "@/lib/api";
+
 
 interface ProfileData {
   id: string;
@@ -144,7 +146,7 @@ export default function ProfilePage() {
   }
 
   function handleCopyBadge() {
-    const badgeCode = `[![Clarvia Score](https://clarvia-api.onrender.com/v1/profiles/${profileId}/badge)](https://clarvia.art/profile/${profileId})`;
+    const badgeCode = `[![Clarvia Score](${API_BASE}/v1/profiles/${profileId}/badge)](https://clarvia.art/profile/${profileId})`;
     navigator.clipboard.writeText(badgeCode);
     setBadgeCopied(true);
     setTimeout(() => setBadgeCopied(false), 2000);
@@ -156,11 +158,17 @@ export default function ProfilePage() {
       <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                <div className="w-3 h-3 rounded-sm bg-accent" />
-              </div>
-              <span className="font-semibold text-base tracking-tight text-foreground">Clarvia</span>
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <Image
+                src="/logos/clarvia-icon.svg"
+                alt="Clarvia"
+                width={32}
+                height={32}
+                className="rounded-full group-hover:scale-110 transition-transform duration-200"
+              />
+              <span className="font-semibold text-base tracking-tight text-foreground">
+                clarvia
+              </span>
             </Link>
             <nav className="hidden sm:flex items-center gap-6">
               <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">
@@ -168,6 +176,9 @@ export default function ProfilePage() {
               </Link>
               <Link href="/register" className="text-sm text-muted hover:text-foreground transition-colors">
                 Register
+              </Link>
+              <Link href="/docs" className="text-sm text-muted hover:text-foreground transition-colors">
+                Docs
               </Link>
             </nav>
           </div>
@@ -346,9 +357,13 @@ export default function ProfilePage() {
                 {/* Badge Preview */}
                 <div className="flex justify-center py-3">
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-card-bg border border-card-border">
-                    <div className="w-5 h-5 rounded-md bg-accent/10 flex items-center justify-center">
-                      <div className="w-2 h-2 rounded-sm bg-accent" />
-                    </div>
+                    <Image
+                      src="/logos/clarvia-icon.svg"
+                      alt="Clarvia"
+                      width={20}
+                      height={20}
+                      className="rounded-full"
+                    />
                     <span className="text-xs font-mono text-muted">Clarvia Score:</span>
                     <span className={`text-xs font-mono font-bold ${profile.clarvia_score != null ? scoreColor(profile.clarvia_score) : "text-muted"}`}>
                       {profile.clarvia_score ?? "—"}
@@ -358,7 +373,7 @@ export default function ProfilePage() {
 
                 <div className="bg-background/50 border border-card-border/50 rounded-xl p-4 overflow-x-auto">
                   <code className="text-xs text-foreground/60 font-mono whitespace-pre break-all">
-                    {`[![Clarvia Score](https://clarvia-api.onrender.com/v1/profiles/${profileId}/badge)](https://clarvia.art/profile/${profileId})`}
+                    {`[![Clarvia Score](${API_BASE}/v1/profiles/${profileId}/badge)](https://clarvia.art/profile/${profileId})`}
                   </code>
                 </div>
                 <button
@@ -404,19 +419,23 @@ export default function ProfilePage() {
       <footer className="border-t border-card-border/50 px-6 py-8">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
           <div className="flex items-center gap-3">
-            <div className="w-5 h-5 rounded-md bg-accent/10 flex items-center justify-center">
-              <div className="w-2 h-2 rounded-sm bg-accent" />
-            </div>
+            <Image
+              src="/logos/clarvia-icon.svg"
+              alt="Clarvia"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
             <span>Clarvia — Discovery & Trust standard for the agent economy</span>
           </div>
-          <a
-            href="https://github.com/clarvia-project"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-foreground transition-colors"
-          >
-            GitHub
-          </a>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <a href="https://github.com/clarvia-project" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
+            <a href="https://x.com/clarvia_ai" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@clarvia_ai</a>
+            <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
+            <Link href="#" className="hover:text-foreground transition-colors" title="Coming soon">Terms</Link>
+            <Link href="/methodology" className="hover:text-foreground transition-colors">Methodology</Link>
+          </div>
         </div>
       </footer>
     </div>

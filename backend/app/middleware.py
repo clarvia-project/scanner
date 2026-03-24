@@ -44,12 +44,21 @@ class RateLimitEntry:
 _rate_store: dict[str, RateLimitEntry] = defaultdict(RateLimitEntry)
 
 
+# Render.com proxy IPs — only trust X-Forwarded-For from known proxies
+_TRUSTED_PROXY_PREFIXES = ("10.", "172.16.", "192.168.", "127.")
+
+
 def _get_client_ip(request: Request) -> str:
-    """Extract client IP, respecting X-Forwarded-For behind proxies."""
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
+    """Extract client IP. Only trust X-Forwarded-For from known proxy IPs."""
+    real_ip = request.client.host if request.client else "unknown"
+
+    # Only trust forwarded header if request comes from a known proxy
+    if any(real_ip.startswith(p) for p in _TRUSTED_PROXY_PREFIXES) or real_ip == "::1":
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+
+    return real_ip
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):

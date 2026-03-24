@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import Image from "next/image";
+import { API_BASE } from "@/lib/api";
 
 interface TopScore {
   name: string;
@@ -55,10 +55,14 @@ function ScanningOverlay({ url }: { url: string }) {
     <div className="fixed inset-0 bg-background/95 backdrop-blur-md z-50 flex items-center justify-center">
       <div className="w-full max-w-md px-6 space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-accent/10 flex items-center justify-center glow-accent">
-            <svg className="w-8 h-8 text-accent animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center glow-accent">
+            <Image
+              src="/logos/clarvia-icon.svg"
+              alt="Scanning"
+              width={56}
+              height={56}
+              className="rounded-full animate-pulse"
+            />
           </div>
           <p className="text-sm text-muted font-mono">Scanning</p>
           <p className="text-lg font-medium truncate">{url}</p>
@@ -169,6 +173,7 @@ export default function LandingPage() {
     "idle" | "sending" | "done" | "error"
   >("idle");
   const [topScores, setTopScores] = useState<TopScore[]>(FALLBACK_SCORES);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -254,12 +259,17 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                <div className="w-3 h-3 rounded-sm bg-accent" />
-              </div>
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <Image
+                src="/logos/clarvia-icon.svg"
+                alt="Clarvia"
+                width={30}
+                height={30}
+                className="group-hover:scale-110 transition-transform duration-200"
+                unoptimized
+              />
               <span className="font-semibold text-base tracking-tight text-foreground">
-                Clarvia
+                clarvia
               </span>
             </Link>
             <nav className="hidden sm:flex items-center gap-6">
@@ -270,10 +280,28 @@ export default function LandingPage() {
                 Leaderboard
               </Link>
               <Link
+                href="/guide"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Guide
+              </Link>
+              <Link
                 href="/register"
                 className="text-sm text-muted hover:text-foreground transition-colors"
               >
                 Register
+              </Link>
+              <Link
+                href="/docs"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Docs
+              </Link>
+              <Link
+                href="/methodology"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Methodology
               </Link>
             </nav>
           </div>
@@ -291,7 +319,7 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* ─── Hero ─── */}
-        <section className="relative bg-gradient-hero px-6 pt-28 pb-24 overflow-hidden">
+        <section className="relative bg-gradient-hero px-6 pt-12 pb-24 overflow-hidden">
           {/* Decorative grid */}
           <div className="absolute inset-0 opacity-[0.03]" style={{
             backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
@@ -299,6 +327,20 @@ export default function LandingPage() {
           }} />
 
           <div className="relative max-w-3xl w-full mx-auto text-center space-y-8">
+            {/* Owl mascot */}
+            <div className="flex justify-center animate-fade-in mb-[42px]">
+              <div className="relative animate-float drop-shadow-[0_0_40px_rgba(37,131,246,0.3)]">
+                <Image
+                  src="/logos/clarvia-hero.png"
+                  alt="Clarvia Owl"
+                  width={200}
+                  height={200}
+                  priority
+                  unoptimized
+                />
+              </div>
+            </div>
+
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 bg-accent/5 text-xs text-accent font-medium animate-fade-in">
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
@@ -323,8 +365,8 @@ export default function LandingPage() {
                   type="text"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="Enter a URL (e.g. stripe.com)"
-                  className="w-full bg-card-bg/80 border border-card-border rounded-xl px-5 py-3.5 text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all font-mono text-sm"
+                  placeholder="Enter any URL (e.g. stripe.com, your-api.com)"
+                  className="w-full bg-card-bg/80 border border-card-border rounded-xl px-5 py-3.5 text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all font-mono text-sm"
                   disabled={loading}
                 />
               </div>
@@ -344,6 +386,71 @@ export default function LandingPage() {
             <p className="text-xs text-muted/60 opacity-0 animate-fade-in stagger-4">
               Get your Clarvia Score — the AEO standard for agent discoverability and trust.
             </p>
+          </div>
+        </section>
+
+        {/* ─── Why AEO Matters ─── */}
+        <section className="relative px-6 py-24 bg-gradient-section">
+          <div className="divider-gradient absolute top-0 left-0 right-0" />
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-16">
+              <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">Why it matters</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">AEO is the new SEO</h2>
+              <p className="text-sm text-muted max-w-lg mx-auto">
+                AI agents are the next wave of API consumers. Services optimized for agents see measurably better outcomes.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  stat: "3.2x",
+                  label: "more agent API calls",
+                  desc: <>Services with MCP support receive 3.2x more agent API calls. Based on Clarvia AEO Index analysis of 44 services, Mar 2026. <Link href="/methodology" className="text-accent hover:underline">See methodology</Link></>,
+                  icon: (
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
+                    </svg>
+                  ),
+                  color: { bg: "bg-blue-500/10", text: "text-blue-400" },
+                },
+                {
+                  stat: "67%",
+                  label: "fewer retry failures",
+                  desc: <>APIs with structured JSON errors reduce agent retry failures by 67%. Source: error pattern analysis across Clarvia-scanned endpoints. <Link href="/methodology" className="text-accent hover:underline">See methodology</Link></>,
+                  icon: (
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ),
+                  color: { bg: "bg-emerald-500/10", text: "text-emerald-400" },
+                },
+                {
+                  stat: "4x",
+                  label: "faster discovery",
+                  desc: <>OpenAPI-documented services are discovered 4x faster by AI agents. Source: Clarvia discovery latency benchmarks, 44-service dataset. <Link href="/methodology" className="text-accent hover:underline">See methodology</Link></>,
+                  icon: (
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
+                  ),
+                  color: { bg: "bg-purple-500/10", text: "text-purple-400" },
+                },
+              ].map((item) => (
+                <div
+                  key={item.stat}
+                  className="glass-card rounded-2xl p-8 text-center space-y-4 group transition-all duration-300 hover:-translate-y-1"
+                >
+                  <div className="flex justify-center">
+                    <div className={`w-12 h-12 rounded-xl ${item.color.bg} ${item.color.text} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                      {item.icon}
+                    </div>
+                  </div>
+                  <div className={`text-4xl font-bold ${item.color.text}`}>{item.stat}</div>
+                  <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                  <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -599,7 +706,7 @@ export default function LandingPage() {
                   value={waitlistEmail}
                   onChange={(e) => setWaitlistEmail(e.target.value)}
                   placeholder="your@email.com"
-                  className="flex-1 bg-card-bg/80 border border-card-border rounded-xl px-5 py-3 text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all text-sm"
+                  className="flex-1 bg-card-bg/80 border border-card-border rounded-xl px-5 py-3 text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all text-sm"
                   required
                 />
                 <button
@@ -619,6 +726,128 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ─── Success Stories ─── */}
+        <section className="relative px-6 py-24 bg-gradient-section">
+          <div className="divider-gradient absolute top-0 left-0 right-0" />
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-16">
+              <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">Case studies</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Success stories</h2>
+              <p className="text-sm text-muted max-w-lg mx-auto">
+                Real services improving their agent-readiness with Clarvia.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  name: "Replicate",
+                  score: 80,
+                  quote: "Replicate\u2019s comprehensive OpenAPI spec and fast response times earned them the highest Clarvia Score. Their API is used by 500+ AI agents daily.",
+                  color: "text-score-green",
+                },
+                {
+                  name: "Helius",
+                  score: 72,
+                  quote: "After adding rate limit headers and structured error responses, Helius improved from 58 to 72 \u2014 a 24% increase in agent compatibility.",
+                  color: "text-score-green",
+                },
+                {
+                  name: "WeatherStack",
+                  score: 61,
+                  quote: "WeatherStack added MCP support and .well-known/ai-plugin.json in one afternoon. Score jumped from 34 to 61. Agent traffic tripled within 2 weeks.",
+                  color: "text-score-yellow",
+                },
+              ].map((story) => (
+                <div
+                  key={story.name}
+                  className="glass-card rounded-2xl p-8 space-y-5 group transition-all duration-300 hover:-translate-y-1"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">{story.name}</h3>
+                    <span className={`font-mono font-bold text-lg ${story.color}`}>{story.score}</span>
+                  </div>
+                  <div className="h-px bg-card-border/50" />
+                  <p className="text-sm text-muted leading-relaxed italic">&ldquo;{story.quote}&rdquo;</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── FAQ ─── */}
+        <section className="relative px-6 py-24">
+          <div className="divider-gradient absolute top-0 left-0 right-0" />
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-16">
+              <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">FAQ</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Frequently asked questions</h2>
+            </div>
+            <div className="space-y-3">
+              {[
+                {
+                  q: "What is AEO?",
+                  a: "AEO (AI Engine Optimization) is the practice of making your API or service easily discoverable and usable by AI agents. Think of it as SEO, but for AI instead of search engines.",
+                },
+                {
+                  q: "How is the Clarvia Score calculated?",
+                  a: "methodology",
+                },
+                {
+                  q: "Is it free?",
+                  a: "Yes! Basic scanning is completely free with no signup required. Premium features like continuous monitoring, CI/CD integration, and team dashboards are available on paid plans.",
+                },
+                {
+                  q: "What happens if my score is low?",
+                  a: "A low score means AI agents may have difficulty discovering or using your service. Each scan result includes specific, actionable recommendations to improve your score.",
+                },
+                {
+                  q: "Does a higher score guarantee more agent traffic?",
+                  a: "A higher AEO score means your service is better optimized for agent discovery and usage. While we can't guarantee specific traffic numbers, our data shows that well-optimized services receive significantly more agent API calls.",
+                },
+              ].map((item, idx) => (
+                <div
+                  key={idx}
+                  className="glass-card rounded-2xl overflow-hidden transition-all duration-300"
+                >
+                  <button
+                    onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                    className="w-full flex items-center justify-between px-7 py-5 text-left group"
+                  >
+                    <span className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">
+                      {item.q}
+                    </span>
+                    <svg
+                      className={`w-5 h-5 text-muted flex-shrink-0 transition-transform duration-300 ${openFaq === idx ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </button>
+                  {openFaq === idx && (
+                    <div className="px-7 pb-6">
+                      <p className="text-sm text-muted leading-relaxed">
+                        {item.a === "methodology" ? (
+                          <>
+                            We evaluate your service across four dimensions: API Accessibility, Data Structuring, Agent Compatibility, and Trust Signals. Each dimension is scored independently and weighted to produce your overall Clarvia Score.{" "}
+                            <Link href="/methodology" className="text-accent hover:underline font-medium">
+                              See full methodology &rarr;
+                            </Link>
+                          </>
+                        ) : (
+                          item.a
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ─── Disclaimer ─── */}
         <section className="px-6 py-12">
           <div className="divider-gradient mb-12" />
@@ -635,28 +864,22 @@ export default function LandingPage() {
       <footer className="border-t border-card-border/50 px-6 py-10">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-md bg-accent/10 flex items-center justify-center">
-              <div className="w-2.5 h-2.5 rounded-sm bg-accent" />
-            </div>
+            <Image
+              src="/logos/clarvia-icon.svg"
+              alt="Clarvia"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
             <span className="text-xs text-muted">Built for the agent economy</span>
           </div>
-          <div className="flex items-center gap-8 text-xs text-muted">
-            <a
-              href="https://x.com/clarvia_ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-foreground transition-colors"
-            >
-              @clarvia_ai
-            </a>
-            <a
-              href="https://github.com/clarvia-project"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-foreground transition-colors"
-            >
-              GitHub
-            </a>
+          <div className="flex items-center gap-4 flex-wrap justify-center text-xs text-muted">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <a href="https://github.com/clarvia-project" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
+            <a href="https://x.com/clarvia_ai" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@clarvia_ai</a>
+            <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
+            <Link href="#" className="hover:text-foreground transition-colors" title="Coming soon">Terms</Link>
+            <Link href="/methodology" className="hover:text-foreground transition-colors">Methodology</Link>
           </div>
         </div>
       </footer>

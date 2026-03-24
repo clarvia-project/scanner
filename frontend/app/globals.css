@@ -1,20 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0e14;
-  --foreground: #e0e6ed;
-  --card-bg: #111821;
-  --card-border: #1e2a3a;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --muted: #6b7280;
+  --background: #0b0f18;
+  --foreground: #e4eaf2;
+  --card-bg: #121a26;
+  --card-border: #1e2d42;
+  --accent: #2583f6;
+  --accent-hover: #1d6fd9;
+  --accent-soft: #3b9aff;
+  --muted: #94a3b8;
   --score-red: #ef4444;
   --score-yellow: #eab308;
   --score-green: #22c55e;
-  --accent-glow: rgba(59, 130, 246, 0.15);
-  --gradient-start: #0a0e14;
-  --gradient-mid: #0f1923;
-  --gradient-end: #0a0e14;
+  --accent-glow: rgba(37, 131, 246, 0.15);
+  --gradient-start: #0b0f18;
+  --gradient-mid: #0f1a28;
+  --gradient-end: #0b0f18;
+  --owl-blue: #2583f6;
+  --owl-blue-light: #c6dcf8;
+  --owl-blue-bg: rgba(37, 131, 246, 0.06);
 }
 
 @theme inline {
@@ -29,6 +33,10 @@
   --color-score-yellow: var(--score-yellow);
   --color-score-green: var(--score-green);
   --color-accent-glow: var(--accent-glow);
+  --color-accent-soft: var(--accent-soft);
+  --color-owl-blue: var(--owl-blue);
+  --color-owl-blue-light: var(--owl-blue-light);
+  --color-owl-blue-bg: var(--owl-blue-bg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
