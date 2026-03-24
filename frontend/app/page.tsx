@@ -41,13 +41,15 @@ function scoreColor(score: number) {
 function ScanningOverlay({ url }: { url: string }) {
   const [phase, setPhase] = useState(0);
 
-  if (typeof window !== "undefined") {
-    setTimeout(() => {
-      if (phase < SCAN_PHASES.length - 1) {
-        setPhase((p) => Math.min(p + 1, SCAN_PHASES.length - 1));
-      }
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPhase((p) => {
+        if (p >= SCAN_PHASES.length - 1) return p;
+        return p + 1;
+      });
     }, 1800);
-  }
+    return () => clearInterval(timer);
+  }, []);
 
   const progress = ((phase + 1) / SCAN_PHASES.length) * 100;
 
@@ -878,7 +880,7 @@ export default function LandingPage() {
             <a href="https://github.com/clarvia-project" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
             <a href="https://x.com/clarvia_ai" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@clarvia_ai</a>
             <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
-            <Link href="#" className="hover:text-foreground transition-colors" title="Coming soon">Terms</Link>
+            <span className="text-muted/50 cursor-default" title="Coming soon">Terms</span>
             <Link href="/methodology" className="hover:text-foreground transition-colors">Methodology</Link>
           </div>
         </div>

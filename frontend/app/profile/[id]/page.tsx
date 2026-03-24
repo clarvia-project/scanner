@@ -433,7 +433,7 @@ export default function ProfilePage() {
             <a href="https://github.com/clarvia-project" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
             <a href="https://x.com/clarvia_ai" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@clarvia_ai</a>
             <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
-            <Link href="#" className="hover:text-foreground transition-colors" title="Coming soon">Terms</Link>
+            <span className="text-muted/50 cursor-default" title="Coming soon">Terms</span>
             <Link href="/methodology" className="hover:text-foreground transition-colors">Methodology</Link>
           </div>
         </div>
