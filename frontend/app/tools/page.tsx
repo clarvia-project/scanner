@@ -41,6 +41,7 @@ const CATEGORIES = [
   { key: "productivity", label: "Productivity" },
   { key: "blockchain", label: "Blockchain" },
   { key: "payments", label: "Payments" },
+  { key: "mcp", label: "MCP" },
   { key: "other", label: "Other" },
 ];
 
