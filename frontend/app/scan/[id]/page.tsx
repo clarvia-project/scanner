@@ -245,11 +245,17 @@ function ScoreGauge({ score }: { score: number }) {
 
 // ----- Dimension Bar Component -----
 
-function subFactorStatus(sf: SubFactor): { icon: string; color: string; bgColor: string } {
+function subFactorStatus(sf: SubFactor): { icon: "check" | "warn" | "x"; color: string; bgColor: string } {
   const pct = sf.max > 0 ? sf.score / sf.max : 0;
-  if (pct >= 0.7) return { icon: "\u2705", color: "text-score-green", bgColor: "bg-score-green/5" };
-  if (pct >= 0.3) return { icon: "\u26A0\uFE0F", color: "text-score-yellow", bgColor: "bg-score-yellow/5" };
-  return { icon: "\u274C", color: "text-score-red", bgColor: "bg-score-red/5" };
+  if (pct >= 0.7) return { icon: "check", color: "text-score-green", bgColor: "bg-score-green/5" };
+  if (pct >= 0.3) return { icon: "warn", color: "text-score-yellow", bgColor: "bg-score-yellow/5" };
+  return { icon: "x", color: "text-score-red", bgColor: "bg-score-red/5" };
+}
+
+function StatusIcon({ type, className }: { type: "check" | "warn" | "x"; className?: string }) {
+  if (type === "check") return <svg className={className || "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>;
+  if (type === "warn") return <svg className={className || "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>;
+  return <svg className={className || "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>;
 }
 
 function subFactorSummary(sf: SubFactor): string {
@@ -322,7 +328,7 @@ function DimensionBar({
                 const summary = subFactorSummary(sf);
                 return (
                   <div key={key} className={`flex items-center gap-2 text-xs rounded-lg px-2 py-1 ${status.bgColor}`}>
-                    <span className="shrink-0 text-[11px]">{status.icon}</span>
+                    <StatusIcon type={status.icon} className={`shrink-0 w-3.5 h-3.5 ${status.color}`} />
                     <span className={`font-medium ${status.color}`}>{sf.label}</span>
                     <span className="text-muted/70 truncate">{summary}</span>
                   </div>
@@ -709,7 +715,7 @@ function AgentProbeSection({ url }: { url: string }) {
           <div key={i} className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
               <span className={c.pass ? "text-score-green" : "text-score-red"}>
-                {c.pass ? "✓" : "✗"}
+                <StatusIcon type={c.pass ? "check" : "x"} className="w-3.5 h-3.5" />
               </span>
               <span>{c.label}</span>
             </div>
@@ -873,8 +879,8 @@ function ShareButtons({ result }: { result: ScanResult }) {
           </>
         ) : (
           <>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-3.07a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L5.25 9" />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
             Copy link
           </>
@@ -1635,7 +1641,7 @@ export default function ScanResultPage() {
             <a href="https://github.com/clarvia-project" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
             <a href="https://x.com/clarvia_ai" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@clarvia_ai</a>
             <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
-            <Link href="#" className="hover:text-foreground transition-colors" title="Coming soon">Terms</Link>
+            <span className="text-muted/50 cursor-default" title="Coming soon">Terms</span>
             <Link href="/methodology" className="hover:text-foreground transition-colors">Methodology</Link>
           </div>
         </div>
