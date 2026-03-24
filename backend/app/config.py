@@ -34,10 +34,15 @@ class Settings(BaseSettings):
         "https://glama.ai",
     ]
 
-    # Stripe
+    # Stripe (legacy — kept for backward compat)
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
     stripe_price_id: str = ""
+
+    # Lemon Squeezy (primary payment)
+    lemonsqueezy_store_id: str = ""      # e.g. "clarvia"
+    lemonsqueezy_variant_id: str = ""    # product variant ID from LS dashboard
+    lemonsqueezy_webhook_secret: str = ""
 
     # Supabase
     supabase_url: str = ""
