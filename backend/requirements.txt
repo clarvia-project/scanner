@@ -4,6 +4,10 @@ aiohttp>=3.9.0
 pydantic>=2.6.0
 pydantic-settings>=2.2.0
 
+# Recommendation engine
+scikit-learn>=1.4.0
+numpy>=1.26.0
+
 # PDF generation
 reportlab>=4.0
 
