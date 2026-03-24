@@ -303,9 +303,31 @@ export default function ServiceDetailPage() {
                 className="text-sm text-muted hover:text-foreground transition-colors"
               >
                 Tools
-              </Link>              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">Leaderboard</Link>
-              <Link href="/register" className="text-sm text-muted hover:text-foreground transition-colors">Register</Link>
-              <Link href="/docs" className="text-sm text-muted hover:text-foreground transition-colors">Docs</Link>
+              </Link>
+              <Link
+                href="/leaderboard"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Leaderboard
+              </Link>
+              <Link
+                href="/guide"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Guide
+              </Link>
+              <Link
+                href="/register"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Register
+              </Link>
+              <Link
+                href="/docs"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Docs
+              </Link>
             </nav>
           </div>
           <span className="text-xs text-muted/60 font-mono hidden sm:inline">v1.0</span>

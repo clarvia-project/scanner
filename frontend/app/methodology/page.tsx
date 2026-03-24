@@ -98,10 +98,31 @@ export default function MethodologyPage() {
                 className="text-sm text-muted hover:text-foreground transition-colors"
               >
                 Tools
-              </Link>              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">Leaderboard</Link>
-              <Link href="/guide" className="text-sm text-muted hover:text-foreground transition-colors">Guide</Link>
-              <Link href="/methodology" className="text-sm text-foreground font-medium">Methodology</Link>
-              <Link href="/docs" className="text-sm text-muted hover:text-foreground transition-colors">Docs</Link>
+              </Link>
+              <Link
+                href="/leaderboard"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Leaderboard
+              </Link>
+              <Link
+                href="/guide"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Guide
+              </Link>
+              <Link
+                href="/register"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Register
+              </Link>
+              <Link
+                href="/docs"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Docs
+              </Link>
             </nav>
           </div>
         </div>
