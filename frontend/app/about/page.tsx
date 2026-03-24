@@ -20,7 +20,12 @@ export default function AboutPage() {
               </span>
             </Link>
             <nav className="hidden sm:flex items-center gap-6">
-              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">Leaderboard</Link>
+              <Link
+                href="/tools"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Tools
+              </Link>              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">Leaderboard</Link>
               <Link href="/guide" className="text-sm text-muted hover:text-foreground transition-colors">Guide</Link>
               <Link href="/methodology" className="text-sm text-muted hover:text-foreground transition-colors">Methodology</Link>
               <Link href="/docs" className="text-sm text-muted hover:text-foreground transition-colors">Docs</Link>

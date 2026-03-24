@@ -73,24 +73,91 @@ class SortOrder(str, Enum):
     score_desc = "score_desc"
     score_asc = "score_asc"
     name_asc = "name_asc"
+    name_desc = "name_desc"
+    recent = "recent"
+
+
+# ---------------------------------------------------------------------------
+# Collected tools (loaded on demand when source=all)
+# ---------------------------------------------------------------------------
+_collected_tools: list[dict[str, Any]] = []
+_collected_loaded = False
+
+_COLLECTED_FILES = [
+    "mcp-registry-all.json",
+    "skills-cli-collected.json",
+    "all-agent-tools.json",
+]
+
+
+def _find_data_dir() -> Path | None:
+    candidates = [Path("/app/data")]
+    base = Path(__file__).resolve()
+    for i in range(2, 6):
+        try:
+            candidates.append(base.parents[i] / "data")
+        except IndexError:
+            break
+    for p in candidates:
+        if p.is_dir():
+            return p
+    return None
+
+
+def _find_collected_file(fname: str) -> Path | None:
+    """Search multiple candidate directories for a collected data file."""
+    candidates = [Path("/app/data")]
+    base = Path(__file__).resolve()
+    for i in range(2, 6):
+        try:
+            candidates.append(base.parents[i] / "data")
+        except IndexError:
+            break
+    for d in candidates:
+        p = d / fname
+        if p.exists():
+            return p
+    return None
+
+
+def _load_collected() -> None:
+    global _collected_tools, _collected_loaded
+    if _collected_loaded:
+        return
+
+    from ..tool_scorer import normalize_tool
+
+    seen_ids: set[str] = set()
+    tools: list[dict[str, Any]] = []
+
+    for fname in _COLLECTED_FILES:
+        fpath = _find_collected_file(fname)
+        if not fpath:
+            logger.warning("Collected file not found: %s", fname)
+            continue
+        try:
+            with open(fpath, "r") as f:
+                raw = json.load(f)
+            for item in raw:
+                normalized = normalize_tool(item)
+                sid = normalized["scan_id"]
+                if sid not in seen_ids:
+                    seen_ids.add(sid)
+                    tools.append(normalized)
+        except Exception as e:
+            logger.warning("Failed to load %s: %s", fname, e)
+
+    _collected_tools = tools
+    _collected_loaded = True
+    logger.info("Loaded %d collected tools from %d files", len(tools), len(_COLLECTED_FILES))
 
 
 def _load_data() -> None:
     global _services, _by_scan_id
-    # Try multiple paths: Docker (/app/data/), local dev
-    candidates = [Path("/app/data/prebuilt-scans.json")]
-    base = Path(__file__).resolve()
-    for i in range(2, 6):
-        try:
-            candidates.append(base.parents[i] / "data" / "prebuilt-scans.json")
-        except IndexError:
-            break
-    data_path = None
-    for p in candidates:
-        if p.exists():
-            data_path = p
-            break
-    if data_path is None:
+    data_dir = _find_data_dir()
+    data_path = data_dir / "prebuilt-scans.json" if data_dir else None
+
+    if data_path is None or not data_path.exists():
         logger.error("prebuilt-scans.json not found in any candidate path")
         return
     with open(data_path, "r") as f:
@@ -161,6 +228,7 @@ def _compact_service(s: dict[str, Any]) -> dict[str, Any]:
     result = {
         "name": s["service_name"],
         "url": s["url"],
+        "description": s.get("description", ""),
         "category": s.get("category", "other"),
         "service_type": s.get("service_type", "general"),
         "clarvia_score": s["clarvia_score"],
@@ -250,18 +318,32 @@ async def list_services(
     min_score: int = Query(0, ge=0, le=100, description="Minimum Clarvia Score"),
     max_score: int | None = Query(None, ge=0, le=100, description="Maximum Clarvia Score"),
     sort: SortOrder = Query(SortOrder.score_desc, description="Sort order"),
+    source: str | None = Query(None, description="'all' to include 20k+ collected tools, 'collected' for collected only, default=scanned only"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
     """Search and filter services for agent consumption.
 
     Supports compound filters: service_type + category + score + text search.
-    Example: GET /v1/services?service_type=mcp_server&category=payments&min_score=70&q=payment
+    Use source=all to search across 20,000+ agent tools (MCP servers, APIs, CLIs, Skills).
+    Example: GET /v1/services?source=all&service_type=mcp_server&q=github
     """
     _ensure_loaded()
     _add_headers(response)
 
-    filtered = _services
+    if source in ("all", "collected"):
+        _load_collected()
+
+    if source == "collected":
+        filtered = list(_collected_tools)
+    elif source == "all":
+        # Merge: scanned services first (higher quality), then collected
+        scanned_ids = {s["scan_id"] for s in _services}
+        filtered = list(_services) + [
+            t for t in _collected_tools if t["scan_id"] not in scanned_ids
+        ]
+    else:
+        filtered = _services
 
     if category:
         filtered = [s for s in filtered if s.get("category") == category]
@@ -276,6 +358,7 @@ async def list_services(
             if q_lower in s.get("service_name", "").lower()
             or q_lower in s.get("description", "").lower()
             or q_lower in s.get("url", "").lower()
+            or any(q_lower in t.lower() for t in s.get("tags", []))
         ]
 
     filtered = [s for s in filtered if s["clarvia_score"] >= min_score]
@@ -289,6 +372,10 @@ async def list_services(
         filtered.sort(key=lambda s: s["clarvia_score"])
     elif sort == SortOrder.name_asc:
         filtered.sort(key=lambda s: s["service_name"].lower())
+    elif sort == SortOrder.name_desc:
+        filtered.sort(key=lambda s: s["service_name"].lower(), reverse=True)
+    elif sort == SortOrder.recent:
+        filtered.sort(key=lambda s: s.get("scanned_at") or "", reverse=True)
 
     total = len(filtered)
     page = filtered[offset : offset + limit]
@@ -312,7 +399,32 @@ async def get_service(scan_id: str, response: Response):
 
     service = _by_scan_id.get(scan_id)
     if not service:
+        # Try collected tools
+        _load_collected()
+        for t in _collected_tools:
+            if t["scan_id"] == scan_id:
+                service = t
+                break
+    if not service:
         raise HTTPException(status_code=404, detail="Service not found")
+
+    # For collected tools, return enriched format
+    if scan_id.startswith("tool_"):
+        return {
+            "name": service["service_name"],
+            "url": service.get("url", ""),
+            "description": service.get("description", ""),
+            "category": service.get("category", "other"),
+            "service_type": service.get("service_type", "general"),
+            "clarvia_score": service["clarvia_score"],
+            "rating": service["rating"],
+            "dimensions": service.get("dimensions", {}),
+            "scan_id": service["scan_id"],
+            "source": service.get("source", ""),
+            "tags": service.get("tags", []),
+            "type_config": service.get("type_config"),
+            "last_scanned": service.get("scanned_at"),
+        }
     return _full_service(service)
 
 
@@ -336,30 +448,47 @@ async def list_categories(response: Response):
 
 
 @router.get("/stats")
-async def get_stats(response: Response):
+async def get_stats(
+    response: Response,
+    source: str | None = Query(None, description="'all' to include collected tools"),
+):
     """Overall statistics across all indexed services."""
     _ensure_loaded()
     _add_headers(response)
 
-    total = len(_services)
+    if source == "all":
+        _load_collected()
+        scanned_ids = {s["scan_id"] for s in _services}
+        pool = list(_services) + [
+            t for t in _collected_tools if t["scan_id"] not in scanned_ids
+        ]
+    else:
+        pool = _services
+
+    total = len(pool)
     if total == 0:
         return {"total_services": 0, "avg_score": 0, "by_category": {}}
 
-    avg = sum(s["clarvia_score"] for s in _services) / total
+    avg = sum(s["clarvia_score"] for s in pool) / total
 
     by_cat: dict[str, list[int]] = {}
-    for s in _services:
+    for s in pool:
         cat = s.get("category", "other")
         by_cat.setdefault(cat, []).append(s["clarvia_score"])
 
-    return {
+    by_type: dict[str, int] = {}
+    for s in pool:
+        st = s.get("service_type", "general")
+        by_type[st] = by_type.get(st, 0) + 1
+
+    result: dict[str, Any] = {
         "total_services": total,
         "avg_score": round(avg, 1),
         "score_distribution": {
-            "excellent": len([s for s in _services if s["clarvia_score"] >= 90]),
-            "strong": len([s for s in _services if 75 <= s["clarvia_score"] < 90]),
-            "moderate": len([s for s in _services if 50 <= s["clarvia_score"] < 75]),
-            "weak": len([s for s in _services if s["clarvia_score"] < 50]),
+            "excellent": len([s for s in pool if s["clarvia_score"] >= 90]),
+            "strong": len([s for s in pool if 75 <= s["clarvia_score"] < 90]),
+            "moderate": len([s for s in pool if 50 <= s["clarvia_score"] < 75]),
+            "weak": len([s for s in pool if s["clarvia_score"] < 50]),
         },
         "by_category": {
             cat: {
@@ -368,4 +497,12 @@ async def get_stats(response: Response):
             }
             for cat, scores in sorted(by_cat.items())
         },
+        "by_type": by_type,
     }
+
+    # Add source breakdown when showing all
+    if source == "all":
+        result["scanned_count"] = len(_services)
+        result["collected_count"] = total - len(_services)
+
+    return result

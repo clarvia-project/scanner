@@ -276,6 +276,12 @@ export default function LandingPage() {
             </Link>
             <nav className="hidden sm:flex items-center gap-6">
               <Link
+                href="/tools"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Tools
+              </Link>
+              <Link
                 href="/leaderboard"
                 className="text-sm text-muted hover:text-foreground transition-colors"
               >
@@ -298,12 +304,6 @@ export default function LandingPage() {
                 className="text-sm text-muted hover:text-foreground transition-colors"
               >
                 Docs
-              </Link>
-              <Link
-                href="/methodology"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Methodology
               </Link>
             </nav>
           </div>
@@ -388,6 +388,21 @@ export default function LandingPage() {
             <p className="text-xs text-muted/60 opacity-0 animate-fade-in stagger-4">
               Get your Clarvia Score — the AEO standard for agent discoverability and trust.
             </p>
+
+            {/* Tool directory teaser */}
+            <Link
+              href="/tools"
+              className="inline-flex items-center gap-3 glass-subtle px-5 py-3 rounded-xl hover:border-accent/30 transition-all group opacity-0 animate-fade-in stagger-4"
+            >
+              <span className="text-sm text-muted group-hover:text-foreground transition-colors">
+                Or explore{" "}
+                <span className="text-foreground font-semibold font-mono">12,800+</span>{" "}
+                agent tools
+              </span>
+              <svg className="w-4 h-4 text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </Link>
           </div>
         </section>
 

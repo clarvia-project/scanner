@@ -267,7 +267,12 @@ export default function ServiceDetailPage() {
         </header>
         <div className="flex-1 flex flex-col items-center justify-center gap-4">
           <p className="text-muted text-sm">{error || "Service not found"}</p>
-          <Link href="/leaderboard" className="text-accent text-sm hover:underline">Back to Leaderboard</Link>
+              <Link
+                href="/tools"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Tools
+              </Link>          <Link href="/leaderboard" className="text-accent text-sm hover:underline">Back to Leaderboard</Link>
         </div>
       </div>
     );
@@ -293,7 +298,12 @@ export default function ServiceDetailPage() {
               <span className="font-semibold text-base tracking-tight text-foreground">clarvia</span>
             </Link>
             <nav className="hidden sm:flex items-center gap-6">
-              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">Leaderboard</Link>
+              <Link
+                href="/tools"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Tools
+              </Link>              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">Leaderboard</Link>
               <Link href="/register" className="text-sm text-muted hover:text-foreground transition-colors">Register</Link>
               <Link href="/docs" className="text-sm text-muted hover:text-foreground transition-colors">Docs</Link>
             </nav>
@@ -305,7 +315,12 @@ export default function ServiceDetailPage() {
       <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-12">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-muted mb-8">
-          <Link href="/leaderboard" className="hover:text-foreground transition-colors">Leaderboard</Link>
+              <Link
+                href="/tools"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Tools
+              </Link>          <Link href="/leaderboard" className="hover:text-foreground transition-colors">Leaderboard</Link>
           <span>/</span>
           <span className="text-foreground">{service.name}</span>
         </div>
