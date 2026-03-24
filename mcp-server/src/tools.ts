@@ -11,6 +11,7 @@ import {
   batchCheck,
   findAlternatives,
   probeService,
+  submitFeedback,
 } from "./api-client.js";
 
 export function registerTools(server: McpServer): void {
@@ -21,12 +22,13 @@ export function registerTools(server: McpServer): void {
     {
       query: z.string().optional().describe("Search keyword"),
       category: z.string().optional().describe("Filter by category"),
+      service_type: z.enum(["mcp_server", "skill", "cli_tool", "api", "general"]).optional().describe("Filter by service type"),
       min_score: z.number().min(0).max(100).optional().describe("Minimum Clarvia score (0-100)"),
       limit: z.number().min(1).max(100).optional().describe("Max results to return"),
     },
-    async ({ query, category, min_score, limit }) => {
+    async ({ query, category, service_type, min_score, limit }) => {
       try {
-        const services = await searchServices({ query, category, min_score, limit });
+        const services = await searchServices({ query, category, service_type, min_score, limit });
         return {
           content: [
             {
@@ -263,6 +265,32 @@ export function registerTools(server: McpServer): void {
     async ({ url }) => {
       try {
         const result = await probeService(url);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // 11. clarvia_submit_feedback — report service usage outcome
+  server.tool(
+    "clarvia_submit_feedback",
+    "Report the outcome of using a service (success/failure/partial). Helps build reliability data for agent tool selection.",
+    {
+      profile_id: z.string().describe("Profile ID of the service used"),
+      outcome: z.enum(["success", "failure", "partial"]).describe("Usage outcome"),
+      agent_id: z.string().optional().describe("Your agent identifier"),
+      error_message: z.string().optional().describe("Error details if failed"),
+      latency_ms: z.number().optional().describe("Response latency in ms"),
+    },
+    async ({ profile_id, outcome, agent_id, error_message, latency_ms }) => {
+      try {
+        const result = await submitFeedback({ profile_id, outcome, agent_id, error_message, latency_ms });
         return {
           content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
         };

@@ -23,8 +23,10 @@ interface Dimension {
 
 interface ScanEntry {
   scan_id: string;
+  profile_id?: string;
   url: string;
   service_name: string;
+  service_type?: string;
   clarvia_score: number;
   rating: string;
   scanned_at: string;
@@ -35,6 +37,32 @@ interface ScanEntry {
     trust_signals: Dimension;
   };
 }
+
+// ----- Service type constants -----
+
+const SERVICE_TYPE_TABS = [
+  { id: "all", label: "All" },
+  { id: "mcp_server", label: "MCP" },
+  { id: "skill", label: "Skill" },
+  { id: "cli_tool", label: "CLI" },
+  { id: "api", label: "API" },
+];
+
+const TYPE_BADGE_STYLES: Record<string, string> = {
+  mcp_server: "bg-purple-500/15 text-purple-400 border-purple-500/25",
+  skill: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
+  cli_tool: "bg-orange-500/15 text-orange-400 border-orange-500/25",
+  api: "bg-blue-500/15 text-blue-400 border-blue-500/25",
+  general: "bg-gray-500/15 text-gray-400 border-gray-500/25",
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  mcp_server: "MCP",
+  skill: "Skill",
+  cli_tool: "CLI",
+  api: "API",
+  general: "General",
+};
 
 // ----- Sort types -----
 
@@ -347,6 +375,9 @@ export default function LeaderboardPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showCompare, setShowCompare] = useState(false);
   const [blockchainSubs, setBlockchainSubs] = useState<Set<string>>(new Set());
+  const [serviceTypeFilter, setServiceTypeFilter] = useState("all");
+  const [typeFilteredData, setTypeFilteredData] = useState<ScanEntry[] | null>(null);
+  const [typeLoading, setTypeLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -358,6 +389,20 @@ export default function LeaderboardPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Fetch type-filtered data from API
+  useEffect(() => {
+    if (serviceTypeFilter === "all") {
+      setTypeFilteredData(null);
+      return;
+    }
+    setTypeLoading(true);
+    fetch(`${API_BASE}/v1/services?service_type=${serviceTypeFilter}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((json: ScanEntry[]) => setTypeFilteredData(json))
+      .catch(() => setTypeFilteredData([]))
+      .finally(() => setTypeLoading(false));
+  }, [serviceTypeFilter]);
 
   const toggleSubFilter = useCallback((id: string) => {
     setActiveSubFilters((prev) => {
@@ -419,7 +464,7 @@ export default function LeaderboardPage() {
   }, [router]);
 
   const filtered = useMemo(() => {
-    let list = data;
+    let list = typeFilteredData ?? data;
 
     // Category filter
     if (category !== "All") {
@@ -464,7 +509,7 @@ export default function LeaderboardPage() {
     });
 
     return list;
-  }, [data, category, search, activeSubFilters, sortKey, sortDir, blockchainSubs]);
+  }, [data, typeFilteredData, category, search, activeSubFilters, sortKey, sortDir, blockchainSubs]);
 
   const compareItems = useMemo(
     () => data.filter((d) => selected.has(d.scan_id)),
@@ -531,6 +576,23 @@ export default function LeaderboardPage() {
               className="w-full bg-card-bg/80 border border-card-border rounded-xl pl-11 pr-4 py-3 text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all font-mono text-sm"
             />
           </div>
+        </div>
+
+        {/* Service type tabs */}
+        <div className="flex justify-center gap-1 mb-6">
+          {SERVICE_TYPE_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setServiceTypeFilter(tab.id)}
+              className={`px-5 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 ${
+                serviceTypeFilter === tab.id
+                  ? "bg-accent text-white shadow-md shadow-accent/15"
+                  : "text-muted hover:text-foreground hover:bg-card-bg/60"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Category filters */}
@@ -622,7 +684,7 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {loading ? (
+        {(loading || typeLoading) ? (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
@@ -745,10 +807,17 @@ export default function LeaderboardPage() {
                           <RankBadge rank={idx + 1} />
                         </td>
 
-                        {/* Service name + URL */}
-                        <td className="px-4 py-4" onClick={() => handleRowClick(item)}>
-                          <div className="font-medium group-hover:text-accent transition-colors">
-                            {item.service_name}
+                        {/* Service name + URL + type badge */}
+                        <td className="px-4 py-4" onClick={() => item.profile_id ? router.push(`/service/${item.profile_id}`) : handleRowClick(item)}>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium group-hover:text-accent transition-colors">
+                              {item.service_name}
+                            </span>
+                            {item.service_type && item.service_type !== "general" && (
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider border ${TYPE_BADGE_STYLES[item.service_type] || TYPE_BADGE_STYLES.general}`}>
+                                {TYPE_LABELS[item.service_type] || item.service_type}
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-muted font-mono truncate max-w-[200px]">
                             {item.url.replace(/^https?:\/\//, "")}
