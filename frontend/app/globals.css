@@ -3,8 +3,9 @@
 :root {
   --background: #0b0f18;
   --foreground: #e4eaf2;
-  --card-bg: #121a26;
-  --card-border: #1e2d42;
+  --card-bg: rgba(18, 26, 38, 0.6);
+  --card-bg-solid: #121a26;
+  --card-border: rgba(30, 45, 66, 0.5);
   --accent: #2583f6;
   --accent-hover: #1d6fd9;
   --accent-soft: #3b9aff;
@@ -47,38 +48,73 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-/* ── Gradient mesh background ── */
+/* ── Gradient mesh background (glassmorphism-friendly) ── */
 .bg-gradient-mesh {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 50%, rgba(99, 102, 241, 0.05), transparent),
-    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(59, 130, 246, 0.04), transparent),
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 50%, rgba(99, 102, 241, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(59, 130, 246, 0.06), transparent),
+    radial-gradient(ellipse 40% 30% at 10% 20%, rgba(168, 85, 247, 0.04), transparent),
     var(--background);
 }
 
 .bg-gradient-hero {
   background:
-    radial-gradient(ellipse 100% 80% at 50% -30%, rgba(59, 130, 246, 0.12), transparent 70%),
-    radial-gradient(ellipse 50% 50% at 70% 20%, rgba(99, 102, 241, 0.06), transparent 60%),
+    radial-gradient(ellipse 100% 80% at 50% -30%, rgba(59, 130, 246, 0.18), transparent 70%),
+    radial-gradient(ellipse 50% 50% at 70% 20%, rgba(99, 102, 241, 0.10), transparent 60%),
+    radial-gradient(ellipse 40% 40% at 30% 60%, rgba(168, 85, 247, 0.05), transparent 50%),
     var(--background);
 }
 
 .bg-gradient-section {
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59, 130, 246, 0.04), transparent 70%),
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59, 130, 246, 0.06), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 30%, rgba(99, 102, 241, 0.03), transparent 60%),
     var(--background);
 }
 
-/* ── Glass card effect ── */
+/* ── Glass card effect (glassmorphism) ── */
 .glass-card {
-  background: linear-gradient(135deg, rgba(17, 24, 33, 0.8), rgba(17, 24, 33, 0.4));
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(30, 42, 58, 0.6);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .glass-card:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(59, 130, 246, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Stronger glass for hero/feature sections */
+.glass-strong {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Subtle glass for inputs/smaller elements */
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-subtle:focus-within {
   border-color: rgba(59, 130, 246, 0.3);
-  background: linear-gradient(135deg, rgba(17, 24, 33, 0.9), rgba(17, 24, 33, 0.5));
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* ── Glow effects ── */
@@ -117,18 +153,22 @@ body {
   background-clip: text;
 }
 
-/* ── Gradient buttons ── */
+/* ── Gradient buttons (glass-enhanced) ── */
 .btn-gradient {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.85), rgba(99, 102, 241, 0.85));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-gradient:hover {
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(79, 70, 229, 0.9));
+  box-shadow: 0 4px 24px rgba(59, 130, 246, 0.35), 0 0 40px rgba(59, 130, 246, 0.1);
   transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .btn-gradient:active {
@@ -315,6 +355,12 @@ body {
 
 .bar-gradient-red {
   background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+/* ── Global glassmorphism for card-bg elements ── */
+[class*="bg-card-bg"] {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 /* ── Focus ring ── */
