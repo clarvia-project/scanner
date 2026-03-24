@@ -209,7 +209,12 @@ export default function ForAgentsPage() {
               </span>
             </Link>
             <nav className="hidden sm:flex items-center gap-6">
-              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">
+              <Link
+                href="/tools"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Tools
+              </Link>              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">
                 Leaderboard
               </Link>
               <Link href="/for-agents" className="text-sm text-foreground font-medium">
