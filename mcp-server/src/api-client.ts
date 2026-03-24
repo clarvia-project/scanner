@@ -133,3 +133,93 @@ export async function registerService(params: {
     body: params,
   });
 }
+
+// --- v2 API functions ---
+
+export interface GateCheckResult {
+  url: string;
+  score: number;
+  rating: string;
+  agent_grade: "AGENT_NATIVE" | "AGENT_FRIENDLY" | "AGENT_POSSIBLE" | "AGENT_HOSTILE";
+  pass: boolean;
+  reason: string;
+  alternatives?: Service[];
+}
+
+export interface BatchCheckResult {
+  results: GateCheckResult[];
+  checked_at: string;
+}
+
+export interface ProbeResult {
+  url: string;
+  reachable: boolean;
+  response_time_ms: number;
+  has_openapi: boolean;
+  has_mcp: boolean;
+  has_agents_json: boolean;
+  checks: Record<string, boolean>;
+}
+
+function gradeFromScore(score: number): GateCheckResult["agent_grade"] {
+  if (score >= 90) return "AGENT_NATIVE";
+  if (score >= 70) return "AGENT_FRIENDLY";
+  if (score >= 50) return "AGENT_POSSIBLE";
+  return "AGENT_HOSTILE";
+}
+
+export async function gateCheck(
+  url: string,
+  minRating: GateCheckResult["agent_grade"] = "AGENT_FRIENDLY",
+): Promise<GateCheckResult> {
+  const scan = await scanService(url);
+  const score = scan.clarvia_score;
+  const grade = gradeFromScore(score);
+
+  const gradeOrder = ["AGENT_HOSTILE", "AGENT_POSSIBLE", "AGENT_FRIENDLY", "AGENT_NATIVE"];
+  const pass = gradeOrder.indexOf(grade) >= gradeOrder.indexOf(minRating);
+
+  let alternatives: Service[] | undefined;
+  if (!pass) {
+    try {
+      alternatives = await searchServices({ min_score: 70, limit: 5 });
+    } catch {
+      // ignore
+    }
+  }
+
+  return {
+    url,
+    score,
+    rating: scan.rating,
+    agent_grade: grade,
+    pass,
+    reason: pass
+      ? `Service scored ${score} (${grade}), meets minimum ${minRating}`
+      : `Service scored ${score} (${grade}), below minimum ${minRating}. Consider alternatives.`,
+    alternatives: pass ? undefined : alternatives,
+  };
+}
+
+export async function batchCheck(urls: string[]): Promise<BatchCheckResult> {
+  const results = await Promise.all(urls.map((u) => gateCheck(u)));
+  return {
+    results,
+    checked_at: new Date().toISOString(),
+  };
+}
+
+export async function findAlternatives(
+  category: string,
+  minScore: number = 70,
+  limit: number = 10,
+): Promise<Service[]> {
+  return searchServices({ category, min_score: minScore, limit });
+}
+
+export async function probeService(url: string): Promise<ProbeResult> {
+  return request<ProbeResult>("/api/v1/accessibility-probe", {
+    method: "POST",
+    body: { url },
+  });
+}

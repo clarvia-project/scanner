@@ -2653,6 +2653,146 @@ async def export_pdf(
 
 
 # ---------------------------------------------------------------------------
+# agents.json — opt-in agent discovery protocol
+# ---------------------------------------------------------------------------
+
+@app.get("/.well-known/agents.json")
+async def agents_json():
+    """Serve /.well-known/agents.json — the agent discovery standard.
+
+    Services that host this file declare themselves as agent-ready.
+    Clarvia gives a score bonus to services that adopt this protocol.
+    """
+    return {
+        "schema_version": "1.0",
+        "service": {
+            "name": "Clarvia AEO Scanner",
+            "description": "AI Engine Optimization scoring and agent-readiness evaluation for any web service.",
+            "url": "https://clarvia.art",
+            "api_base": "https://clarvia-api.onrender.com",
+        },
+        "capabilities": {
+            "scan": {
+                "endpoint": "/api/scan",
+                "method": "POST",
+                "description": "Score any URL for agent-readiness (0-100)",
+                "input": {"url": "string"},
+                "output": {"clarvia_score": "number", "rating": "string", "dimensions": "object"},
+            },
+            "gate_check": {
+                "endpoint": "/api/v1/batch-score",
+                "method": "POST",
+                "description": "Batch check multiple URLs with pass/fail for agent tool-use",
+                "input": {"urls": "string[]"},
+            },
+            "probe": {
+                "endpoint": "/api/v1/accessibility-probe",
+                "method": "POST",
+                "description": "Real-time accessibility probe (reachability, OpenAPI, MCP support)",
+                "input": {"url": "string"},
+            },
+            "benchmark": {
+                "endpoint": "/api/v1/benchmark",
+                "method": "GET",
+                "description": "Industry benchmark statistics",
+            },
+            "search": {
+                "endpoint": "/v1/services",
+                "method": "GET",
+                "description": "Search indexed services by category and minimum score",
+                "input": {"category": "string?", "min_score": "number?"},
+            },
+        },
+        "mcp": {
+            "package": "@clarvia/mcp-server",
+            "tools": [
+                "scan_service",
+                "clarvia_gate_check",
+                "clarvia_batch_check",
+                "clarvia_find_alternatives",
+                "clarvia_probe",
+                "search_services",
+            ],
+        },
+        "langchain": {
+            "package": "clarvia-langchain",
+            "install": "pip install clarvia-langchain",
+        },
+        "auth": {
+            "type": "api_key",
+            "header": "X-API-Key",
+            "free_tier": True,
+            "docs": "https://clarvia.art/docs",
+        },
+        "rate_limits": {
+            "free": "15 scans/month",
+            "pro": "500 scans/month",
+            "business": "unlimited",
+        },
+    }
+
+
+@app.post("/api/v1/validate-agents-json")
+async def validate_agents_json(request: Request):
+    """Validate a service's /.well-known/agents.json file.
+
+    Returns whether the file exists and conforms to the schema.
+    Services with valid agents.json get a score bonus.
+    """
+    import httpx
+
+    body = await request.json()
+    url = body.get("url", "").rstrip("/")
+    if not url:
+        raise HTTPException(status_code=400, detail="url is required")
+
+    agents_url = f"{url}/.well-known/agents.json"
+    result = {
+        "url": agents_url,
+        "exists": False,
+        "valid": False,
+        "errors": [],
+        "data": None,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+            resp = await client.get(agents_url)
+            if resp.status_code != 200:
+                result["errors"].append(f"HTTP {resp.status_code}")
+                return result
+
+            result["exists"] = True
+            data = resp.json()
+            result["data"] = data
+
+            # Basic schema validation
+            errors = []
+            if "schema_version" not in data:
+                errors.append("Missing schema_version")
+            if "service" not in data:
+                errors.append("Missing service block")
+            elif not isinstance(data["service"], dict):
+                errors.append("service must be an object")
+            else:
+                for field in ("name", "url"):
+                    if field not in data["service"]:
+                        errors.append(f"Missing service.{field}")
+            if "capabilities" not in data:
+                errors.append("Missing capabilities block")
+
+            result["errors"] = errors
+            result["valid"] = len(errors) == 0
+
+    except httpx.TimeoutException:
+        result["errors"].append("Timeout fetching agents.json")
+    except Exception as e:
+        result["errors"].append(str(e)[:200])
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Monitor lifecycle
 # ---------------------------------------------------------------------------
 

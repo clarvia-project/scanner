@@ -57,9 +57,17 @@ async def create_checkout(request: Request):
             detail="Payment not configured. Set SCANNER_LEMONSQUEEZY_STORE_ID and SCANNER_LEMONSQUEEZY_VARIANT_ID.",
         )
 
+    # Normalize store_id — strip any ".lemonsqueezy.com" suffix if present
+    clean_store = store_id.replace(".lemonsqueezy.com", "").strip()
+
+    # Use production frontend URL, fallback to settings
+    frontend = settings.frontend_url or "https://clarvia.art"
+    if "localhost" in frontend:
+        frontend = "https://clarvia.art"
+
     # Lemon Squeezy checkout URL with custom data
     checkout_url = (
-        f"https://{store_id}.lemonsqueezy.com/checkout/buy/{variant_id}"
+        f"https://{clean_store}.lemonsqueezy.com/checkout/buy/{variant_id}"
         f"?checkout[custom][scan_id]={scan_id}"
         f"&checkout[custom][service_name]={scan.service_name}"
     )
@@ -67,7 +75,7 @@ async def create_checkout(request: Request):
         checkout_url += f"&checkout[email]={email}"
 
     # Add success/cancel URLs
-    checkout_url += f"&checkout[custom][success_url]={settings.frontend_url}/report/{scan_id}"
+    checkout_url += f"&checkout[custom][success_url]={frontend}/report/{scan_id}"
 
     # Save pending report
     try:

@@ -7,6 +7,10 @@ import {
   listCategories,
   getStats,
   registerService,
+  gateCheck,
+  batchCheck,
+  findAlternatives,
+  probeService,
 } from "./api-client.js";
 
 export function registerTools(server: McpServer): void {
@@ -165,6 +169,102 @@ export function registerTools(server: McpServer): void {
               text: JSON.stringify(result, null, 2),
             },
           ],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // --- v2 Agent-first tools ---
+
+  // 7. clarvia_gate_check — pass/fail boolean for agent tool-use decisions
+  server.tool(
+    "clarvia_gate_check",
+    "Check if a service is safe for agent tool-use. Returns pass/fail with agent grade (AGENT_NATIVE/FRIENDLY/POSSIBLE/HOSTILE). Use before calling any external API.",
+    {
+      url: z.string().url().describe("Service URL to check"),
+      min_rating: z
+        .enum(["AGENT_NATIVE", "AGENT_FRIENDLY", "AGENT_POSSIBLE", "AGENT_HOSTILE"])
+        .optional()
+        .describe("Minimum acceptable grade (default: AGENT_FRIENDLY)"),
+    },
+    async ({ url, min_rating }) => {
+      try {
+        const result = await gateCheck(url, min_rating || "AGENT_FRIENDLY");
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // 8. clarvia_batch_check — check multiple URLs at once
+  server.tool(
+    "clarvia_batch_check",
+    "Check multiple service URLs at once. Returns pass/fail + agent grade for each. Use for comparing services or pre-filtering tool candidates.",
+    {
+      urls: z.array(z.string().url()).min(1).max(10).describe("List of service URLs (max 10)"),
+    },
+    async ({ urls }) => {
+      try {
+        const result = await batchCheck(urls);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // 9. clarvia_find_alternatives — find better-rated services in a category
+  server.tool(
+    "clarvia_find_alternatives",
+    "Find alternative services with high agent-readiness scores in a given category. Use when a service fails the gate check.",
+    {
+      category: z.string().describe("Service category (e.g. 'payment', 'ai', 'crypto', 'saas')"),
+      min_score: z.number().min(0).max(100).optional().describe("Minimum score (default: 70)"),
+      limit: z.number().min(1).max(20).optional().describe("Max results (default: 10)"),
+    },
+    async ({ category, min_score, limit }) => {
+      try {
+        const result = await findAlternatives(category, min_score || 70, limit || 10);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // 10. clarvia_probe — real-time accessibility probe
+  server.tool(
+    "clarvia_probe",
+    "Run a real-time accessibility probe on a service. Checks reachability, response time, OpenAPI spec, MCP support, and agents.json presence.",
+    {
+      url: z.string().url().describe("Service URL to probe"),
+    },
+    async ({ url }) => {
+      try {
+        const result = await probeService(url);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
         };
       } catch (err) {
         return {
