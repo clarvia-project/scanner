@@ -3,13 +3,30 @@ services:
     name: clarvia-api
     runtime: python
     plan: free
+    region: oregon
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     rootDir: backend
+    healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.0"
-      - key: CORS_ORIGINS
-        value: "https://clarvia.art,https://www.clarvia.art"
-    healthCheckPath: /health
-    autoDeploy: true
+      - key: SCANNER_ENV
+        value: "production"
+      - key: SCANNER_FRONTEND_URL
+        value: "https://clarvia.art"
+      - key: SCANNER_CORS_ORIGINS
+        value: '["https://clarvia.art","https://www.clarvia.art","https://clarvia-aeo-scanner.vercel.app"]'
+      - key: SCANNER_SUPABASE_URL
+        sync: false
+      - key: SCANNER_SUPABASE_ANON_KEY
+        sync: false
+      - key: SCANNER_STRIPE_SECRET_KEY
+        sync: false
+      - key: SCANNER_STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: SCANNER_STRIPE_PRICE_ID
+        sync: false
+      - key: SCANNER_ADMIN_API_KEY
+        sync: false

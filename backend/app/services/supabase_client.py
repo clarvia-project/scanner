@@ -5,6 +5,7 @@ still works using in-memory cache.
 """
 
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from ..config import settings
@@ -176,6 +177,67 @@ async def get_report(scan_id: str) -> dict | None:
         return result.data if result.data else None
     except Exception:
         return None
+
+
+# ---------------------------------------------------------------------------
+# Scan history
+# ---------------------------------------------------------------------------
+
+_history_fallback: dict[str, list[dict]] = {}
+
+
+async def save_scan_history(
+    url: str, scan_id: str, score: int, rating: str, service_name: str,
+    dimensions: dict[str, int] | None = None,
+) -> bool:
+    """Append a scan result to the history table (with optional dimension scores)."""
+    entry = {
+        "scan_id": scan_id,
+        "score": score,
+        "rating": rating,
+        "service_name": service_name,
+        "scanned_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if dimensions:
+        entry["dimensions"] = dimensions
+
+    client = get_supabase()
+    if client:
+        try:
+            client.table("scan_history").insert(
+                {"url": url, **entry}
+            ).execute()
+            return True
+        except Exception as e:
+            logger.error("Failed to save scan history to Supabase: %s", e)
+
+    # Fallback to in-memory
+    _history_fallback.setdefault(url, []).insert(0, entry)
+    # Keep only last 100 per URL in memory
+    _history_fallback[url] = _history_fallback[url][:100]
+    return True
+
+
+async def get_scan_history(url: str, limit: int = 20) -> list[dict]:
+    """Get scan history for a URL, ordered by most recent first."""
+    client = get_supabase()
+    if client:
+        try:
+            result = (
+                client.table("scan_history")
+                .select("scan_id, score, rating, scanned_at, dimensions, service_name")
+                .eq("url", url)
+                .order("scanned_at", desc=True)
+                .limit(limit)
+                .execute()
+            )
+            if result.data:
+                return result.data
+        except Exception as e:
+            logger.error("Failed to fetch scan history from Supabase: %s", e)
+
+    # Fallback to in-memory
+    return _history_fallback.get(url, [])[:limit]
 
 
 async def add_to_waitlist(email: str) -> bool:

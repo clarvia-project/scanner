@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import Image from "next/image";
+import { API_BASE } from "@/lib/api";
 
 export default function ReportPage() {
   const params = useParams();
@@ -57,11 +57,17 @@ export default function ReportPage() {
     <div className="flex flex-col min-h-screen bg-gradient-mesh">
       <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-              <div className="w-3 h-3 rounded-sm bg-accent" />
-            </div>
-            <span className="font-semibold text-base tracking-tight text-foreground">Clarvia</span>
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <Image
+              src="/logos/clarvia-icon.svg"
+              alt="Clarvia"
+              width={32}
+              height={32}
+              className="rounded-full group-hover:scale-110 transition-transform duration-200"
+            />
+            <span className="font-semibold text-base tracking-tight text-foreground">
+              clarvia
+            </span>
           </Link>
           <span className="text-xs text-muted font-mono">Detailed Report</span>
         </div>
@@ -163,19 +169,23 @@ export default function ReportPage() {
       <footer className="border-t border-card-border/50 px-6 py-8">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
           <div className="flex items-center gap-3">
-            <div className="w-5 h-5 rounded-md bg-accent/10 flex items-center justify-center">
-              <div className="w-2 h-2 rounded-sm bg-accent" />
-            </div>
+            <Image
+              src="/logos/clarvia-icon.svg"
+              alt="Clarvia"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
             <span>Clarvia — Discovery & Trust standard for the agent economy</span>
           </div>
-          <a
-            href="https://github.com/clarvia-project"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-foreground transition-colors"
-          >
-            GitHub
-          </a>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <a href="https://github.com/clarvia-project" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
+            <a href="https://x.com/clarvia_ai" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@clarvia_ai</a>
+            <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
+            <Link href="#" className="hover:text-foreground transition-colors" title="Coming soon">Terms</Link>
+            <Link href="/methodology" className="hover:text-foreground transition-colors">Methodology</Link>
+          </div>
         </div>
       </footer>
     </div>

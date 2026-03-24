@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <g id="clarvia-owl">
+    <!-- Wings -->
+    <ellipse cx="46" cy="96" rx="30" ry="22" fill="#6fb2ff" transform="rotate(-18 46 96)"/>
+    <ellipse cx="154" cy="96" rx="30" ry="22" fill="#6fb2ff" transform="rotate(18 154 96)"/>
+    <!-- Wing tips -->
+    <ellipse cx="30" cy="102" rx="14" ry="10" fill="#5aa2fb" transform="rotate(-28 30 102)"/>
+    <ellipse cx="170" cy="102" rx="14" ry="10" fill="#5aa2fb" transform="rotate(28 170 102)"/>
+    <!-- Body -->
+    <circle cx="100" cy="102" r="52" fill="#2583f6"/>
+    <!-- Belly -->
+    <ellipse cx="100" cy="118" rx="28" ry="24" fill="#8fc3ff"/>
+    <!-- Head tufts -->
+    <path d="M67 62 Q72 45 85 56 Q77 60 74 70 Z" fill="#2583f6"/>
+    <path d="M133 62 Q128 45 115 56 Q123 60 126 70 Z" fill="#2583f6"/>
+    <!-- Face patches -->
+    <ellipse cx="82" cy="89" rx="23" ry="25" fill="#beddff"/>
+    <ellipse cx="118" cy="89" rx="23" ry="25" fill="#beddff"/>
+    <!-- Eyes -->
+    <ellipse id="sclera-left" cx="82" cy="90" rx="16" ry="18" fill="#ffffff"/>
+    <ellipse id="sclera-right" cx="118" cy="90" rx="16" ry="18" fill="#ffffff"/>
+    <circle id="pupil-left" cx="86" cy="93" r="6.5" fill="#111111"/>
+    <circle id="pupil-right" cx="114" cy="93" r="6.5" fill="#111111"/>
+    <!-- Eye highlights -->
+    <circle cx="88.5" cy="90.5" r="2" fill="#ffffff"/>
+    <circle cx="116.5" cy="90.5" r="2" fill="#ffffff"/>
+    <!-- Beak -->
+    <path d="M100 96 L91 104 Q100 110 109 104 Z" fill="#f59e0b"/>
+    <!-- Feet -->
+    <g id="foot-left" fill="#f59e0b">
+      <ellipse cx="83" cy="152" rx="6" ry="4"/>
+      <path d="M78 152 L73 158 L79 156 Z"/>
+      <path d="M83 153 L83 160 L86 154 Z"/>
+      <path d="M88 152 L93 158 L87 156 Z"/>
+    </g>
+    <g id="foot-right" fill="#f59e0b">
+      <ellipse cx="117" cy="152" rx="6" ry="4"/>
+      <path d="M112 152 L107 158 L113 156 Z"/>
+      <path d="M117 153 L117 160 L120 154 Z"/>
+      <path d="M122 152 L127 158 L121 156 Z"/>
+    </g>
+    <!-- Small feather accents -->
+    <ellipse cx="100" cy="122" rx="7" ry="5" fill="#7ebaff"/>
+    <ellipse cx="88" cy="131" rx="6" ry="4" fill="#7ebaff"/>
+    <ellipse cx="112" cy="131" rx="6" ry="4" fill="#7ebaff"/>
+  </g>
+</svg>

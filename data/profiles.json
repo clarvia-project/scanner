@@ -1,0 +1,123 @@
+[
+  {
+    "profile_id": "prf_giy1pe3aajln",
+    "name": "E2E Test Service",
+    "url": "https://httpbin.org",
+    "description": "E2E test profile",
+    "category": "testing",
+    "github_url": null,
+    "mcp_config": null,
+    "contact_email": null,
+    "tags": [
+      "test",
+      "e2e"
+    ],
+    "clarvia_score": 27,
+    "status": "scanned",
+    "created_at": "2026-03-23T16:44:01.575800+00:00",
+    "updated_at": "2026-03-23T16:44:01.575800+00:00",
+    "last_scanned_at": "2026-03-23T16:44:14.454337+00:00",
+    "scan_result": {
+      "scan_id": "scn_16c5609873cc",
+      "rating": "Low",
+      "clarvia_score": 27,
+      "dimensions": {
+        "api_accessibility": {
+          "score": 16,
+          "max": 25
+        },
+        "data_structuring": {
+          "score": 0,
+          "max": 25
+        },
+        "agent_compatibility": {
+          "score": 1,
+          "max": 25
+        },
+        "trust_signals": {
+          "score": 10,
+          "max": 25
+        }
+      },
+      "top_recommendations": [
+        "Publish an MCP (Model Context Protocol) server to gain up to 10 points \u2014 the single highest-impact improvement for agent compatibility.",
+        "Publish a complete OpenAPI 3.x spec with JSON Schema models to maximize Schema Definition score (up to 7 points).",
+        "Implement standardized error responses (RFC 7807 or similar) with error codes and remediation hints.",
+        "Expose X-RateLimit-* headers (limit, remaining, reset) in API responses so agents can self-throttle.",
+        "Add webhook support so agents receive real-time event notifications instead of polling."
+      ],
+      "scanned_at": "2026-03-23T16:44:14.454298+00:00"
+    }
+  },
+  {
+    "profile_id": "prf_6btq3esqnc9q",
+    "name": "Test Service",
+    "url": "https://example.com",
+    "description": "Updated description",
+    "category": "testing",
+    "github_url": null,
+    "mcp_config": null,
+    "contact_email": null,
+    "tags": [
+      "test",
+      "e2e"
+    ],
+    "clarvia_score": null,
+    "status": "pending_scan",
+    "created_at": "2026-03-23T17:18:25.136530+00:00",
+    "updated_at": "2026-03-23T17:18:25.138005+00:00",
+    "last_scanned_at": null,
+    "scan_result": null
+  },
+  {
+    "profile_id": "prf_9tlw09sdx729",
+    "name": "First",
+    "url": "https://duplicate-test.example.com",
+    "description": "",
+    "category": "other",
+    "github_url": null,
+    "mcp_config": null,
+    "contact_email": null,
+    "tags": [],
+    "clarvia_score": null,
+    "status": "pending_scan",
+    "created_at": "2026-03-23T17:18:25.141871+00:00",
+    "updated_at": "2026-03-23T17:18:25.141871+00:00",
+    "last_scanned_at": null,
+    "scan_result": null
+  },
+  {
+    "profile_id": "prf_oypy31eatmn4",
+    "name": "Badge Test",
+    "url": "https://badge-test.example.com",
+    "description": "",
+    "category": "other",
+    "github_url": null,
+    "mcp_config": null,
+    "contact_email": null,
+    "tags": [],
+    "clarvia_score": null,
+    "status": "pending_scan",
+    "created_at": "2026-03-23T17:18:25.143832+00:00",
+    "updated_at": "2026-03-23T17:18:25.143832+00:00",
+    "last_scanned_at": null,
+    "scan_result": null
+  },
+  {
+    "profile_id": "prf_nznj9k0e7s70",
+    "name": "Unscored Badge",
+    "url": "https://unscored-badge.example.com",
+    "description": "",
+    "category": "other",
+    "github_url": null,
+    "mcp_config": null,
+    "contact_email": null,
+    "tags": [],
+    "clarvia_score": null,
+    "status": "pending_scan",
+    "created_at": "2026-03-23T17:18:25.146602+00:00",
+    "updated_at": "2026-03-23T17:18:25.146602+00:00",
+    "last_scanned_at": null,
+    "scan_result": null
+  }
+]

@@ -1,14 +1,24 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { API_BASE } from "@/lib/api";
 
 // ----- Types -----
+
+interface SubFactor {
+  score: number;
+  max: number;
+  label: string;
+  evidence?: Record<string, unknown>;
+}
 
 interface Dimension {
   score: number;
   max: number;
+  sub_factors?: Record<string, SubFactor>;
 }
 
 interface ScanEntry {
@@ -26,6 +36,11 @@ interface ScanEntry {
   };
 }
 
+// ----- Sort types -----
+
+type SortKey = "score" | "name" | "api" | "data" | "agent" | "trust";
+type SortDir = "asc" | "desc";
+
 // ----- Category mapping -----
 
 const CATEGORY_MAP: Record<string, string[]> = {
@@ -41,25 +56,84 @@ const CATEGORY_MAP: Record<string, string[]> = {
   Communication: ["slack", "discord", "twilio", "sendgrid", "resend"],
   Data: ["snowflake", "databricks", "mixpanel", "amplitude", "segment"],
   Productivity: ["notion", "linear", "atlassian", "asana", "figma", "canva"],
-  Blockchain: ["solana", "ethereum", "helius", "alchemy", "moralis", "dune"],
   MCP: ["mcp", "smithery", "glama"],
 };
 
-const CATEGORIES = ["All", ...Object.keys(CATEGORY_MAP)];
+// Blockchain subcategories
+const BLOCKCHAIN_SUBCATEGORIES: Record<string, string[]> = {
+  "Node Providers": ["alchemy", "infura", "quicknode"],
+  Indexers: ["the graph", "goldsky", "helius"],
+  Analytics: ["dune", "flipside"],
+  "Full-stack": ["moralis"],
+  "L1 / Networks": ["solana", "ethereum"],
+};
+
+// Flattened list of all blockchain service names for top-level matching
+const ALL_BLOCKCHAIN_NAMES = Object.values(BLOCKCHAIN_SUBCATEGORIES).flat();
+
+const CATEGORIES = ["All", ...Object.keys(CATEGORY_MAP), "Blockchain"];
 
 function getCategory(serviceName: string): string {
   const lower = serviceName.toLowerCase();
+  // Check blockchain first (subcategories)
+  if (ALL_BLOCKCHAIN_NAMES.some((n) => lower.includes(n))) return "Blockchain";
   for (const [cat, names] of Object.entries(CATEGORY_MAP)) {
     if (names.some((n) => lower.includes(n))) return cat;
   }
   return "Other";
 }
 
+function getBlockchainSubcategory(serviceName: string): string | null {
+  const lower = serviceName.toLowerCase();
+  for (const [sub, names] of Object.entries(BLOCKCHAIN_SUBCATEGORIES)) {
+    if (names.some((n) => lower.includes(n))) return sub;
+  }
+  return null;
+}
+
+// ----- Sub-factor filter definitions -----
+
+interface SubFactorFilter {
+  id: string;
+  label: string;
+  test: (entry: ScanEntry) => boolean;
+}
+
+const SUB_FACTOR_FILTERS: SubFactorFilter[] = [
+  {
+    id: "mcp",
+    label: "Has MCP Support",
+    test: (e) => (e.dimensions.agent_compatibility.sub_factors?.mcp_server_exists?.score ?? 0) > 0,
+  },
+  {
+    id: "openapi",
+    label: "Has OpenAPI Spec",
+    test: (e) => (e.dimensions.data_structuring.sub_factors?.schema_definition?.score ?? 0) > 5,
+  },
+  {
+    id: "errors",
+    label: "Good Error Handling",
+    test: (e) => (e.dimensions.data_structuring.sub_factors?.error_structure?.score ?? 0) > 5,
+  },
+  {
+    id: "fast",
+    label: "Fast Response",
+    test: (e) => (e.dimensions.api_accessibility.sub_factors?.response_speed?.score ?? 0) >= 7,
+  },
+];
+
 // ----- Helpers -----
 
 function scoreColor(score: number): string {
   if (score >= 70) return "text-score-green";
   if (score >= 40) return "text-score-yellow";
+  return "text-score-red";
+}
+
+function dimScoreColor(score: number, max: number): string {
+  const pct = max > 0 ? score / max : 0;
+  if (pct >= 0.7) return "text-score-green";
+  if (pct >= 0.4) return "text-score-yellow";
   return "text-score-red";
 }
 
@@ -83,6 +157,17 @@ function dimBarGradient(score: number, max: number): string {
   if (pct >= 0.7) return "bar-gradient-green";
   if (pct >= 0.4) return "bar-gradient-yellow";
   return "bar-gradient-red";
+}
+
+function dimValue(entry: ScanEntry, key: SortKey): number {
+  switch (key) {
+    case "api": return entry.dimensions.api_accessibility.score;
+    case "data": return entry.dimensions.data_structuring.score;
+    case "agent": return entry.dimensions.agent_compatibility.score;
+    case "trust": return entry.dimensions.trust_signals.score;
+    case "score": return entry.clarvia_score;
+    default: return 0;
+  }
 }
 
 // ----- Components -----
@@ -128,6 +213,127 @@ function RankBadge({ rank }: { rank: number }) {
   return <span className="text-sm text-muted font-mono">{rank}</span>;
 }
 
+function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
+  if (!active) return <span className="text-muted/30 ml-1">&#x25B4;</span>;
+  return (
+    <span className="text-accent ml-1">
+      {dir === "asc" ? "\u25B4" : "\u25BE"}
+    </span>
+  );
+}
+
+// ----- Compare bar chart -----
+
+function CompareBarChart({
+  items,
+  dimKey,
+  label,
+}: {
+  items: ScanEntry[];
+  dimKey: keyof ScanEntry["dimensions"];
+  label: string;
+}) {
+  const max = items[0]?.dimensions[dimKey].max ?? 25;
+  const scores = items.map((it) => it.dimensions[dimKey].score);
+  const best = Math.max(...scores);
+
+  return (
+    <div className="space-y-2">
+      <div className="text-xs font-mono text-muted uppercase tracking-wider">{label}</div>
+      {items.map((it, i) => {
+        const s = it.dimensions[dimKey].score;
+        const pct = max > 0 ? (s / max) * 100 : 0;
+        const isWinner = s === best && scores.filter((x) => x === best).length === 1;
+        return (
+          <div key={it.scan_id} className="flex items-center gap-3">
+            <span className="text-xs text-foreground w-28 truncate shrink-0">{it.service_name}</span>
+            <div className="flex-1 h-5 bg-card-border/30 rounded overflow-hidden relative">
+              <div
+                className={`h-full rounded ${isWinner ? "bg-accent" : "bg-accent/40"} transition-all`}
+                style={{ width: `${pct}%` }}
+              />
+              <span className="absolute inset-0 flex items-center justify-end pr-2 text-[10px] font-mono text-foreground/70">
+                {s}/{max}
+              </span>
+            </div>
+            {isWinner && (
+              <span className="text-[10px] font-mono text-accent shrink-0">WIN</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ----- Compare Modal -----
+
+function CompareModal({
+  items,
+  onClose,
+}: {
+  items: ScanEntry[];
+  onClose: () => void;
+}) {
+  const dims: { key: keyof ScanEntry["dimensions"]; label: string }[] = [
+    { key: "api_accessibility", label: "API Accessibility" },
+    { key: "data_structuring", label: "Data Structuring" },
+    { key: "agent_compatibility", label: "Agent Compatibility" },
+    { key: "trust_signals", label: "Trust Signals" },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="relative glass-card rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-bold">Compare Services</h2>
+          <button
+            onClick={onClose}
+            className="text-muted hover:text-foreground transition-colors text-lg leading-none"
+          >
+            &#x2715;
+          </button>
+        </div>
+
+        {/* Overall scores */}
+        <div className="flex gap-4 mb-8">
+          {items.map((it) => (
+            <div key={it.scan_id} className="flex-1 bg-card-bg/60 border border-card-border rounded-xl p-4 text-center">
+              <div className="text-sm font-medium truncate mb-1">{it.service_name}</div>
+              <div className={`text-2xl font-mono font-bold ${scoreColor(it.clarvia_score)}`}>
+                {it.clarvia_score}
+              </div>
+              <div className={`text-[10px] font-mono uppercase mt-1 ${ratingBadgeClass(it.rating)} inline-block px-2 py-0.5 rounded`}>
+                {it.rating}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Dimension comparisons */}
+        <div className="space-y-6">
+          {dims.map((d) => (
+            <CompareBarChart key={d.key} items={items} dimKey={d.key} label={d.label} />
+          ))}
+        </div>
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={onClose}
+            className="text-sm text-muted hover:text-foreground transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ----- Main Page -----
 
 export default function LeaderboardPage() {
@@ -135,28 +341,100 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
+  const [activeSubFilters, setActiveSubFilters] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<SortKey>("score");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showCompare, setShowCompare] = useState(false);
+  const [blockchainSubs, setBlockchainSubs] = useState<Set<string>>(new Set());
   const router = useRouter();
 
   useEffect(() => {
     fetch("/data/prebuilt-scans.json")
       .then((res) => res.json())
       .then((json: ScanEntry[]) => {
-        const sorted = [...json].sort(
-          (a, b) => b.clarvia_score - a.clarvia_score,
-        );
-        setData(sorted);
+        setData(json);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
+  const toggleSubFilter = useCallback((id: string) => {
+    setActiveSubFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelected = useCallback((scanId: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(scanId)) {
+        next.delete(scanId);
+      } else {
+        if (next.size >= 3) return prev; // max 3
+        next.add(scanId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSort = useCallback((key: SortKey) => {
+    setSortKey((prev) => {
+      if (prev === key) {
+        setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+        return key;
+      }
+      setSortDir(key === "name" ? "asc" : "desc");
+      return key;
+    });
+  }, []);
+
+  const handleRowClick = useCallback(async (item: ScanEntry) => {
+    if (item.scan_id) {
+      router.push(`/scan/${item.scan_id}`);
+      return;
+    }
+    // No scan_id — trigger a live scan of the service URL
+    try {
+      const res = await fetch(`${API_BASE}/api/scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: item.url }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.scan_id) {
+          router.push(`/scan/${data.scan_id}`);
+          return;
+        }
+      }
+      // Fallback: navigate to home scanner with URL prefilled
+      router.push(`/?url=${encodeURIComponent(item.url)}`);
+    } catch {
+      router.push(`/?url=${encodeURIComponent(item.url)}`);
+    }
+  }, [router]);
+
   const filtered = useMemo(() => {
     let list = data;
 
+    // Category filter
     if (category !== "All") {
       list = list.filter((item) => getCategory(item.service_name) === category);
     }
 
+    // Blockchain subcategory filter
+    if (category === "Blockchain" && blockchainSubs.size > 0) {
+      list = list.filter((item) => {
+        const sub = getBlockchainSubcategory(item.service_name);
+        return sub !== null && blockchainSubs.has(sub);
+      });
+    }
+
+    // Search filter
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(
@@ -166,8 +444,32 @@ export default function LeaderboardPage() {
       );
     }
 
+    // Sub-factor filters
+    for (const fId of activeSubFilters) {
+      const filterDef = SUB_FACTOR_FILTERS.find((f) => f.id === fId);
+      if (filterDef) {
+        list = list.filter(filterDef.test);
+      }
+    }
+
+    // Sorting
+    list = [...list].sort((a, b) => {
+      if (sortKey === "name") {
+        const cmp = a.service_name.localeCompare(b.service_name);
+        return sortDir === "asc" ? cmp : -cmp;
+      }
+      const aVal = sortKey === "score" ? a.clarvia_score : dimValue(a, sortKey);
+      const bVal = sortKey === "score" ? b.clarvia_score : dimValue(b, sortKey);
+      return sortDir === "desc" ? bVal - aVal : aVal - bVal;
+    });
+
     return list;
-  }, [data, category, search]);
+  }, [data, category, search, activeSubFilters, sortKey, sortDir, blockchainSubs]);
+
+  const compareItems = useMemo(
+    () => data.filter((d) => selected.has(d.scan_id)),
+    [data, selected],
+  );
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-mesh">
@@ -175,11 +477,17 @@ export default function LeaderboardPage() {
       <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                <div className="w-3 h-3 rounded-sm bg-accent" />
-              </div>
-              <span className="font-semibold text-base tracking-tight text-foreground">Clarvia</span>
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <Image
+                src="/logos/clarvia-icon.svg"
+                alt="Clarvia"
+                width={32}
+                height={32}
+                className="rounded-full group-hover:scale-110 transition-transform duration-200"
+              />
+              <span className="font-semibold text-base tracking-tight text-foreground">
+                clarvia
+              </span>
             </Link>
             <nav className="hidden sm:flex items-center gap-6">
               <Link href="/leaderboard" className="text-sm text-foreground font-medium">
@@ -187,6 +495,9 @@ export default function LeaderboardPage() {
               </Link>
               <Link href="/register" className="text-sm text-muted hover:text-foreground transition-colors">
                 Register
+              </Link>
+              <Link href="/docs" className="text-sm text-muted hover:text-foreground transition-colors">
+                Docs
               </Link>
             </nav>
           </div>
@@ -217,17 +528,20 @@ export default function LeaderboardPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search services..."
-              className="w-full bg-card-bg/80 border border-card-border rounded-xl pl-11 pr-4 py-3 text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all font-mono text-sm"
+              className="w-full bg-card-bg/80 border border-card-border rounded-xl pl-11 pr-4 py-3 text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all font-mono text-sm"
             />
           </div>
         </div>
 
         {/* Category filters */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        <div className="flex flex-wrap justify-center gap-2 mb-4">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
-              onClick={() => setCategory(cat)}
+              onClick={() => {
+                setCategory(cat);
+                if (cat !== "Blockchain") setBlockchainSubs(new Set());
+              }}
               className={`px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200 border ${
                 category === cat
                   ? "btn-gradient text-white border-transparent shadow-md shadow-accent/10"
@@ -239,6 +553,75 @@ export default function LeaderboardPage() {
           ))}
         </div>
 
+        {/* Blockchain subcategory filters */}
+        {category === "Blockchain" && (
+          <div className="flex flex-wrap justify-center gap-2 mb-4">
+            {Object.keys(BLOCKCHAIN_SUBCATEGORIES).map((sub) => {
+              const active = blockchainSubs.has(sub);
+              return (
+                <button
+                  key={sub}
+                  onClick={() => {
+                    setBlockchainSubs((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(sub)) next.delete(sub);
+                      else next.add(sub);
+                      return next;
+                    });
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-mono transition-all duration-200 border ${
+                    active
+                      ? "bg-accent/15 text-accent border-accent/40 shadow-sm shadow-accent/10"
+                      : "bg-card-bg/40 text-muted/70 border-card-border/50 hover:border-accent/20 hover:text-muted"
+                  }`}
+                >
+                  <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${active ? "bg-accent" : "bg-muted/30"}`} />
+                  {sub}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Sub-factor pill filters */}
+        <div className="flex flex-wrap justify-center gap-2 mb-10">
+          {SUB_FACTOR_FILTERS.map((f) => {
+            const active = activeSubFilters.has(f.id);
+            return (
+              <button
+                key={f.id}
+                onClick={() => toggleSubFilter(f.id)}
+                className={`px-3 py-1.5 rounded-full text-[11px] font-mono transition-all duration-200 border ${
+                  active
+                    ? "bg-accent/15 text-accent border-accent/40 shadow-sm shadow-accent/10"
+                    : "bg-card-bg/40 text-muted/70 border-card-border/50 hover:border-accent/20 hover:text-muted"
+                }`}
+              >
+                <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${active ? "bg-accent" : "bg-muted/30"}`} />
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Compare bar */}
+        {selected.size >= 2 && (
+          <div className="flex items-center justify-center mb-6">
+            <button
+              onClick={() => setShowCompare(true)}
+              className="btn-gradient text-white px-6 py-2.5 rounded-xl text-sm font-medium shadow-md shadow-accent/10 transition-all hover:shadow-lg hover:shadow-accent/20"
+            >
+              Compare Selected ({selected.size})
+            </button>
+            <button
+              onClick={() => setSelected(new Set())}
+              className="ml-3 text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
@@ -247,7 +630,7 @@ export default function LeaderboardPage() {
           <div className="text-center py-20">
             <p className="text-muted text-sm mb-4">No services found.</p>
             <button
-              onClick={() => { setCategory("All"); setSearch(""); }}
+              onClick={() => { setCategory("All"); setSearch(""); setActiveSubFilters(new Set()); }}
               className="text-accent text-sm hover:text-accent-hover transition-colors"
             >
               Clear filters
@@ -257,90 +640,202 @@ export default function LeaderboardPage() {
           /* Table */
           <div className="glass-card rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm" role="table" aria-label="AEO Leaderboard rankings">
                 <thead>
                   <tr className="border-b border-card-border/50 text-left text-xs text-muted uppercase tracking-wider">
-                    <th className="px-6 py-4 w-10">#</th>
-                    <th className="px-4 py-4">Service</th>
-                    <th className="px-4 py-4 text-center w-20">Score</th>
+                    {/* Compare checkbox header */}
+                    <th className="px-3 py-4 w-8">
+                      <span className="sr-only">Compare</span>
+                    </th>
+                    <th className="px-3 py-4 w-10">#</th>
+                    <th
+                      className="px-4 py-4 cursor-pointer select-none hover:text-foreground transition-colors"
+                      onClick={() => handleSort("name")}
+                    >
+                      <span className="inline-flex items-center">
+                        Service
+                        <SortArrow active={sortKey === "name"} dir={sortDir} />
+                      </span>
+                    </th>
+                    <th
+                      className="px-4 py-4 text-center w-20 cursor-pointer select-none hover:text-foreground transition-colors"
+                      onClick={() => handleSort("score")}
+                    >
+                      <span className="inline-flex items-center justify-center">
+                        Score
+                        <SortArrow active={sortKey === "score"} dir={sortDir} />
+                      </span>
+                    </th>
                     <th className="px-4 py-4 text-center w-28">Rating</th>
+                    {/* Dimension score columns */}
+                    <th
+                      className="px-2 py-4 text-center w-14 cursor-pointer select-none hover:text-foreground transition-colors hidden md:table-cell"
+                      onClick={() => handleSort("api")}
+                      title="API Accessibility"
+                    >
+                      <span className="inline-flex items-center justify-center">
+                        API
+                        <SortArrow active={sortKey === "api"} dir={sortDir} />
+                      </span>
+                    </th>
+                    <th
+                      className="px-2 py-4 text-center w-14 cursor-pointer select-none hover:text-foreground transition-colors hidden md:table-cell"
+                      onClick={() => handleSort("data")}
+                      title="Data Structuring"
+                    >
+                      <span className="inline-flex items-center justify-center">
+                        Data
+                        <SortArrow active={sortKey === "data"} dir={sortDir} />
+                      </span>
+                    </th>
+                    <th
+                      className="px-2 py-4 text-center w-14 cursor-pointer select-none hover:text-foreground transition-colors hidden md:table-cell"
+                      onClick={() => handleSort("agent")}
+                      title="Agent Compatibility"
+                    >
+                      <span className="inline-flex items-center justify-center">
+                        Agent
+                        <SortArrow active={sortKey === "agent"} dir={sortDir} />
+                      </span>
+                    </th>
+                    <th
+                      className="px-2 py-4 text-center w-14 cursor-pointer select-none hover:text-foreground transition-colors hidden md:table-cell"
+                      onClick={() => handleSort("trust")}
+                      title="Trust Signals"
+                    >
+                      <span className="inline-flex items-center justify-center">
+                        Trust
+                        <SortArrow active={sortKey === "trust"} dir={sortDir} />
+                      </span>
+                    </th>
                     <th className="px-4 py-4 hidden lg:table-cell min-w-[280px]">
                       Dimensions
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((item, idx) => (
-                    <tr
-                      key={item.scan_id}
-                      onClick={() => router.push(`/scan/${item.scan_id}`)}
-                      className={`border-b border-card-border/30 cursor-pointer transition-all duration-200 group ${
-                        idx === 0 ? "rank-gold-row hover:bg-yellow-500/5" :
-                        idx === 1 ? "rank-silver-row hover:bg-gray-400/5" :
-                        idx === 2 ? "rank-bronze-row hover:bg-orange-500/5" :
-                        "hover:bg-card-border/10"
-                      }`}
-                    >
-                      {/* Rank */}
-                      <td className="px-6 py-4">
-                        <RankBadge rank={idx + 1} />
-                      </td>
+                  {filtered.map((item, idx) => {
+                    const isSelected = selected.has(item.scan_id);
+                    return (
+                      <tr
+                        key={item.scan_id}
+                        className={`border-b border-card-border/30 cursor-pointer transition-all duration-200 group ${
+                          isSelected ? "bg-accent/5 border-accent/20" :
+                          idx === 0 ? "rank-gold-row hover:bg-yellow-500/5" :
+                          idx === 1 ? "rank-silver-row hover:bg-gray-400/5" :
+                          idx === 2 ? "rank-bronze-row hover:bg-orange-500/5" :
+                          "hover:bg-card-border/10"
+                        }`}
+                      >
+                        {/* Compare checkbox */}
+                        <td className="px-3 py-4" onClick={(e) => e.stopPropagation()}>
+                          <label className="flex items-center justify-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelected(item.scan_id)}
+                              disabled={!isSelected && selected.size >= 3}
+                              className="w-3.5 h-3.5 rounded border-card-border bg-card-bg/60 text-accent focus:ring-accent/30 focus:ring-offset-0 cursor-pointer disabled:opacity-30 accent-[var(--accent)]"
+                            />
+                          </label>
+                        </td>
 
-                      {/* Service name + URL */}
-                      <td className="px-4 py-4">
-                        <div className="font-medium group-hover:text-accent transition-colors">
-                          {item.service_name}
-                        </div>
-                        <div className="text-xs text-muted font-mono truncate max-w-[200px]">
-                          {item.url.replace(/^https?:\/\//, "")}
-                        </div>
-                      </td>
+                        {/* Rank */}
+                        <td className="px-3 py-4" onClick={() => handleRowClick(item)}>
+                          <RankBadge rank={idx + 1} />
+                        </td>
 
-                      {/* Score */}
-                      <td className="px-4 py-4 text-center">
-                        <span
-                          className={`font-mono font-bold text-lg ${scoreColor(item.clarvia_score)}`}
+                        {/* Service name + URL */}
+                        <td className="px-4 py-4" onClick={() => handleRowClick(item)}>
+                          <div className="font-medium group-hover:text-accent transition-colors">
+                            {item.service_name}
+                          </div>
+                          <div className="text-xs text-muted font-mono truncate max-w-[200px]">
+                            {item.url.replace(/^https?:\/\//, "")}
+                          </div>
+                        </td>
+
+                        {/* Score */}
+                        <td className="px-4 py-4 text-center" onClick={() => handleRowClick(item)}>
+                          <span
+                            className={`font-mono font-bold text-lg ${scoreColor(item.clarvia_score)}`}
+                            aria-label={`Score: ${item.clarvia_score} out of 100`}
+                          >
+                            {item.clarvia_score}
+                          </span>
+                        </td>
+
+                        {/* Rating badge */}
+                        <td className="px-4 py-4 text-center" onClick={() => handleRowClick(item)}>
+                          <span
+                            className={`inline-block px-2.5 py-1 rounded-lg text-[10px] font-mono uppercase tracking-wider ${ratingBadgeClass(item.rating)}`}
+                          >
+                            {item.rating}
+                          </span>
+                        </td>
+
+                        {/* Dimension score mini columns */}
+                        <td
+                          className="px-2 py-4 text-center hidden md:table-cell"
+                          onClick={() => handleRowClick(item)}
                         >
-                          {item.clarvia_score}
-                        </span>
-                      </td>
-
-                      {/* Rating badge */}
-                      <td className="px-4 py-4 text-center">
-                        <span
-                          className={`inline-block px-2.5 py-1 rounded-lg text-[10px] font-mono uppercase tracking-wider ${ratingBadgeClass(item.rating)}`}
+                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions.api_accessibility.score, item.dimensions.api_accessibility.max)}`} aria-label={`API: ${item.dimensions.api_accessibility.score} out of ${item.dimensions.api_accessibility.max}`}>
+                            {item.dimensions.api_accessibility.score}
+                          </span>
+                        </td>
+                        <td
+                          className="px-2 py-4 text-center hidden md:table-cell"
+                          onClick={() => handleRowClick(item)}
                         >
-                          {item.rating}
-                        </span>
-                      </td>
+                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions.data_structuring.score, item.dimensions.data_structuring.max)}`} aria-label={`Data: ${item.dimensions.data_structuring.score} out of ${item.dimensions.data_structuring.max}`}>
+                            {item.dimensions.data_structuring.score}
+                          </span>
+                        </td>
+                        <td
+                          className="px-2 py-4 text-center hidden md:table-cell"
+                          onClick={() => handleRowClick(item)}
+                        >
+                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions.agent_compatibility.score, item.dimensions.agent_compatibility.max)}`} aria-label={`Agent: ${item.dimensions.agent_compatibility.score} out of ${item.dimensions.agent_compatibility.max}`}>
+                            {item.dimensions.agent_compatibility.score}
+                          </span>
+                        </td>
+                        <td
+                          className="px-2 py-4 text-center hidden md:table-cell"
+                          onClick={() => handleRowClick(item)}
+                        >
+                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions.trust_signals.score, item.dimensions.trust_signals.max)}`} aria-label={`Trust: ${item.dimensions.trust_signals.score} out of ${item.dimensions.trust_signals.max}`}>
+                            {item.dimensions.trust_signals.score}
+                          </span>
+                        </td>
 
-                      {/* Dimension bars */}
-                      <td className="px-4 py-4 hidden lg:table-cell">
-                        <div className="space-y-1">
-                          <DimMiniBar
-                            label="API"
-                            score={item.dimensions.api_accessibility.score}
-                            max={item.dimensions.api_accessibility.max}
-                          />
-                          <DimMiniBar
-                            label="Data"
-                            score={item.dimensions.data_structuring.score}
-                            max={item.dimensions.data_structuring.max}
-                          />
-                          <DimMiniBar
-                            label="Agent"
-                            score={item.dimensions.agent_compatibility.score}
-                            max={item.dimensions.agent_compatibility.max}
-                          />
-                          <DimMiniBar
-                            label="Trust"
-                            score={item.dimensions.trust_signals.score}
-                            max={item.dimensions.trust_signals.max}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        {/* Dimension bars */}
+                        <td className="px-4 py-4 hidden lg:table-cell" onClick={() => handleRowClick(item)}>
+                          <div className="space-y-1">
+                            <DimMiniBar
+                              label="API"
+                              score={item.dimensions.api_accessibility.score}
+                              max={item.dimensions.api_accessibility.max}
+                            />
+                            <DimMiniBar
+                              label="Data"
+                              score={item.dimensions.data_structuring.score}
+                              max={item.dimensions.data_structuring.max}
+                            />
+                            <DimMiniBar
+                              label="Agent"
+                              score={item.dimensions.agent_compatibility.score}
+                              max={item.dimensions.agent_compatibility.max}
+                            />
+                            <DimMiniBar
+                              label="Trust"
+                              score={item.dimensions.trust_signals.score}
+                              max={item.dimensions.trust_signals.max}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -373,21 +868,30 @@ export default function LeaderboardPage() {
       <footer className="border-t border-card-border/50 px-6 py-8">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
           <div className="flex items-center gap-3">
-            <div className="w-5 h-5 rounded-md bg-accent/10 flex items-center justify-center">
-              <div className="w-2 h-2 rounded-sm bg-accent" />
-            </div>
+            <Image
+              src="/logos/clarvia-icon.svg"
+              alt="Clarvia"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
             <span>Clarvia — Discovery & Trust standard for the agent economy</span>
           </div>
-          <a
-            href="https://github.com/clarvia-project"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-foreground transition-colors"
-          >
-            GitHub
-          </a>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <a href="https://github.com/clarvia-project" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
+            <a href="https://x.com/clarvia_ai" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@clarvia_ai</a>
+            <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
+            <Link href="#" className="hover:text-foreground transition-colors" title="Coming soon">Terms</Link>
+            <Link href="/methodology" className="hover:text-foreground transition-colors">Methodology</Link>
+          </div>
         </div>
       </footer>
+
+      {/* Compare Modal */}
+      {showCompare && compareItems.length >= 2 && (
+        <CompareModal items={compareItems} onClose={() => setShowCompare(false)} />
+      )}
     </div>
   );
 }

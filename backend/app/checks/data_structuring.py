@@ -110,17 +110,34 @@ async def check_schema_definition(
     if total_endpoints > 0 and len(schemas) > 0:
         spec_str = json.dumps(openapi_spec)
         has_refs = "$ref" in spec_str
+        has_descriptions = '"description"' in spec_str
+        has_examples = '"example"' in spec_str or '"examples"' in spec_str
 
-        if total_endpoints >= 5 and len(schemas) >= 3 and has_refs:
+        if total_endpoints >= 10 and len(schemas) >= 5 and has_refs and has_descriptions:
             return (7, {
+                "reason": "Comprehensive OpenAPI spec with rich models and descriptions",
+                "spec_url": spec_url,
+                "endpoints": total_endpoints,
+                "schemas": len(schemas),
+                "has_examples": has_examples,
+            })
+        elif total_endpoints >= 5 and len(schemas) >= 3 and has_refs:
+            return (6, {
                 "reason": "Published OpenAPI spec with complete models",
                 "spec_url": spec_url,
                 "endpoints": total_endpoints,
                 "schemas": len(schemas),
             })
-        else:
+        elif total_endpoints >= 3 and len(schemas) >= 1:
             return (5, {
-                "reason": "Partial schema — some endpoints documented",
+                "reason": "Partial schema — core endpoints documented",
+                "spec_url": spec_url,
+                "endpoints": total_endpoints,
+                "schemas": len(schemas),
+            })
+        else:
+            return (4, {
+                "reason": "Minimal schema — few endpoints documented",
                 "spec_url": spec_url,
                 "endpoints": total_endpoints,
                 "schemas": len(schemas),
@@ -130,6 +147,12 @@ async def check_schema_definition(
             "reason": "Example payloads only, no formal schema",
             "spec_url": spec_url,
             "endpoints": total_endpoints,
+        })
+    elif len(schemas) > 0:
+        return (1, {
+            "reason": "Schema definitions found but no documented endpoints",
+            "spec_url": spec_url,
+            "schemas": len(schemas),
         })
 
     return (0, {"reason": "No schema or examples found"})
@@ -180,7 +203,16 @@ async def check_pricing(
                                     "free tier", "free plan", "enterprise",
                                     "pricing", "plan"]
                 matches = [kw for kw in price_indicators if kw in text_lower]
-                if len(matches) >= 2:
+                # Check for precise pricing with numbers
+                import re
+                has_specific_prices = bool(re.search(r'\$\d+', text))
+                if len(matches) >= 3 and has_specific_prices:
+                    return (4, {
+                        "reason": "Detailed pricing page with specific tier prices",
+                        "url": path,
+                        "indicators": matches[:5],
+                    })
+                elif len(matches) >= 2:
                     return (3, {
                         "reason": "Pricing page with clear tiers but not machine-readable",
                         "url": path,

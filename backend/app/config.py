@@ -11,7 +11,13 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # CORS
-    cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "https://clarvia.art", "https://www.clarvia.art"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://clarvia.art",
+        "https://www.clarvia.art",
+        "https://clarvia-aeo-scanner.vercel.app",
+    ]
 
     # HTTP probing
     http_timeout: float = 10.0
@@ -36,6 +42,9 @@ class Settings(BaseSettings):
     # Supabase
     supabase_url: str = ""
     supabase_anon_key: str = ""
+
+    # Admin API key for write operations (profiles, admin dashboard)
+    admin_api_key: str = ""
 
     # Frontend URL (for Stripe redirects)
     frontend_url: str = "http://localhost:3000"

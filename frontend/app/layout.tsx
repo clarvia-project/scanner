@@ -16,11 +16,20 @@ export const metadata: Metadata = {
   title: "Clarvia AEO Scanner — Is your service ready for AI agents?",
   description:
     "Get your Clarvia Score — the AEO standard for agent discoverability and trust. Scan any API to measure AI Engine Optimization readiness.",
+  keywords: [
+    "AEO",
+    "AI Engine Optimization",
+    "agent readiness",
+    "API score",
+    "MCP",
+    "AI agents",
+    "Clarvia",
+  ],
   openGraph: {
     title: "Clarvia AEO Scanner",
     description:
       "Is your service ready for AI agents? Get your Clarvia Score — the AEO standard for agent discoverability and trust.",
-    url: "https://scanner.clarvia.io",
+    url: "https://clarvia.art",
     siteName: "Clarvia",
     type: "website",
     images: [
@@ -39,7 +48,11 @@ export const metadata: Metadata = {
       "Is your service ready for AI agents? Get your Clarvia Score.",
     images: ["/og-image.png"],
   },
-  metadataBase: new URL("https://scanner.clarvia.io"),
+  metadataBase: new URL("https://clarvia.art"),
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -52,6 +65,14 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <meta name="theme-color" content="#0b0f18" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

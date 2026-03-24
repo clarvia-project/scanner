@@ -5,9 +5,9 @@ Sub-factors:
 - Documentation Quality (5 pts)
 - Update Frequency (4 pts)
 - Response Consistency (4 pts)
-- Error Response Quality (3 pts)
-- Deprecation Policy (2 pts)
-- SLA / Uptime Guarantee (1 pt)
+- Security Headers (3 pts)
+- Error Response Quality (2 pts)
+- Deprecation Policy (1 pt)
 """
 
 import asyncio
@@ -47,11 +47,31 @@ async def check_uptime(
                 if resp.status < 300:
                     text = await resp.text()
                     text_lower = text.lower()
-                    if any(kw in text_lower for kw in [
-                        "operational", "uptime", "all systems",
-                        "no incidents", "status page",
-                    ]):
-                        return (6, {"reason": "Public status page found with operational indicators", "url": url})
+                    has_operational = any(kw in text_lower for kw in [
+                        "operational", "all systems", "no incidents",
+                    ])
+                    has_uptime_pct = any(kw in text_lower for kw in [
+                        "99.9", "99.99", "100%", "uptime",
+                    ])
+                    has_history = any(kw in text_lower for kw in [
+                        "incident history", "past incidents", "uptime history",
+                        "90 days", "30 days",
+                    ])
+                    if has_operational and has_uptime_pct and has_history:
+                        return (6, {
+                            "reason": "Comprehensive status page with uptime metrics and history",
+                            "url": url,
+                        })
+                    elif has_operational and (has_uptime_pct or has_history):
+                        return (5, {
+                            "reason": "Status page with operational status and metrics",
+                            "url": url,
+                        })
+                    elif has_operational:
+                        return (4, {
+                            "reason": "Status page showing operational status",
+                            "url": url,
+                        })
                     return (3, {"reason": "Status page found", "url": url})
         except Exception:
             pass
@@ -68,6 +88,13 @@ async def check_uptime(
             allow_redirects=True, ssl=False,
         ) as resp:
             if resp.status < 300:
+                # Check for security headers as a proxy for operational maturity
+                has_hsts = "strict-transport-security" in {h.lower() for h in resp.headers}
+                has_csp = "content-security-policy" in {h.lower() for h in resp.headers}
+                if has_hsts and has_csp:
+                    return (2, {
+                        "reason": "No status page but site responsive with security headers (HSTS, CSP)",
+                    })
                 return (1, {
                     "reason": "No status page but site is currently responsive",
                 })
@@ -117,13 +144,16 @@ async def check_documentation_quality(
                 text = await resp.text()
                 text_lower = text.lower()
 
+                lang_count = sum(1 for lang in ["python", "javascript", "ruby", "go", "java", "curl", "php", "c#", "rust", "typescript"]
+                                if lang in text_lower)
                 signals = {
                     "api_reference": any(kw in text_lower for kw in ["api reference", "endpoints", "api documentation"]),
                     "guides": any(kw in text_lower for kw in ["guide", "tutorial", "getting started", "quickstart"]),
                     "changelog": any(kw in text_lower for kw in ["changelog", "release notes", "what's new"]),
                     "code_examples": any(kw in text_lower for kw in ["```", "code example", "sample code", "sdk"]),
-                    "multi_language": sum(1 for lang in ["python", "javascript", "ruby", "go", "java", "curl", "php", "c#", "rust"]
-                                         if lang in text_lower) >= 3,
+                    "multi_language": lang_count >= 3,
+                    "error_handling": any(kw in text_lower for kw in ["error handling", "error codes", "troubleshooting"]),
+                    "pagination": any(kw in text_lower for kw in ["pagination", "cursor", "next_page", "offset"]),
                 }
 
                 signal_count = sum(signals.values())
@@ -291,12 +321,25 @@ async def check_response_consistency(
                     "url": probe_url,
                     "status": statuses[0],
                 })
-            elif all_same_status:
-                return (2, {
-                    "reason": "Status codes consistent but content varies (dynamic content)",
+            elif all_same_status and all_same_ct:
+                return (3, {
+                    "reason": "Status and content-type consistent, body varies (dynamic content)",
                     "url": probe_url,
                     "status": statuses[0],
                     "unique_hashes": len(set(content_hashes)),
+                })
+            elif all_same_status:
+                return (2, {
+                    "reason": "Status codes consistent but content varies",
+                    "url": probe_url,
+                    "status": statuses[0],
+                    "unique_hashes": len(set(content_hashes)),
+                })
+            elif len(set(statuses)) == 2:
+                return (1, {
+                    "reason": "Mostly consistent responses with minor status variation",
+                    "url": probe_url,
+                    "statuses": statuses,
                 })
             else:
                 return (0, {
@@ -311,10 +354,9 @@ async def check_response_consistency(
 async def check_error_response_quality(
     session: aiohttp.ClientSession, base_url: str
 ) -> tuple[int, dict[str, Any]]:
-    """Check error response quality beyond structure (3 pts max).
+    """Check error response quality beyond structure (2 pts max).
 
-    3 pts = Error includes code, message, AND documentation link
-    2 pts = Error includes code and descriptive message
+    2 pts = Error includes code and descriptive message (or better)
     1 pt  = Basic error message
     0 pts = No structured errors or HTML errors
     """
@@ -344,19 +386,13 @@ async def check_error_response_quality(
                                 "help_url", "reference", "https://",
                             ])
 
-                            if has_code and has_message and has_doc_link:
-                                return (3, {
-                                    "reason": "Error includes code, message, and documentation link",
-                                    "url": probe_url,
-                                    "status": resp.status,
-                                    "error_keys": list(data.keys())[:8],
-                                })
-                            elif has_code and has_message:
+                            if has_code and has_message:
                                 return (2, {
                                     "reason": "Error includes code and descriptive message",
                                     "url": probe_url,
                                     "status": resp.status,
                                     "error_keys": list(data.keys())[:8],
+                                    "has_doc_link": has_doc_link,
                                 })
                             elif has_message:
                                 return (1, {
@@ -375,10 +411,9 @@ async def check_error_response_quality(
 async def check_deprecation_policy(
     session: aiohttp.ClientSession, base_url: str
 ) -> tuple[int, dict[str, Any]]:
-    """Check for deprecation policy documentation (2 pts max).
+    """Check for deprecation policy documentation (1 pt max).
 
-    2 pts = Explicit deprecation/versioning policy documented
-    1 pt  = Deprecation or sunset mentioned
+    1 pt  = Deprecation/versioning policy or sunset mentioned
     0 pts = No deprecation policy found
     """
     policy_paths = [
@@ -406,17 +441,11 @@ async def check_deprecation_policy(
                     strong_matches = [kw for kw in deprecation_keywords[:4] if kw in text]
                     weak_matches = [kw for kw in deprecation_keywords[4:] if kw in text]
 
-                    if strong_matches:
-                        return (2, {
-                            "reason": "Explicit deprecation/versioning policy documented",
-                            "url": path,
-                            "keywords": strong_matches,
-                        })
-                    elif weak_matches:
+                    if strong_matches or weak_matches:
                         return (1, {
-                            "reason": "Deprecation or migration mentioned",
+                            "reason": "Deprecation/versioning policy or migration mentioned",
                             "url": path,
-                            "keywords": weak_matches,
+                            "keywords": strong_matches + weak_matches,
                         })
         except (aiohttp.ClientError, asyncio.TimeoutError):
             continue
@@ -432,7 +461,7 @@ async def check_deprecation_policy(
                 sunset = resp.headers.get("sunset")
                 deprecation = resp.headers.get("deprecation")
                 if sunset or deprecation:
-                    return (2, {
+                    return (1, {
                         "reason": "Sunset/Deprecation headers in API response",
                         "url": path,
                         "sunset": sunset,
@@ -444,44 +473,57 @@ async def check_deprecation_policy(
     return (0, {"reason": "No deprecation policy found"})
 
 
-async def check_sla_guarantee(
+async def check_security_headers(
     session: aiohttp.ClientSession, base_url: str
 ) -> tuple[int, dict[str, Any]]:
-    """Check for published SLA or uptime guarantee (1 pt max).
+    """Check for security headers on the main URL (3 pts max).
 
-    1 pt  = SLA/uptime guarantee published
-    0 pts = No SLA found
+    3 pts = All 4 security headers present
+    2 pts = 3 of 4 present
+    1 pt  = 2 of 4 present
+    0 pts = 1 or fewer present
     """
-    sla_paths = [
-        f"{base_url}/sla",
-        f"{base_url}/docs/sla",
-        f"{base_url}/terms",
-        f"{base_url}/legal/sla",
-        f"{base_url}/pricing",
-    ]
+    target_headers = {
+        "strict-transport-security": "HSTS",
+        "content-security-policy": "CSP",
+        "x-content-type-options": "X-Content-Type-Options",
+        "x-frame-options": "X-Frame-Options",
+    }
 
-    for path in sla_paths:
-        try:
-            async with session.get(
-                path, timeout=aiohttp.ClientTimeout(total=5),
-                allow_redirects=True, ssl=False,
-            ) as resp:
-                if resp.status < 300:
-                    text = (await resp.text()).lower()
-                    sla_keywords = [
-                        "service level agreement", "sla", "uptime guarantee",
-                        "99.9%", "99.99%", "99.95%", "guaranteed uptime",
-                        "availability commitment",
-                    ]
-                    if any(kw in text for kw in sla_keywords):
-                        return (1, {
-                            "reason": "SLA or uptime guarantee published",
-                            "url": path,
-                        })
-        except (aiohttp.ClientError, asyncio.TimeoutError):
-            continue
+    try:
+        async with session.get(
+            base_url,
+            timeout=aiohttp.ClientTimeout(total=5),
+            allow_redirects=True,
+            ssl=False,
+        ) as resp:
+            resp_headers_lower = {h.lower() for h in resp.headers}
+            found = {
+                label: header in resp_headers_lower
+                for header, label in target_headers.items()
+            }
+            present = [label for label, ok in found.items() if ok]
+            missing = [label for label, ok in found.items() if not ok]
+            count = len(present)
 
-    return (0, {"reason": "No SLA/uptime guarantee found"})
+            if count >= 4:
+                score = 3
+            elif count == 3:
+                score = 2
+            elif count == 2:
+                score = 1
+            else:
+                score = 0
+
+            return (score, {
+                "reason": f"{count}/4 security headers present",
+                "present": present,
+                "missing": missing,
+            })
+    except (aiohttp.ClientError, asyncio.TimeoutError):
+        pass
+
+    return (0, {"reason": "Could not check security headers"})
 
 
 async def check_github_activity(
@@ -538,16 +580,17 @@ async def run_trust_signals(
 ) -> dict:
     """Run all Trust Signal checks concurrently."""
     (uptime_score, uptime_ev), (docs_score, docs_ev), (update_score, update_ev), \
-        (consistency_score, consistency_ev), (error_quality_score, error_quality_ev), \
-        (deprecation_score, deprecation_ev), (sla_score, sla_ev), \
+        (consistency_score, consistency_ev), (security_headers_score, security_headers_ev), \
+        (error_quality_score, error_quality_ev), \
+        (deprecation_score, deprecation_ev), \
         (gh_score, gh_ev) = await asyncio.gather(
         check_uptime(session, base_url),
         check_documentation_quality(session, base_url),
         check_update_frequency(session, base_url),
         check_response_consistency(session, base_url),
+        check_security_headers(session, base_url),
         check_error_response_quality(session, base_url),
         check_deprecation_policy(session, base_url),
-        check_sla_guarantee(session, base_url),
         check_github_activity(session, base_url),
     )
 
@@ -558,7 +601,7 @@ async def run_trust_signals(
         uptime_ev["github_bonus"] = bonus
         uptime_ev["github_evidence"] = gh_ev
 
-    total = uptime_score + docs_score + update_score + consistency_score + error_quality_score + deprecation_score + sla_score
+    total = uptime_score + docs_score + update_score + consistency_score + security_headers_score + error_quality_score + deprecation_score
 
     return {
         "score": total,
@@ -588,23 +631,23 @@ async def run_trust_signals(
                 "label": "Response Consistency",
                 "evidence": consistency_ev,
             },
+            "security_headers": {
+                "score": security_headers_score,
+                "max": 3,
+                "label": "Security Headers",
+                "evidence": security_headers_ev,
+            },
             "error_response_quality": {
                 "score": error_quality_score,
-                "max": 3,
+                "max": 2,
                 "label": "Error Response Quality",
                 "evidence": error_quality_ev,
             },
             "deprecation_policy": {
                 "score": deprecation_score,
-                "max": 2,
+                "max": 1,
                 "label": "Deprecation Policy",
                 "evidence": deprecation_ev,
-            },
-            "sla_guarantee": {
-                "score": sla_score,
-                "max": 1,
-                "label": "SLA / Uptime Guarantee",
-                "evidence": sla_ev,
             },
         },
     }

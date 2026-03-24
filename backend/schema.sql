@@ -59,12 +59,68 @@ CREATE TABLE IF NOT EXISTS waitlist (
 CREATE INDEX IF NOT EXISTS idx_waitlist_email ON waitlist (email);
 
 -- ---------------------------------------------------------------------------
+-- scan_history: time-series data for trend tracking (Data Moat A)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS scan_history (
+    id          UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    url         TEXT NOT NULL,
+    scan_id     TEXT NOT NULL,
+    score       INTEGER NOT NULL,
+    rating      TEXT NOT NULL,
+    service_name TEXT NOT NULL,
+    dimensions  JSONB,
+    scanned_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_scan_history_url ON scan_history (url);
+CREATE INDEX IF NOT EXISTS idx_scan_history_scanned_at ON scan_history (scanned_at DESC);
+CREATE INDEX IF NOT EXISTS idx_scan_history_url_time ON scan_history (url, scanned_at DESC);
+
+-- ---------------------------------------------------------------------------
+-- tracked_urls: URLs registered for periodic auto-rescan (Data Moat A)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tracked_urls (
+    id          UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    url         TEXT NOT NULL UNIQUE,
+    service_name TEXT NOT NULL,
+    category    TEXT NOT NULL DEFAULT 'general',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_tracked_urls_category ON tracked_urls (category);
+
+-- ---------------------------------------------------------------------------
+-- accessibility_probes: AI agent accessibility test results (Data Moat C)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS accessibility_probes (
+    id              UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    url             TEXT NOT NULL,
+    probe_score     INTEGER NOT NULL,
+    probe_rating    TEXT NOT NULL,
+    agent_reachable BOOLEAN NOT NULL DEFAULT false,
+    agent_blocked   BOOLEAN NOT NULL DEFAULT false,
+    latency_ms      INTEGER,
+    allows_ai       BOOLEAN NOT NULL DEFAULT true,
+    discovery_count INTEGER NOT NULL DEFAULT 0,
+    json_available  BOOLEAN NOT NULL DEFAULT false,
+    full_result     JSONB,
+    probed_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_probes_url ON accessibility_probes (url);
+CREATE INDEX IF NOT EXISTS idx_probes_probed_at ON accessibility_probes (probed_at DESC);
+
+-- ---------------------------------------------------------------------------
 -- Row Level Security (RLS) policies
 -- ---------------------------------------------------------------------------
 -- Enable RLS on all tables
 ALTER TABLE scans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE scan_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tracked_urls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accessibility_probes ENABLE ROW LEVEL SECURITY;
 
 -- Allow the service role (backend) to do everything
 CREATE POLICY "Service role full access on scans"
@@ -82,7 +138,24 @@ CREATE POLICY "Service role full access on waitlist"
     USING (true)
     WITH CHECK (true);
 
+CREATE POLICY "Service role full access on scan_history"
+    ON scan_history FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Service role full access on tracked_urls"
+    ON tracked_urls FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Service role full access on accessibility_probes"
+    ON accessibility_probes FOR ALL USING (true) WITH CHECK (true);
+
 -- Public read access for scans (shared scan results)
 CREATE POLICY "Public read scans"
     ON scans FOR SELECT
+    USING (true);
+
+CREATE POLICY "Public read scan_history"
+    ON scan_history FOR SELECT
+    USING (true);
+
+CREATE POLICY "Public read accessibility_probes"
+    ON accessibility_probes FOR SELECT
     USING (true);
