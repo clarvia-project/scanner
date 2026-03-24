@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .config import settings
-from .middleware import RateLimitMiddleware
+from .middleware import RateLimitMiddleware, SecurityHeadersMiddleware
 from .models import ErrorResponse, ScanRequest, ScanResponse, WaitlistRequest
 from .routes.admin_routes import router as admin_router
 from .routes.badge_routes import router as badge_router
@@ -59,6 +59,9 @@ app.add_middleware(
 
 # Rate limiting
 app.add_middleware(RateLimitMiddleware)
+
+# Security headers
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 # ---------------------------------------------------------------------------

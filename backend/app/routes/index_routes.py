@@ -128,6 +128,8 @@ def _load_collected() -> None:
     from ..tool_scorer import normalize_tool
 
     seen_ids: set[str] = set()
+    # name-based dedup: keep the higher-scored tool when the same name appears from different sources
+    seen_names: dict[str, int] = {}  # lowercase name -> index in tools list
     tools: list[dict[str, Any]] = []
 
     for fname in _COLLECTED_FILES:
@@ -141,8 +143,19 @@ def _load_collected() -> None:
             for item in raw:
                 normalized = normalize_tool(item)
                 sid = normalized["scan_id"]
-                if sid not in seen_ids:
-                    seen_ids.add(sid)
+                if sid in seen_ids:
+                    continue
+                seen_ids.add(sid)
+
+                name_key = normalized["service_name"].lower().strip()
+                if name_key in seen_names:
+                    existing_idx = seen_names[name_key]
+                    existing_score = tools[existing_idx].get("clarvia_score", 0)
+                    new_score = normalized.get("clarvia_score", 0)
+                    if new_score > existing_score:
+                        tools[existing_idx] = normalized
+                else:
+                    seen_names[name_key] = len(tools)
                     tools.append(normalized)
         except Exception as e:
             logger.warning("Failed to load %s: %s", fname, e)

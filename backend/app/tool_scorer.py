@@ -269,6 +269,7 @@ def normalize_tool(tool: dict[str, Any]) -> dict[str, Any]:
             "productivity": ["notion", "calendar", "task", "project"],
             "blockchain": ["solana", "ethereum", "web3", "crypto", "defi"],
             "payments": ["payment", "stripe", "billing", "invoice"],
+            "mcp": ["mcp", "model context protocol", "smithery", "glama", "mcp server"],
         }
         for cat, kws in cat_keywords.items():
             if any(kw in combined for kw in kws):
@@ -294,3 +295,19 @@ def normalize_tool(tool: dict[str, Any]) -> dict[str, Any]:
         "source": f"collected:{source}",
         "tags": tool.get("keywords", [])[:5],
     }
+
+    # Auto-extract keywords from description when keywords list is empty
+    if not result["tags"] and desc:
+        from collections import Counter
+        stop = {"this", "that", "with", "from", "your", "have", "will", "been",
+                "they", "them", "their", "what", "when", "which", "there", "about",
+                "into", "than", "also", "more", "some", "very", "just", "other",
+                "over", "such", "only", "does", "most", "like", "make", "made",
+                "each", "well", "were", "then", "used", "many", "using", "tool",
+                "tools", "allows", "provides", "support", "based", "helps", "enable"}
+        words = re.findall(r"[a-zA-Z]{4,}", desc.lower())
+        filtered = [w for w in words if w not in stop]
+        common = [w for w, _ in Counter(filtered).most_common(5)]
+        result["tags"] = common
+
+    return result
