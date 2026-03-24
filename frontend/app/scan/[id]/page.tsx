@@ -899,7 +899,7 @@ function FreeActions({ result }: { result: ScanResult }) {
   const [badgeCopied, setBadgeCopied] = useState(false);
   const [badgeStyle, setBadgeStyle] = useState<"flat" | "flat-square">("flat");
 
-  const badgeUrl = `https://clarvia.art/api/badge/${result.scan_id}${badgeStyle !== "flat" ? `?style=${badgeStyle}` : ""}`;
+  const badgeUrl = `${API_BASE}/api/badge/${result.scan_id}${badgeStyle !== "flat" ? `?style=${badgeStyle}` : ""}`;
   const detailsUrl = typeof window !== "undefined" ? window.location.href : `https://clarvia.art/scan/${result.scan_id}`;
   const badgeMarkdown = `[![AEO Score: ${result.clarvia_score}](${badgeUrl})](${detailsUrl})`;
   const badgeHtml = `<a href="${detailsUrl}"><img src="${badgeUrl}" alt="AEO Score: ${result.clarvia_score}" /></a>`;
