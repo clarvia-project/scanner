@@ -79,7 +79,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if client_ip in ("127.0.0.1", "::1", "localhost"):
             return await call_next(request)
 
+        # Bypass rate limiting for admin API key
         api_key = request.headers.get("x-api-key")
+        if api_key:
+            from .config import settings
+            if api_key == getattr(settings, "admin_api_key", None):
+                return await call_next(request)
         if api_key:
             key = f"apikey:{api_key}"
             limit = API_KEY_LIMIT
