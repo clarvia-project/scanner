@@ -94,8 +94,36 @@ export default function ToolDetailPage() {
               <span className="font-semibold text-base tracking-tight text-foreground">clarvia</span>
             </Link>
             <nav className="hidden sm:flex items-center gap-6">
-              <Link href="/tools" className="text-sm text-accent font-medium">Tools</Link>
-              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">Leaderboard</Link>
+              <Link
+                href="/tools"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Tools
+              </Link>
+              <Link
+                href="/leaderboard"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Leaderboard
+              </Link>
+              <Link
+                href="/guide"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Guide
+              </Link>
+              <Link
+                href="/register"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Register
+              </Link>
+              <Link
+                href="/docs"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Docs
+              </Link>
             </nav>
           </div>
         </div>
