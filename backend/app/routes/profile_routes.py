@@ -86,11 +86,23 @@ class MCPConfig(BaseModel):
     resources_count: int = 0
 
 
+SERVICE_TYPES = {"mcp_server", "skill", "cli_tool", "api", "general"}
+
+
 class ProfileCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     url: str = Field(..., min_length=1)
     description: str = Field("", max_length=2000)
     category: str = Field("other", max_length=50)
+    service_type: str = Field("general", description="mcp_server|skill|cli_tool|api|general")
+    type_config: dict[str, Any] | None = Field(
+        None,
+        description="Type-specific config. "
+        "mcp_server: {npm_package, endpoint_url, transport, tools, resources}. "
+        "skill: {skill_file_url, compatible_agents, execution_env}. "
+        "cli_tool: {install_command, binary_name, usage_example}. "
+        "api: {openapi_url, auth_method, base_url}.",
+    )
     github_url: str | None = None
     mcp_config: MCPConfig | None = None
     contact_email: str | None = None
@@ -102,6 +114,8 @@ class ProfileUpdateRequest(BaseModel):
     url: str | None = None
     description: str | None = None
     category: str | None = None
+    service_type: str | None = None
+    type_config: dict[str, Any] | None = None
     github_url: str | None = None
     mcp_config: MCPConfig | None = None
     contact_email: str | None = None
@@ -152,8 +166,13 @@ def _make_badge_svg(score: int | None) -> str:
 # ---------------------------------------------------------------------------
 
 @router.post("/profiles")
-async def create_profile(req: ProfileCreateRequest, _key: ApiKeyDep):
-    """Register a new MCP service profile. Requires API key."""
+async def create_profile(req: ProfileCreateRequest):
+    """Register a new service. No API key required — open registration."""
+    # Validate service_type
+    stype = req.service_type or "general"
+    if stype not in SERVICE_TYPES:
+        raise HTTPException(status_code=400, detail=f"Invalid service_type. Must be one of: {', '.join(SERVICE_TYPES)}")
+
     # Check for duplicate URL
     for p in _profiles.values():
         if p["url"] == req.url:
@@ -171,6 +190,8 @@ async def create_profile(req: ProfileCreateRequest, _key: ApiKeyDep):
         "url": req.url,
         "description": req.description,
         "category": req.category,
+        "service_type": stype,
+        "type_config": req.type_config,
         "github_url": req.github_url,
         "mcp_config": req.mcp_config.model_dump() if req.mcp_config else None,
         "contact_email": req.contact_email,
@@ -181,27 +202,115 @@ async def create_profile(req: ProfileCreateRequest, _key: ApiKeyDep):
         "updated_at": now,
         "last_scanned_at": None,
         "scan_result": None,
+        "agents_json_valid": None,
+        "email_verified": False,
     }
 
     _profiles[profile_id] = profile
     _save_profiles()
 
+    # Auto-validate agents.json in background (non-blocking)
+    _schedule_agents_json_check(profile_id, req.url)
+
+    # Auto-trigger scan (non-blocking)
+    _schedule_auto_scan(profile_id)
+
     return {
         "profile_id": profile_id,
         "name": req.name,
         "url": req.url,
+        "service_type": stype,
         "clarvia_score": None,
         "status": "pending_scan",
         "created_at": now,
-        "profile_url": f"https://clarvia.art/profile/{profile_id}",
+        "service_url": f"https://clarvia.art/service/{profile_id}",
     }
+
+
+def _schedule_agents_json_check(profile_id: str, url: str) -> None:
+    """Non-blocking agents.json validation after registration."""
+    import asyncio
+    import httpx
+
+    async def _check():
+        try:
+            agents_url = f"{url.rstrip('/')}/.well-known/agents.json"
+            async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+                resp = await client.get(agents_url)
+                valid = resp.status_code == 200
+                if profile_id in _profiles:
+                    _profiles[profile_id]["agents_json_valid"] = valid
+                    _save_profiles()
+        except Exception:
+            if profile_id in _profiles:
+                _profiles[profile_id]["agents_json_valid"] = False
+                _save_profiles()
+
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(_check())
+    except Exception:
+        pass
+
+
+def _schedule_auto_scan(profile_id: str) -> None:
+    """Auto-trigger scan after registration (non-blocking)."""
+    import asyncio
+
+    async def _scan():
+        try:
+            profile = _profiles.get(profile_id)
+            if not profile:
+                return
+            profile["status"] = "scanning"
+            _save_profiles()
+
+            from ..scanner import run_scan
+            result = await run_scan(profile["url"])
+
+            profile["clarvia_score"] = result.clarvia_score
+            profile["status"] = "scanned"
+            profile["last_scanned_at"] = datetime.now(timezone.utc).isoformat()
+            profile["scan_result"] = {
+                "scan_id": result.scan_id,
+                "rating": result.rating,
+                "clarvia_score": result.clarvia_score,
+                "dimensions": {
+                    k: {"score": v.score, "max": v.max}
+                    for k, v in result.dimensions.items()
+                },
+                "top_recommendations": result.top_recommendations,
+                "scanned_at": result.scanned_at.isoformat(),
+            }
+            _save_profiles()
+
+            try:
+                from ..services.supabase_client import save_scan
+                await save_scan(result)
+            except Exception:
+                pass
+        except Exception as e:
+            logger.warning("Auto-scan failed for %s: %s", profile_id, e)
+            if profile_id in _profiles:
+                _profiles[profile_id]["status"] = "scan_failed"
+                _save_profiles()
+
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(_scan())
+    except Exception:
+        pass
 
 
 @router.get("/profiles")
 async def list_profiles(
     category: str | None = Query(None, description="Filter by category"),
+    service_type: str | None = Query(None, description="Filter by service type"),
     status: str | None = Query(None, description="Filter by status"),
     min_score: int | None = Query(None, ge=0, le=100),
+    q: str | None = Query(None, description="Text search in name/description"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
@@ -210,8 +319,13 @@ async def list_profiles(
 
     if category:
         results = [p for p in results if p.get("category") == category]
+    if service_type:
+        results = [p for p in results if p.get("service_type", "general") == service_type]
     if status:
         results = [p for p in results if p.get("status") == status]
+    if q:
+        q_lower = q.lower()
+        results = [p for p in results if q_lower in p.get("name", "").lower() or q_lower in p.get("description", "").lower()]
     if min_score is not None:
         results = [
             p for p in results
@@ -236,9 +350,12 @@ async def list_profiles(
                 "name": p["name"],
                 "url": p["url"],
                 "category": p.get("category", "other"),
+                "service_type": p.get("service_type", "general"),
+                "type_config": p.get("type_config"),
                 "clarvia_score": p.get("clarvia_score"),
                 "status": p.get("status"),
                 "tags": p.get("tags", []),
+                "agents_json_valid": p.get("agents_json_valid"),
                 "created_at": p.get("created_at"),
             }
             for p in page

@@ -125,14 +125,18 @@ def _merge_profiles() -> None:
                 "scan_id": scan_id,
                 "url": profile["url"],
                 "service_name": profile["name"],
+                "description": profile.get("description", ""),
                 "clarvia_score": profile.get("clarvia_score", 0),
                 "rating": scan_result.get("rating", "unknown"),
                 "dimensions": scan_result.get("dimensions", {}),
                 "category": profile.get("category", "other"),
+                "service_type": profile.get("service_type", "general"),
+                "type_config": profile.get("type_config"),
                 "scanned_at": scan_result.get("scanned_at"),
                 "source": "profile",
                 "profile_id": profile["profile_id"],
                 "tags": profile.get("tags", []),
+                "agents_json_valid": profile.get("agents_json_valid"),
             }
             _services.append(entry)
             _by_scan_id[scan_id] = entry
@@ -154,16 +158,63 @@ def _ensure_loaded() -> None:
 def _compact_service(s: dict[str, Any]) -> dict[str, Any]:
     """Return a compact representation (no sub_factors)."""
     dims = s.get("dimensions", {})
-    return {
+    result = {
         "name": s["service_name"],
         "url": s["url"],
         "category": s.get("category", "other"),
+        "service_type": s.get("service_type", "general"),
         "clarvia_score": s["clarvia_score"],
         "rating": s["rating"],
         "dimensions": {k: v["score"] for k, v in dims.items()},
         "scan_id": s["scan_id"],
         "last_scanned": s.get("scanned_at"),
     }
+    # Include connection_info for typed services
+    tc = s.get("type_config")
+    if tc:
+        result["connection_info"] = _build_connection_info(s.get("service_type", "general"), tc)
+    if s.get("profile_id"):
+        result["profile_id"] = s["profile_id"]
+    return result
+
+
+def _build_connection_info(service_type: str, type_config: dict) -> dict[str, Any]:
+    """Build agent-friendly connection info from type_config."""
+    if service_type == "mcp_server":
+        info: dict[str, Any] = {}
+        if type_config.get("npm_package"):
+            info["install"] = f"npm install {type_config['npm_package']}"
+        if type_config.get("endpoint_url"):
+            info["endpoint"] = type_config["endpoint_url"]
+        if type_config.get("transport"):
+            info["transport"] = type_config["transport"]
+        if type_config.get("tools"):
+            info["tools"] = type_config["tools"]
+        return info
+    elif service_type == "cli_tool":
+        info = {}
+        if type_config.get("install_command"):
+            info["install"] = type_config["install_command"]
+        if type_config.get("binary_name"):
+            info["binary"] = type_config["binary_name"]
+        return info
+    elif service_type == "api":
+        info = {}
+        if type_config.get("openapi_url"):
+            info["openapi"] = type_config["openapi_url"]
+        if type_config.get("base_url"):
+            info["base_url"] = type_config["base_url"]
+        if type_config.get("auth_method"):
+            info["auth"] = type_config["auth_method"]
+        return info
+    elif service_type == "skill":
+        info = {}
+        if type_config.get("skill_file_url"):
+            info["skill_url"] = type_config["skill_file_url"]
+        if type_config.get("compatible_agents"):
+            info["agents"] = type_config["compatible_agents"]
+        return info
+    return {}
 
 
 def _full_service(s: dict[str, Any]) -> dict[str, Any]:
@@ -194,13 +245,19 @@ def _add_headers(response: Response) -> None:
 async def list_services(
     response: Response,
     category: str | None = Query(None, description="Filter by category"),
+    service_type: str | None = Query(None, description="Filter by type: mcp_server|skill|cli_tool|api|general"),
+    q: str | None = Query(None, description="Text search in name/description"),
     min_score: int = Query(0, ge=0, le=100, description="Minimum Clarvia Score"),
     max_score: int | None = Query(None, ge=0, le=100, description="Maximum Clarvia Score"),
     sort: SortOrder = Query(SortOrder.score_desc, description="Sort order"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
-    """Search and filter services for agent consumption."""
+    """Search and filter services for agent consumption.
+
+    Supports compound filters: service_type + category + score + text search.
+    Example: GET /v1/services?service_type=mcp_server&category=payments&min_score=70&q=payment
+    """
     _ensure_loaded()
     _add_headers(response)
 
@@ -208,6 +265,18 @@ async def list_services(
 
     if category:
         filtered = [s for s in filtered if s.get("category") == category]
+
+    if service_type:
+        filtered = [s for s in filtered if s.get("service_type", "general") == service_type]
+
+    if q:
+        q_lower = q.lower()
+        filtered = [
+            s for s in filtered
+            if q_lower in s.get("service_name", "").lower()
+            or q_lower in s.get("description", "").lower()
+            or q_lower in s.get("url", "").lower()
+        ]
 
     filtered = [s for s in filtered if s["clarvia_score"] >= min_score]
 

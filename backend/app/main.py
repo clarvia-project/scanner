@@ -14,6 +14,7 @@ from .middleware import RateLimitMiddleware
 from .models import ErrorResponse, ScanRequest, ScanResponse, WaitlistRequest
 from .routes.admin_routes import router as admin_router
 from .routes.badge_routes import router as badge_router
+from .routes.feedback_routes import router as feedback_router
 from .routes.index_routes import router as index_router
 from .routes.profile_routes import router as profile_router
 from .scanner import cleanup_cache, get_cached_scan, run_scan
@@ -107,6 +108,7 @@ except ImportError:
 # Mount routers
 app.include_router(index_router)
 app.include_router(profile_router)
+app.include_router(feedback_router)
 app.include_router(admin_router)
 app.include_router(badge_router)
 

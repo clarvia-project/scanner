@@ -89,6 +89,7 @@ export interface RegisterResult {
 export async function searchServices(params: {
   query?: string;
   category?: string;
+  service_type?: string;
   min_score?: number;
   limit?: number;
 }): Promise<Service[]> {
@@ -96,9 +97,28 @@ export async function searchServices(params: {
     params: {
       q: params.query,
       category: params.category,
+      service_type: params.service_type,
       min_score: params.min_score,
       limit: params.limit,
     },
+  });
+}
+
+export interface FeedbackResult {
+  status: string;
+  total_feedback: number;
+}
+
+export async function submitFeedback(params: {
+  profile_id: string;
+  outcome: "success" | "failure" | "partial";
+  agent_id?: string;
+  error_message?: string;
+  latency_ms?: number;
+}): Promise<FeedbackResult> {
+  return request<FeedbackResult>("/v1/feedback", {
+    method: "POST",
+    body: params,
   });
 }
 
