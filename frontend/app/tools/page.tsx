@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { API_BASE } from "@/lib/api";
+import { API_BASE, recommendTools, type RecommendResult } from "@/lib/api";
 
 interface Tool {
   name: string;
@@ -110,16 +110,23 @@ export default function ToolsPage() {
   const [offset, setOffset] = useState(0);
   const limit = 30;
 
+  // Intent search mode
+  const [searchMode, setSearchMode] = useState<"keyword" | "intent">("keyword");
+  const [intentResults, setIntentResults] = useState<RecommendResult[]>([]);
+  const [intentTotal, setIntentTotal] = useState(0);
+  const [expandedTerms, setExpandedTerms] = useState<string[]>([]);
+
   // Debounce search
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(query), 300);
+    const delay = searchMode === "intent" ? 500 : 300;
+    const t = setTimeout(() => setDebouncedQuery(query), delay);
     return () => clearTimeout(t);
-  }, [query]);
+  }, [query, searchMode]);
 
   // Reset offset when filters change
   useEffect(() => {
     setOffset(0);
-  }, [debouncedQuery, serviceType, category, sortOrder]);
+  }, [debouncedQuery, serviceType, category, sortOrder, searchMode]);
 
   // Fetch stats
   useEffect(() => {
@@ -129,8 +136,34 @@ export default function ToolsPage() {
       .catch(() => {});
   }, []);
 
-  // Fetch tools
+  // Intent search
+  const fetchIntent = useCallback(async () => {
+    if (!debouncedQuery || searchMode !== "intent") return;
+    setLoading(true);
+    try {
+      const filters: Record<string, unknown> = {};
+      if (serviceType) filters.service_type = serviceType;
+      if (category) filters.category = category;
+      const data = await recommendTools(debouncedQuery, filters as any, 30);
+      setIntentResults(data.recommendations);
+      setIntentTotal(data.total_candidates);
+      setExpandedTerms(data.intent_parsed.expanded_terms);
+    } catch {
+      setIntentResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedQuery, serviceType, category, searchMode]);
+
+  useEffect(() => {
+    if (searchMode === "intent" && debouncedQuery) {
+      fetchIntent();
+    }
+  }, [fetchIntent, searchMode, debouncedQuery]);
+
+  // Fetch tools (keyword mode)
   const fetchTools = useCallback(async () => {
+    if (searchMode === "intent" && debouncedQuery) return; // intent mode handles its own fetch
     setLoading(true);
     const params = new URLSearchParams({
       source: "all",
@@ -284,6 +317,29 @@ export default function ToolsPage() {
           </div>
         )}
 
+        {/* Search Mode Toggle */}
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => { setSearchMode("keyword"); setIntentResults([]); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all cursor-pointer ${
+              searchMode === "keyword" ? "btn-gradient text-white" : "glass-subtle text-muted"
+            }`}
+          >
+            Keyword Search
+          </button>
+          <button
+            onClick={() => setSearchMode("intent")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all cursor-pointer flex items-center gap-1.5 ${
+              searchMode === "intent" ? "btn-gradient text-white" : "glass-subtle text-muted"
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            </svg>
+            Intent Search
+          </button>
+        </div>
+
         {/* Search + Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="flex-1 relative">
@@ -304,7 +360,10 @@ export default function ToolsPage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search tools... (e.g. github, slack, database)"
+              placeholder={searchMode === "intent"
+                ? "What do you want to do? (e.g. automate PR reviews, send Slack notifications)"
+                : "Search tools... (e.g. github, slack, database)"
+              }
               className="w-full glass-subtle pl-10 pr-4 py-2.5 rounded-lg text-sm placeholder:text-muted/50 focus:outline-none"
             />
           </div>
@@ -331,11 +390,28 @@ export default function ToolsPage() {
           </select>
         </div>
 
+        {/* Expanded terms (intent mode) */}
+        {searchMode === "intent" && expandedTerms.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            <span className="text-[10px] text-muted/60 font-mono mr-1">Searching:</span>
+            {expandedTerms.slice(0, 12).map((term) => (
+              <span key={term} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-accent/10 text-accent/70 border border-accent/20">
+                {term}
+              </span>
+            ))}
+            {expandedTerms.length > 12 && (
+              <span className="text-[10px] text-muted/50 font-mono">+{expandedTerms.length - 12} more</span>
+            )}
+          </div>
+        )}
+
         {/* Results count */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <p className="text-xs text-muted font-mono">
-              {total.toLocaleString()} results
+              {searchMode === "intent" && debouncedQuery
+                ? `${intentTotal.toLocaleString()} matches`
+                : `${total.toLocaleString()} results`}
               {debouncedQuery && ` for "${debouncedQuery}"`}
             </p>
             <button
@@ -359,6 +435,66 @@ export default function ToolsPage() {
               <div key={i} className="glass-card rounded-xl p-4 h-32 animate-pulse" />
             ))}
           </div>
+        ) : searchMode === "intent" && debouncedQuery ? (
+          /* Intent search results */
+          intentResults.length === 0 ? (
+            <div className="glass-card rounded-xl p-12 text-center">
+              <p className="text-muted">No matching tools. Try describing what you want to do differently.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {intentResults.map((rec, idx) => (
+                <Link
+                  key={rec.scan_id}
+                  href={
+                    rec.scan_id.startsWith("tool_")
+                      ? `/tool/${rec.scan_id}`
+                      : `/scan/${rec.scan_id}`
+                  }
+                  className="glass-card rounded-xl p-4 hover:border-accent/30 transition-all group flex flex-col"
+                >
+                  <div className="flex items-start gap-3 mb-2">
+                    <ServiceIcon url={rec.url} name={rec.name} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <TypeBadge type={rec.service_type} />
+                        <span className={`text-xs font-mono font-bold ${scoreColor(rec.clarvia_score)}`}>
+                          {rec.clarvia_score}
+                        </span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-accent/15 text-accent border border-accent/25">
+                          {Math.round(rec.relevance_score * 100)}% match
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-semibold truncate group-hover:text-accent transition-colors">
+                        {idx + 1}. {rec.name}
+                      </h3>
+                    </div>
+                  </div>
+                  {rec.description && (
+                    <p className="text-xs text-muted/70 line-clamp-2 mb-1.5 leading-relaxed">
+                      {rec.description}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-accent/60 font-mono mb-1.5">
+                    {rec.match_reason}
+                  </p>
+                  <div className="flex items-center gap-2 mt-auto">
+                    <span className="text-[10px] text-muted/50 font-mono px-1.5 py-0.5 rounded bg-card-border/30">
+                      {rec.category}
+                    </span>
+                    {rec.install_hint && (
+                      <span
+                        className="text-[10px] text-emerald-400/70 font-mono truncate max-w-[180px]"
+                        title={rec.install_hint}
+                      >
+                        {rec.install_hint}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )
         ) : tools.length === 0 ? (
           <div className="glass-card rounded-xl p-12 text-center">
             <p className="text-muted">No tools found. Try a different search.</p>
