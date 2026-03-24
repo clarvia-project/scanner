@@ -45,6 +45,43 @@ const CATEGORIES = [
   { key: "other", label: "Other" },
 ];
 
+function getFaviconUrl(url: string): string | null {
+  if (!url) return null;
+  try {
+    const domain = new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+  } catch {
+    return null;
+  }
+}
+
+function ServiceIcon({ url, name }: { url: string; name: string }) {
+  const [error, setError] = useState(false);
+  const favicon = getFaviconUrl(url);
+
+  if (!favicon || error) {
+    // Fallback: first letter
+    return (
+      <div className="w-8 h-8 rounded-lg bg-card-border/40 flex items-center justify-center flex-shrink-0">
+        <span className="text-xs font-bold text-muted/70">
+          {(name || "?").charAt(0).toUpperCase()}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={favicon}
+      alt=""
+      width={20}
+      height={20}
+      className="w-8 h-8 rounded-lg bg-card-border/30 p-1.5 flex-shrink-0 object-contain"
+      onError={() => setError(true)}
+    />
+  );
+}
+
 function scoreColor(score: number) {
   if (score >= 70) return "text-score-green";
   if (score >= 40) return "text-score-yellow";
@@ -338,7 +375,8 @@ export default function ToolsPage() {
                 }
                 className="glass-card rounded-xl p-4 hover:border-accent/30 transition-all group flex flex-col"
               >
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex items-start gap-3 mb-2">
+                  <ServiceIcon url={tool.url} name={tool.name} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <TypeBadge type={tool.service_type} />

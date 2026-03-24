@@ -6,6 +6,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { API_BASE } from "@/lib/api";
 
+function getFaviconUrl(url: string): string | null {
+  if (!url) return null;
+  try {
+    const domain = new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+  } catch {
+    return null;
+  }
+}
+
 interface ToolDetail {
   name: string;
   url: string;
@@ -147,7 +157,23 @@ export default function ToolDetailPage() {
                 </span>
                 <span className="text-xs text-muted/50 font-mono">{tool.category}</span>
               </div>
-              <h1 className="text-2xl font-bold tracking-tight mb-2">{tool.name}</h1>
+              <div className="flex items-center gap-3 mb-2">
+                {getFaviconUrl(tool.url) ? (
+                  <img
+                    src={getFaviconUrl(tool.url)!}
+                    alt=""
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 rounded-lg bg-card-border/30 p-1 object-contain"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-lg bg-card-border/40 flex items-center justify-center">
+                    <span className="text-sm font-bold text-muted/70">{tool.name.charAt(0).toUpperCase()}</span>
+                  </div>
+                )}
+                <h1 className="text-2xl font-bold tracking-tight">{tool.name}</h1>
+              </div>
               {tool.description && (
                 <p className="text-muted leading-relaxed max-w-xl">{tool.description}</p>
               )}
