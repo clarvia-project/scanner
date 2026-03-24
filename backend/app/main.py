@@ -96,14 +96,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # ---------------------------------------------------------------------------
 # Optional service imports (graceful degradation without Stripe/Supabase)
 # ---------------------------------------------------------------------------
-_stripe_router = None
 _supabase_client = None
-
-try:
-    from .routes.stripe_routes import router as stripe_router
-    _stripe_router = stripe_router
-except ImportError:
-    logger.info("Stripe routes not available (missing stripe package)")
 
 try:
     from .services.supabase_client import get_supabase
@@ -117,8 +110,18 @@ app.include_router(profile_router)
 app.include_router(admin_router)
 app.include_router(badge_router)
 
-if _stripe_router:
-    app.include_router(_stripe_router, prefix="/api/report")
+# Payment: Lemon Squeezy (primary) with Stripe fallback
+try:
+    from .routes.payment_routes import router as payment_router
+    app.include_router(payment_router, prefix="/api/report")
+    logger.info("Lemon Squeezy payment routes loaded")
+except ImportError:
+    try:
+        from .routes.stripe_routes import router as stripe_router
+        app.include_router(stripe_router, prefix="/api/report")
+        logger.info("Stripe payment routes loaded (fallback)")
+    except ImportError:
+        logger.info("No payment routes available")
 
 
 # ---------------------------------------------------------------------------
