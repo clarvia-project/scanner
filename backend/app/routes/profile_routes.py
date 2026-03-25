@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field, HttpUrl
 
 from ..auth import ApiKeyDep
 
@@ -120,8 +120,8 @@ def get_all_profiles() -> list[dict[str, Any]]:
     return list(_profiles.values())
 
 
-# Load on module import
-_load_profiles()
+# NOTE: _load_profiles() is called during app lifespan startup (see main.py),
+# not at module import time, to avoid side effects during import.
 
 
 # ---------------------------------------------------------------------------
@@ -139,7 +139,7 @@ SERVICE_TYPES = {"mcp_server", "skill", "cli_tool", "api", "general"}
 
 class ProfileCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
-    url: str = Field(..., min_length=1)
+    url: HttpUrl = Field(..., description="Service URL (must be a valid HTTP/HTTPS URL)")
     description: str = Field("", max_length=2000)
     category: str = Field("other", max_length=50)
     service_type: str = Field("general", description="mcp_server|skill|cli_tool|api|general")
@@ -151,22 +151,22 @@ class ProfileCreateRequest(BaseModel):
         "cli_tool: {install_command, binary_name, usage_example}. "
         "api: {openapi_url, auth_method, base_url}.",
     )
-    github_url: str | None = None
+    github_url: HttpUrl | None = None
     mcp_config: MCPConfig | None = None
-    contact_email: str | None = None
+    contact_email: EmailStr | None = None
     tags: list[str] = Field(default_factory=list)
 
 
 class ProfileUpdateRequest(BaseModel):
     name: str | None = None
-    url: str | None = None
+    url: HttpUrl | None = None
     description: str | None = None
     category: str | None = None
     service_type: str | None = None
     type_config: dict[str, Any] | None = None
-    github_url: str | None = None
+    github_url: HttpUrl | None = None
     mcp_config: MCPConfig | None = None
-    contact_email: str | None = None
+    contact_email: EmailStr | None = None
     tags: list[str] | None = None
 
 
@@ -253,27 +253,33 @@ async def create_profile(req: ProfileCreateRequest, request: Request):
         raise HTTPException(status_code=400, detail=f"Invalid service_type. Must be one of: {', '.join(SERVICE_TYPES)}")
 
     # Check for duplicate URL
+    req_url_str = str(req.url)
     for p in _profiles.values():
-        if p["url"] == req.url:
+        if p["url"] == req_url_str:
             raise HTTPException(
                 status_code=409,
-                detail=f"Profile already exists for URL: {req.url}",
+                detail=f"Profile already exists for URL: {req_url_str}",
             )
 
     profile_id = _gen_id()
     now = datetime.now(timezone.utc).isoformat()
 
+    # Convert Pydantic Url/EmailStr objects to plain strings for JSON serialization
+    url_str = str(req.url)
+    github_url_str = str(req.github_url) if req.github_url else None
+    contact_email_str = str(req.contact_email) if req.contact_email else None
+
     profile = {
         "profile_id": profile_id,
         "name": req.name,
-        "url": req.url,
+        "url": url_str,
         "description": req.description,
         "category": req.category,
         "service_type": stype,
         "type_config": req.type_config,
-        "github_url": req.github_url,
+        "github_url": github_url_str,
         "mcp_config": req.mcp_config.model_dump() if req.mcp_config else None,
-        "contact_email": req.contact_email,
+        "contact_email": contact_email_str,
         "tags": req.tags,
         "clarvia_score": None,
         "status": "pending_scan",
@@ -289,7 +295,7 @@ async def create_profile(req: ProfileCreateRequest, request: Request):
     _save_profiles()
 
     # Auto-validate agents.json in background (non-blocking)
-    _schedule_agents_json_check(profile_id, req.url)
+    _schedule_agents_json_check(profile_id, url_str)
 
     # Auto-trigger scan (non-blocking)
     _schedule_auto_scan(profile_id)
@@ -297,7 +303,7 @@ async def create_profile(req: ProfileCreateRequest, request: Request):
     return {
         "profile_id": profile_id,
         "name": req.name,
-        "url": req.url,
+        "url": url_str,
         "service_type": stype,
         "clarvia_score": None,
         "status": "pending_scan",
@@ -467,6 +473,13 @@ async def update_profile(profile_id: str, req: ProfileUpdateRequest, _key: ApiKe
     if "mcp_config" in updates and updates["mcp_config"] is not None:
         updates["mcp_config"] = updates["mcp_config"].model_dump() if hasattr(updates["mcp_config"], "model_dump") else updates["mcp_config"]
 
+    # Convert Pydantic Url/EmailStr objects to plain strings
+    for url_field in ("url", "github_url"):
+        if url_field in updates and updates[url_field] is not None:
+            updates[url_field] = str(updates[url_field])
+    if "contact_email" in updates and updates["contact_email"] is not None:
+        updates["contact_email"] = str(updates["contact_email"])
+
     for key, value in updates.items():
         profile[key] = value
 
@@ -526,7 +539,7 @@ async def scan_profile(profile_id: str, _key: ApiKeyDep):
         _save_profiles()
         raise HTTPException(
             status_code=500,
-            detail=f"Scan failed: {type(e).__name__}: {str(e)[:200]}",
+            detail="Scan failed due to an internal error. Please try again later.",
         )
 
 

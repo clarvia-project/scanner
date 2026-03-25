@@ -4,6 +4,9 @@ aiohttp~=3.13.3
 pydantic~=2.12.5
 pydantic-settings~=2.13.1
 
+# MCP server (Streamable HTTP transport)
+mcp>=1.8.0
+
 # Recommendation engine
 scikit-learn~=1.8.0
 numpy~=2.4.3
