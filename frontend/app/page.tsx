@@ -661,23 +661,16 @@ export default function LandingPage() {
               <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">For developers</p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Ship agent-ready services</h2>
             </div>
-            <div className="flex flex-wrap justify-center gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm max-w-4xl mx-auto">
               {[
                 { label: "Register your MCP server or API", step: "1" },
                 { label: "Get scored automatically", step: "2" },
                 { label: "Add badge to README", step: "3" },
                 { label: "Get discovered by agents", step: "4" },
               ].map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3">
-                  {idx > 0 && (
-                    <svg className="w-4 h-4 text-accent/40 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                    </svg>
-                  )}
-                  <span className="glass-card rounded-xl px-5 py-3 text-muted flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-md bg-accent/10 text-accent text-[10px] font-bold flex items-center justify-center">{item.step}</span>
-                    {item.label}
-                  </span>
+                <div key={idx} className="glass-card rounded-xl px-4 py-3 text-muted flex items-center gap-2 text-center">
+                  <span className="w-5 h-5 rounded-md bg-accent/10 text-accent text-[10px] font-bold flex items-center justify-center flex-shrink-0">{item.step}</span>
+                  <span className="text-xs">{item.label}</span>
                 </div>
               ))}
             </div>
