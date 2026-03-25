@@ -14,7 +14,11 @@ from .checks.agent_compatibility import run_agent_compatibility
 from .checks.data_structuring import run_data_structuring
 from .checks.onchain_bonus import run_onchain_bonus
 from .checks.trust_signals import run_trust_signals
+import logging
+
 from .config import settings
+
+logger = logging.getLogger(__name__)
 from .models import (
     DimensionResult,
     OnchainBonusResult,
@@ -23,6 +27,8 @@ from .models import (
 )
 
 # In-memory cache: scan_id -> (result, timestamp)
+# Bounded to CACHE_MAX_SIZE entries to prevent unbounded memory growth.
+CACHE_MAX_SIZE = 1000
 _scan_cache: dict[str, tuple[ScanResponse, float]] = {}
 
 
@@ -429,6 +435,9 @@ async def run_scan(
         session_headers.update(auth_headers)
 
     # Validate URL is reachable
+    # ssl=False: scan targets may use self-signed certs; this is intentional
+    # for external URL probing. Internal API calls (Supabase) use their own
+    # SDK with default SSL verification enabled.
     connector = aiohttp.TCPConnector(limit=20, ssl=False)
     async with aiohttp.ClientSession(
         connector=connector,
@@ -484,7 +493,26 @@ async def run_scan(
         ts_task = run_trust_signals(session, url)
         oc_task = run_onchain_bonus(url)
 
-        all_results = await asyncio.gather(*api_tasks, ac_task, ts_task, oc_task)
+        all_results = await asyncio.gather(
+            *api_tasks, ac_task, ts_task, oc_task,
+            return_exceptions=True,
+        )
+
+        # If any check raised an exception, log it and substitute a zero-score fallback
+        _zero_dim = lambda name: {"score": 0, "max": 25, "sub_factors": {}}
+        _zero_onchain = {"score": 0, "max": 25, "applicable": False, "sub_factors": {}}
+        for i, res in enumerate(all_results):
+            if isinstance(res, BaseException):
+                logger.error("Scan check %d failed: %s", i, res)
+                # Determine which check failed and provide appropriate fallback
+                if i < len(api_tasks):
+                    all_results[i] = _zero_dim("api_accessibility")
+                elif i == len(api_tasks):
+                    all_results[i] = _zero_dim("agent_compatibility")
+                elif i == len(api_tasks) + 1:
+                    all_results[i] = _zero_dim("trust_signals")
+                else:
+                    all_results[i] = _zero_onchain
 
         # Pick best API result
         api_results = all_results[:len(api_tasks)]
@@ -543,7 +571,12 @@ async def run_scan(
         authenticated_scan=authenticated,
     )
 
-    # Cache result
+    # Cache result (evict oldest entries if at capacity)
+    if len(_scan_cache) >= CACHE_MAX_SIZE:
+        # Remove oldest 10% by timestamp
+        sorted_keys = sorted(_scan_cache, key=lambda k: _scan_cache[k][1])
+        for k in sorted_keys[: max(1, CACHE_MAX_SIZE // 10)]:
+            del _scan_cache[k]
     _scan_cache[scan_id] = (response, time.time())
 
     return response
