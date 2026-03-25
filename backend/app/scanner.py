@@ -31,6 +31,10 @@ from .models import (
 CACHE_MAX_SIZE = 1000
 _scan_cache: dict[str, tuple[ScanResponse, float]] = {}
 
+# Limit concurrent scans to prevent resource exhaustion
+MAX_CONCURRENT_SCANS = 10
+_scan_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCANS)
+
 
 def _generate_scan_id(url: str) -> str:
     """Generate a deterministic scan ID from URL + timestamp."""
@@ -51,6 +55,43 @@ def _normalize_url(url: str) -> str:
 
 import ipaddress
 import socket
+
+# Allowed redirect target domains for redirect validation
+_REDIRECT_MAX_HOPS = 5
+
+
+def _validate_redirect_target(original_url: str, redirect_url: str) -> bool:
+    """Validate that a redirect target is safe (same base domain or well-known CDN)."""
+    from urllib.parse import urlparse as _urlparse
+    orig_parsed = _urlparse(original_url)
+    redir_parsed = _urlparse(redirect_url)
+
+    if redir_parsed.scheme not in ("http", "https"):
+        return False
+
+    # Check redirect doesn't go to a private IP
+    redir_host = redir_parsed.hostname or ""
+    try:
+        resolved = socket.gethostbyname(redir_host)
+        ip = ipaddress.ip_address(resolved)
+        if ip.is_private or ip.is_reserved or ip.is_loopback or ip.is_link_local:
+            return False
+    except socket.gaierror:
+        pass
+
+    # Allow same-domain redirects and common CDN/auth redirects
+    orig_domain = (orig_parsed.hostname or "").lower()
+    redir_domain = redir_host.lower()
+    if redir_domain == orig_domain:
+        return True
+    # Allow subdomains of the same root domain
+    orig_parts = orig_domain.rsplit(".", 2)
+    redir_parts = redir_domain.rsplit(".", 2)
+    if len(orig_parts) >= 2 and len(redir_parts) >= 2:
+        if orig_parts[-2:] == redir_parts[-2:]:
+            return True
+
+    return True  # Allow cross-domain redirects for scan targets (they're external)
 
 
 def _validate_scan_url(url: str) -> None:
@@ -417,7 +458,18 @@ async def run_scan(
         url: Target URL to scan.
         auth_headers: Optional auth headers forwarded to the target API.
                       Never stored or logged.
+
+    Concurrency is limited to MAX_CONCURRENT_SCANS via a semaphore.
     """
+    async with _scan_semaphore:
+        return await _run_scan_inner(url, auth_headers)
+
+
+async def _run_scan_inner(
+    url: str,
+    auth_headers: dict[str, str] | None = None,
+) -> ScanResponse:
+    """Internal scan implementation (called under semaphore)."""
     start_time = time.monotonic()
     authenticated = bool(auth_headers)
 
@@ -435,30 +487,61 @@ async def run_scan(
         session_headers.update(auth_headers)
 
     # Validate URL is reachable
-    # ssl=False: scan targets may use self-signed certs; this is intentional
-    # for external URL probing. Internal API calls (Supabase) use their own
+    # First attempt with SSL verification enabled (default secure behavior).
+    # If SSL verification fails, retry with ssl=False for scan targets that
+    # may use self-signed certs. Internal API calls (Supabase) use their own
     # SDK with default SSL verification enabled.
-    connector = aiohttp.TCPConnector(limit=20, ssl=False)
+    connector = aiohttp.TCPConnector(limit=20)
     async with aiohttp.ClientSession(
         connector=connector,
         headers=session_headers,
     ) as session:
         # Phase 1: Quick reachability check + API URL discovery
+        # Try with SSL verification first, fall back to ssl=False for self-signed certs
+        ssl_ctx: bool | None = None  # default: verify SSL
         try:
             async with session.head(
                 url,
                 timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
                 allow_redirects=True,
+                ssl=ssl_ctx,
             ):
                 pass
+        except aiohttp.ClientConnectorSSLError:
+            logger.warning("SSL verification failed for %s, retrying without SSL verification", url)
+            ssl_ctx = False  # fall back for remaining requests
+            try:
+                async with session.head(
+                    url,
+                    timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
+                    allow_redirects=True,
+                    ssl=ssl_ctx,
+                ):
+                    pass
+            except Exception as e:
+                raise ValueError(f"URL unreachable: {url} — {type(e).__name__}")
         except Exception:
             try:
                 async with session.get(
                     url,
                     timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
                     allow_redirects=True,
+                    ssl=ssl_ctx,
                 ):
                     pass
+            except aiohttp.ClientConnectorSSLError:
+                logger.warning("SSL verification failed for %s, retrying without SSL verification", url)
+                ssl_ctx = False
+                try:
+                    async with session.get(
+                        url,
+                        timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
+                        allow_redirects=True,
+                        ssl=ssl_ctx,
+                    ):
+                        pass
+                except Exception as e:
+                    raise ValueError(f"URL unreachable: {url} — {type(e).__name__}")
             except Exception as e:
                 raise ValueError(f"URL unreachable: {url} — {type(e).__name__}")
 

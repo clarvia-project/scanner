@@ -1,5 +1,6 @@
 """FastAPI application entry point."""
 
+import asyncio
 import logging
 import json as _json_mod
 import sys
@@ -77,19 +78,83 @@ from .scanner import cleanup_cache, get_cached_scan, run_scan
 
 logger = logging.getLogger(__name__)
 
+import os
+from contextlib import asynccontextmanager
+
+# Background task handle for periodic cache cleanup
+_cache_cleanup_task: asyncio.Task | None = None
+
+
+async def _periodic_cache_cleanup():
+    """Background task: clean expired cache entries every 30 minutes."""
+    import asyncio
+    while True:
+        await asyncio.sleep(1800)  # 30 minutes
+        try:
+            removed = cleanup_cache()
+            from .middleware import cleanup_rate_store
+            rate_removed = cleanup_rate_store()
+            if removed or rate_removed:
+                logger.info("Background cleanup: %d cache + %d rate-limit entries removed", removed, rate_removed)
+        except Exception as e:
+            logger.warning("Background cleanup error: %s", e)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan: startup and shutdown hooks."""
+    import asyncio
+    global _cache_cleanup_task
+
+    # --- Startup ---
+    # Load profiles (moved from module-level import to avoid side effects)
+    from .routes.profile_routes import _load_profiles
+    _load_profiles()
+    logger.info("Profiles loaded during startup")
+
+    # Load index data
+    from .routes.index_routes import _load_data
+    _load_data()
+    logger.info("Index data loaded during startup")
+
+    # Start background cache cleanup
+    _cache_cleanup_task = asyncio.create_task(_periodic_cache_cleanup())
+
+    # Start MCP session manager (required for Streamable HTTP transport)
+    try:
+        from .mcp_server import mcp_session_manager
+        async with mcp_session_manager.run():
+            logger.info("MCP session manager started")
+            yield
+    except Exception as exc:
+        logger.warning("MCP session manager not available: %s", exc)
+        yield
+
+    # --- Shutdown ---
+    logger.info("Shutting down gracefully...")
+    if _cache_cleanup_task:
+        _cache_cleanup_task.cancel()
+        try:
+            await _cache_cleanup_task
+        except asyncio.CancelledError:
+            pass
+    logger.info("Shutdown complete")
+
+
+_is_production = os.environ.get("SCANNER_ENV", "production") == "production"
+
 app = FastAPI(
     title="Clarvia AEO Scanner API",
     description="Scan any URL for AI Engine Optimization readiness. "
     "Provides AEO scoring, recommendations, and competitive benchmarks.",
     version="1.1.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json",
+    docs_url=None if _is_production else "/api/docs",
+    redoc_url=None if _is_production else "/api/redoc",
+    openapi_url=None if _is_production else "/api/openapi.json",
+    lifespan=lifespan,
 )
 
 # CORS — use settings.cors_origins as the base, add production domains
-import os
-
 _cors_origins = list(settings.cors_origins)
 # Ensure production domains are always included
 for _origin in [
@@ -102,7 +167,7 @@ for _origin in [
 if settings.frontend_url and settings.frontend_url not in _cors_origins:
     _cors_origins.append(settings.frontend_url)
 # Allow localhost in development
-if os.environ.get("SCANNER_ENV", "production") == "development":
+if not _is_production:
     _cors_origins.extend(["http://localhost:3000", "http://localhost:8002"])
 
 app.add_middleware(
@@ -176,6 +241,14 @@ app.include_router(admin_router)
 app.include_router(badge_router)
 app.include_router(trending_router)
 app.include_router(marketing_router)
+
+# MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
+try:
+    from .mcp_server import mcp_app
+    app.mount("/mcp", mcp_app)
+    logger.info("MCP Streamable HTTP server mounted at /mcp")
+except Exception as exc:
+    logger.warning("MCP server not available: %s", exc)
 
 # Payment: Lemon Squeezy (primary) with Stripe fallback
 try:
@@ -283,7 +356,7 @@ async def scan_url(req: ScanRequest):
         logger.exception("Scan failed for URL: %s", req.url)
         raise HTTPException(
             status_code=500,
-            detail=f"Scan failed: {type(e).__name__}: {str(e)[:200]}",
+            detail="Scan failed due to an internal error. Please try again later.",
         )
 
 
@@ -342,10 +415,17 @@ async def join_waitlist(req: WaitlistRequest):
 
 
 @app.post("/api/cache/cleanup")
-async def cache_cleanup():
-    """Remove expired cache entries."""
+async def cache_cleanup(request: Request):
+    """Remove expired cache entries. Requires admin API key."""
+    # Require admin API key for manual cache cleanup
+    api_key = request.headers.get("x-api-key") or request.headers.get("x-clarvia-key")
+    if not settings.admin_api_key or api_key != settings.admin_api_key:
+        raise HTTPException(status_code=403, detail="Admin API key required")
+
     removed = cleanup_cache()
-    return {"removed": removed}
+    from .middleware import cleanup_rate_store
+    rate_removed = cleanup_rate_store()
+    return {"cache_removed": removed, "rate_limit_removed": rate_removed}
 
 
 # ---------------------------------------------------------------------------
@@ -370,13 +450,20 @@ async def api_v1_score(url: str):
     if not clean_url.startswith("http"):
         clean_url = f"https://{clean_url}"
 
+    def _domain_match(url_a: str, url_b: str) -> bool:
+        """Compare URLs by domain (hostname) instead of substring."""
+        from urllib.parse import urlparse as _up
+        host_a = (_up(url_a).hostname or "").lower().removeprefix("www.")
+        host_b = (_up(url_b).hostname or "").lower().removeprefix("www.")
+        return host_a == host_b and host_a != ""
+
     # Check prebuilt scans first (fast path)
     prebuilt_path = Path(__file__).parent.parent.parent / "frontend" / "public" / "data" / "prebuilt-scans.json"
     if prebuilt_path.exists():
         with open(prebuilt_path) as f:
             scans = json.load(f)
         for s in scans:
-            if clean_url.rstrip("/") in s.get("url", "").rstrip("/") or s.get("url", "").rstrip("/") in clean_url.rstrip("/"):
+            if _domain_match(clean_url, s.get("url", "")):
                 return {
                     "url": s["url"],
                     "service_name": s["service_name"],
@@ -408,7 +495,8 @@ async def api_v1_score(url: str):
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Scan failed: {str(e)[:200]}")
+        logger.exception("API v1 score scan failed for URL: %s", clean_url)
+        raise HTTPException(status_code=500, detail="Scan failed due to an internal error. Please try again later.")
 
 
 @app.get("/api/v1/leaderboard")
@@ -472,15 +560,22 @@ async def api_v1_compare(urls: str):
         with open(prebuilt_path) as f:
             prebuilt = json.load(f)
 
+    def _domain_match_compare(url_a: str, url_b: str) -> bool:
+        """Compare URLs by domain (hostname) instead of substring."""
+        from urllib.parse import urlparse as _up
+        host_a = (_up(url_a).hostname or "").lower().removeprefix("www.")
+        host_b = (_up(url_b).hostname or "").lower().removeprefix("www.")
+        return host_a == host_b and host_a != ""
+
     results = []
     for url in url_list:
         clean = url.lower().strip()
         if not clean.startswith("http"):
             clean = f"https://{clean}"
 
-        # Check prebuilt
+        # Check prebuilt (domain-level match, not substring)
         match = next(
-            (s for s in prebuilt if clean.rstrip("/") in s.get("url", "").rstrip("/") or s.get("url", "").rstrip("/") in clean.rstrip("/")),
+            (s for s in prebuilt if _domain_match_compare(clean, s.get("url", ""))),
             None
         )
         if match:
@@ -649,6 +744,9 @@ async def authenticated_scan(request: Request):
     }
 
     try:
+        # ssl=False is intentional for authenticated scan probing — targets may
+        # use self-signed certs. This only applies to user-initiated scans
+        # against external URLs, not internal API calls.
         async with aiohttp.ClientSession(timeout=timeout) as session:
             # --- Request 1: GET base URL ---
             try:
@@ -726,7 +824,7 @@ async def authenticated_scan(request: Request):
                 pass  # Non-critical, we already have headers from request 1
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Authenticated scan failed: {type(e).__name__}: {str(e)[:200]}")
+        raise HTTPException(status_code=500, detail="Authenticated scan failed due to an internal error. Please try again later.")
 
     return {
         "auth_scan_report": {
@@ -910,7 +1008,7 @@ async def mcp_scan(identifier: str):
                     pass
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"MCP scan failed: {type(e).__name__}: {str(e)[:200]}")
+        raise HTTPException(status_code=500, detail="MCP scan failed due to an internal error. Please try again later.")
 
     # --- Quality scoring ---
     if mcp_found:
@@ -1838,13 +1936,17 @@ async def get_playbook(scan_id: str):
     if not cached:
         raise HTTPException(status_code=404, detail="Scan not found. Run a scan first.")
 
+    # cached is a ScanResponse Pydantic model — convert to dict for uniform access
+    scan_data = cached.model_dump() if hasattr(cached, "model_dump") else cached
+
     items = []
-    dimensions = cached.get("dimensions", {})
+    dimensions = scan_data.get("dimensions", {}) if isinstance(scan_data, dict) else {}
     for dim_key, dim_data in dimensions.items():
-        sub_factors = dim_data.get("sub_factors", {})
+        sub_factors = dim_data.get("sub_factors", {}) if isinstance(dim_data, dict) else {}
         for sf_key, sf_data in sub_factors.items():
-            score = sf_data.get("score", 0)
-            max_score = sf_data.get("max", 0)
+            sf_dict = sf_data if isinstance(sf_data, dict) else {}
+            score = sf_dict.get("score", 0)
+            max_score = sf_dict.get("max", 0)
             if max_score <= 0 or score >= max_score:
                 continue  # already at max
 
@@ -1873,7 +1975,7 @@ async def get_playbook(scan_id: str):
             items.append({
                 "sub_factor": sf_key,
                 "dimension": dim_key,
-                "label": sf_data.get("label", sf_key.replace("_", " ").title()),
+                "label": sf_dict.get("label", sf_key.replace("_", " ").title()),
                 "current_score": score,
                 "max_score": max_score,
                 "potential_gain": gap,
@@ -1883,13 +1985,16 @@ async def get_playbook(scan_id: str):
     # Sort by potential gain (biggest improvements first)
     items.sort(key=lambda x: x["potential_gain"], reverse=True)
 
+    service_name = scan_data.get("service_name", "") if isinstance(scan_data, dict) else getattr(cached, "service_name", "")
+    clarvia_score = scan_data.get("clarvia_score", 0) if isinstance(scan_data, dict) else getattr(cached, "clarvia_score", 0)
+
     return {
         "scan_id": scan_id,
-        "service_name": cached.get("service_name", ""),
+        "service_name": service_name,
         "items": items,
         "total_potential_gain": sum(i["potential_gain"] for i in items),
-        "current_score": cached.get("clarvia_score", 0),
-        "projected_score": min(100, cached.get("clarvia_score", 0) + sum(i["potential_gain"] for i in items)),
+        "current_score": clarvia_score,
+        "projected_score": min(100, clarvia_score + sum(i["potential_gain"] for i in items)),
     }
 
 
@@ -1996,7 +2101,7 @@ async def scan_history(url: str, limit: int = 20):
         return {"url": clean_url, "scans": scans, "total": len(scans)}
     except Exception as e:
         logger.exception("Failed to fetch scan history for %s", clean_url)
-        raise HTTPException(status_code=500, detail=f"Failed to fetch history: {str(e)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to fetch history. Please try again later.")
 
 
 # ---------------------------------------------------------------------------
@@ -2063,7 +2168,8 @@ async def get_trends(url: str, days: int = 90):
         from .services.supabase_client import get_scan_history
         scans = await get_scan_history(clean_url, limit=500)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)[:200])
+        logger.exception("Failed to fetch trend data for %s", clean_url)
+        raise HTTPException(status_code=500, detail="Failed to fetch trend data. Please try again later.")
 
     if not scans:
         return {"url": clean_url, "trend": [], "delta": None, "message": "No historical data yet"}
@@ -2619,7 +2725,7 @@ async def batch_score(req: BatchScanRequest, request: Request):
             return BatchScanResultItem(
                 url=url,
                 status="error",
-                error=f"{type(e).__name__}: {str(e)[:200]}",
+                error="Scan failed due to an internal error.",
             )
 
     results = await asyncio.gather(*[_scan_one(url) for url in req.urls])
@@ -2696,7 +2802,7 @@ async def ci_check(req: CICheckRequest, request: Request):
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.exception("CI check scan failed for URL: %s", req.url)
-        raise HTTPException(status_code=500, detail=f"Scan failed: {str(e)[:200]}")
+        raise HTTPException(status_code=500, detail="Scan failed due to an internal error. Please try again later.")
 
     # --- Evaluate thresholds ---
     overall_score = result.clarvia_score

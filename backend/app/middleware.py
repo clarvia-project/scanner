@@ -41,6 +41,10 @@ class RateLimitEntry:
 
 
 # In-memory store: keyed by IP or API key
+# TODO: Replace with Redis-backed store for multi-instance deployments.
+#       In-memory rate limiting is ineffective when running behind a load
+#       balancer with multiple app instances, as each instance maintains
+#       its own counter. Use redis-py or valkey with atomic INCR + EXPIRE.
 _rate_store: dict[str, RateLimitEntry] = defaultdict(RateLimitEntry)
 
 
