@@ -280,7 +280,7 @@ def normalize_tool(tool: dict[str, Any]) -> dict[str, Any]:
     safe_name = re.sub(r"[^a-z0-9]", "_", name.lower())[:40]
     scan_id = f"tool_{source}_{safe_name}"
 
-    return {
+    result = {
         "scan_id": scan_id,
         "url": url,
         "service_name": name,

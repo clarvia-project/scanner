@@ -1,0 +1,64 @@
+{
+  "name": "clarvia",
+  "version": "1.0.0",
+  "description": "AI Agent Tool Directory & AEO Scanner — Search 12,800+ tools scored for agent readiness",
+  "homepage": "https://clarvia.art",
+  "logo": "https://clarvia.art/logos/clarvia-icon.svg",
+  "publisher": {
+    "name": "Clarvia",
+    "url": "https://clarvia.art"
+  },
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["@clarvia/mcp-server"]
+  },
+  "tools": [
+    {
+      "name": "search_services",
+      "description": "Search 12,800+ AI agent tools by keyword, category, or AEO score"
+    },
+    {
+      "name": "scan_service",
+      "description": "Run a full AEO audit on any URL for agent discoverability and quality"
+    },
+    {
+      "name": "get_service_details",
+      "description": "Get detailed AEO evaluation report for a previously scanned service"
+    },
+    {
+      "name": "list_categories",
+      "description": "List all tool categories with service counts"
+    },
+    {
+      "name": "get_stats",
+      "description": "Get aggregate directory statistics — total services, average score, distribution"
+    },
+    {
+      "name": "register_service",
+      "description": "Submit a new tool or API for Clarvia indexing and AEO scoring"
+    },
+    {
+      "name": "clarvia_gate_check",
+      "description": "Quick pass/fail safety check for agent tool-use decisions with agent grade"
+    },
+    {
+      "name": "clarvia_batch_check",
+      "description": "Batch-check up to 10 URLs — pass/fail and agent grade for each"
+    },
+    {
+      "name": "clarvia_find_alternatives",
+      "description": "Find higher-rated alternative tools in a category by agent-readiness score"
+    },
+    {
+      "name": "clarvia_probe",
+      "description": "Live accessibility probe — reachability, latency, OpenAPI, MCP, agents.json"
+    },
+    {
+      "name": "clarvia_submit_feedback",
+      "description": "Report tool usage outcome to build community reliability data"
+    }
+  ],
+  "categories": ["developer-tools", "ai", "search", "quality-assurance"],
+  "tags": ["aeo", "mcp", "agent", "tool-discovery", "scoring"]
+}

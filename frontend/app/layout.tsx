@@ -98,6 +98,49 @@ export default function RootLayout({
             })
           }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": [
+                {
+                  "@type": "Question",
+                  "name": "What is AEO?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "AEO (AI Engine Optimization) measures how easily AI agents can discover and use your API or MCP server. It is the equivalent of SEO for the agent economy — instead of optimizing for search engines, AEO optimizes for AI systems that autonomously consume APIs, tools, and services."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What is a Clarvia Score?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "A 0-100 score measuring agent readiness across 4 dimensions: API Accessibility, Data Structuring, Agent Compatibility, and Trust Signals. Higher scores indicate better discoverability and usability by AI agents."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "How do I improve my AEO score?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Scan your URL on Clarvia, review the dimension breakdowns to identify weak areas, and follow the Improvement Playbook with actionable recommendations for each dimension. Common improvements include adding OpenAPI specs, structured error responses, and MCP server support."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Is Clarvia free?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes, scanning, tool search, side-by-side comparison, weekly trending, and embeddable AEO badges are all free. Clarvia indexes over 12,800 tools across the AI agent ecosystem."
+                  }
+                }
+              ]
+            })
+          }}
+        />
         {children}
       </body>
     </html>

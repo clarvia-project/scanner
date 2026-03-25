@@ -1,6 +1,7 @@
 """Intent-based tool recommendation engine for Clarvia.
 
-Uses TF-IDF with synonym expansion to match user intents to tools.
+Uses TF-IDF with synonym expansion, exact-name boosting, and
+category-aware scoring to match user intents to tools.
 """
 
 from __future__ import annotations
@@ -17,6 +18,13 @@ from .synonym_dict import expand_intent
 
 logger = logging.getLogger(__name__)
 
+# Name-match boost: when the query exactly matches or contains the tool name
+_NAME_EXACT_BOOST = 0.35
+_NAME_PARTIAL_BOOST = 0.15
+
+# Penalize tools whose description is empty or very short (< 20 chars)
+_NO_DESC_PENALTY = 0.5
+
 
 class RecommendationEngine:
     """TF-IDF based recommendation engine with synonym expansion."""
@@ -25,6 +33,7 @@ class RecommendationEngine:
         self._vectorizer: TfidfVectorizer | None = None
         self._tfidf_matrix = None
         self._tools: list[dict[str, Any]] = []
+        self._name_lower: list[str] = []  # pre-computed lowercase names
         self._built = False
 
     @property
@@ -45,18 +54,20 @@ class RecommendationEngine:
             return
 
         self._tools = tools
+        self._name_lower = [t.get("service_name", "").lower().strip() for t in tools]
 
-        # Build document corpus: name + description + tags + category + type
+        # Build document corpus — name repeated for emphasis, plus desc/tags/category
         documents = []
         for tool in tools:
+            name = tool.get("service_name", "")
             parts = [
-                tool.get("service_name", ""),
+                name,
+                name,  # repeat name to boost its weight
                 tool.get("description", ""),
                 " ".join(tool.get("tags", [])),
                 tool.get("category", ""),
                 tool.get("service_type", ""),
             ]
-            # Add type_config hints for richer matching
             tc = tool.get("type_config") or {}
             if tc.get("npm_package"):
                 parts.append(tc["npm_package"])
@@ -67,7 +78,7 @@ class RecommendationEngine:
 
         self._vectorizer = TfidfVectorizer(
             max_features=15000,
-            ngram_range=(1, 2),  # unigrams + bigrams
+            ngram_range=(1, 2),
             stop_words="english",
             min_df=1,
             max_df=0.95,
@@ -104,6 +115,8 @@ class RecommendationEngine:
                 "method": "not_ready",
             }
 
+        intent_lower = intent.lower().strip()
+
         # Expand intent with synonyms
         expanded_terms = expand_intent(intent)
         expanded_query = " ".join(expanded_terms)
@@ -112,12 +125,17 @@ class RecommendationEngine:
         query_vec = self._vectorizer.transform([expanded_query])
         similarities = cosine_similarity(query_vec, self._tfidf_matrix).flatten()
 
-        # Build candidates with scores
         max_clarvia = max((t["clarvia_score"] for t in self._tools), default=1) or 1
+
+        # Pre-compute: detect if intent looks like a product name (single word, no spaces/verbs)
+        intent_words = intent_lower.split()
+        is_name_query = len(intent_words) <= 2 and not any(
+            w in intent_words for w in ("want", "need", "how", "to", "can", "should", "help")
+        )
 
         candidates = []
         for idx, sim_score in enumerate(similarities):
-            if sim_score < 0.01:  # skip irrelevant
+            if sim_score < 0.005:
                 continue
 
             tool = self._tools[idx]
@@ -130,20 +148,32 @@ class RecommendationEngine:
             if category and tool.get("category") != category:
                 continue
 
-            normalized_quality = tool["clarvia_score"] / max_clarvia
-            combined = (relevance_weight * sim_score) + (quality_weight * normalized_quality)
+            # --- Scoring ---
+            name_lower = self._name_lower[idx]
+            boost = 0.0
 
-            # Build match reason
+            # Exact name match boost
+            if is_name_query:
+                if name_lower == intent_lower or intent_lower == name_lower.replace(" ", ""):
+                    boost = _NAME_EXACT_BOOST
+                elif intent_lower in name_lower or name_lower in intent_lower:
+                    boost = _NAME_PARTIAL_BOOST
+
+            # Penalize tools with missing/empty description (low quality signal)
+            desc = tool.get("description", "")
+            quality_mult = _NO_DESC_PENALTY if len(desc) < 20 else 1.0
+
+            normalized_quality = (tool["clarvia_score"] / max_clarvia) * quality_mult
+            combined = (relevance_weight * sim_score) + (quality_weight * normalized_quality) + boost
+
             match_reason = _build_match_reason(intent, tool, expanded_terms)
-
-            # Build install hint
             install_hint = _build_install_hint(tool)
 
             candidates.append({
                 "name": tool["service_name"],
                 "scan_id": tool["scan_id"],
                 "url": tool.get("url", ""),
-                "description": tool.get("description", ""),
+                "description": desc,
                 "category": tool.get("category", "other"),
                 "service_type": tool.get("service_type", "general"),
                 "clarvia_score": tool["clarvia_score"],
@@ -166,7 +196,7 @@ class RecommendationEngine:
             },
             "recommendations": top,
             "total_candidates": len(candidates),
-            "method": "tfidf+synonyms",
+            "method": "tfidf+synonyms+boost",
         }
 
 

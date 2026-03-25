@@ -899,6 +899,347 @@ function ShareButtons({ result }: { result: ScanResult }) {
   );
 }
 
+// ----- Improvement Playbook Section -----
+
+interface PlaybookItem {
+  sub_factor: string;
+  dimension: string;
+  label: string;
+  current_score: number;
+  max_score: number;
+  potential_gain: number;
+  fixes: Record<string, { title: string; code: string; install: string; estimated_time: string }>;
+}
+
+function PlaybookSection({ scanId }: { scanId: string }) {
+  const [items, setItems] = useState<PlaybookItem[]>([]);
+  const [totalGain, setTotalGain] = useState(0);
+  const [projectedScore, setProjectedScore] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [stack, setStack] = useState<"python" | "nodejs" | "go">("python");
+  const [copied, setCopied] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/playbook?scan_id=${encodeURIComponent(scanId)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setItems(data.items || []);
+        setTotalGain(data.total_potential_gain || 0);
+        setProjectedScore(data.projected_score || 0);
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [scanId]);
+
+  function handleCopy(code: string, key: string) {
+    navigator.clipboard.writeText(code);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
+  }
+
+  if (!loaded || items.length === 0) return null;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xs font-mono text-accent uppercase tracking-widest flex items-center gap-2">
+          Improvement Playbook
+          <span className="text-xs font-bold text-score-green">+{totalGain} pts possible</span>
+        </h2>
+        {/* Stack selector */}
+        <div className="flex gap-1">
+          {(["python", "nodejs", "go"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStack(s)}
+              className={`text-[10px] font-mono px-2 py-1 rounded border transition-colors cursor-pointer ${
+                stack === s ? "border-accent/50 text-accent bg-accent/5" : "border-card-border text-muted hover:border-accent/30"
+              }`}
+            >
+              {s === "nodejs" ? "Node.js" : s === "python" ? "Python" : "Go"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Projected score bar */}
+      <div className="glass-card rounded-xl px-6 py-3 flex items-center gap-4">
+        <span className="text-[10px] text-muted font-mono">PROJECTED SCORE</span>
+        <div className="flex-1 h-2 bg-card-border/30 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full bg-score-green/60 transition-all"
+            style={{ width: `${projectedScore}%` }}
+          />
+        </div>
+        <span className="text-sm font-mono font-bold text-score-green">{projectedScore}</span>
+      </div>
+
+      {/* Playbook items */}
+      <div className="space-y-2">
+        {items.map((item) => {
+          const isOpen = expanded === item.sub_factor;
+          const fix = item.fixes[stack];
+          return (
+            <div key={item.sub_factor} className="glass-card rounded-xl overflow-hidden">
+              <button
+                onClick={() => setExpanded(isOpen ? null : item.sub_factor)}
+                className="w-full px-5 py-3 flex items-center gap-3 text-left cursor-pointer hover:bg-white/[0.02] transition-colors"
+              >
+                <span className="text-xs font-bold text-score-green font-mono w-10">
+                  +{item.potential_gain}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium">{item.label}</span>
+                  <span className="text-[10px] text-muted/50 font-mono ml-2">
+                    {item.current_score}/{item.max_score}
+                  </span>
+                </div>
+                <span className="text-[10px] text-muted/40 font-mono capitalize">{item.dimension.replace(/_/g, " ")}</span>
+                <svg
+                  className={`w-4 h-4 text-muted/40 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isOpen && fix && (
+                <div className="px-5 pb-4 space-y-3 border-t border-card-border/20 pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold">{fix.title}</span>
+                    <span className="text-[10px] text-muted font-mono">{fix.estimated_time}</span>
+                  </div>
+                  {fix.install && (
+                    <div className="flex items-center gap-2">
+                      <code className="text-[10px] font-mono px-2 py-1 bg-black/30 rounded text-accent/70">
+                        {fix.install}
+                      </code>
+                    </div>
+                  )}
+                  <div className="relative">
+                    <pre className="bg-black/40 rounded-lg p-4 text-[11px] font-mono leading-relaxed overflow-x-auto max-h-64 text-muted/80">
+                      {fix.code}
+                    </pre>
+                    <button
+                      onClick={() => handleCopy(fix.code, item.sub_factor)}
+                      className="absolute top-2 right-2 text-[10px] px-2 py-1 rounded bg-card-border/50 hover:bg-accent/20 transition-colors cursor-pointer"
+                    >
+                      {copied === item.sub_factor ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {isOpen && !fix && (
+                <div className="px-5 pb-4 border-t border-card-border/20 pt-3">
+                  <p className="text-xs text-muted">No {stack === "nodejs" ? "Node.js" : stack} template available. Try another stack.</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ----- History & Trends Section -----
+
+interface HistoryScan {
+  scan_id: string;
+  score: number;
+  rating: string;
+  scanned_at: string;
+  dimensions?: Record<string, number>;
+}
+
+function HistorySection({
+  url,
+  currentScore,
+  currentDimensions,
+}: {
+  url: string;
+  currentScore: number;
+  currentDimensions: Record<string, Dimension>;
+}) {
+  const [history, setHistory] = useState<HistoryScan[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [rescanning, setRescanning] = useState(false);
+
+  useEffect(() => {
+    if (!url) return;
+    fetch(`${API_BASE}/api/v1/history?url=${encodeURIComponent(url)}&limit=10`)
+      .then((r) => r.json())
+      .then((data) => {
+        const scans = data.scans || data.items || [];
+        setHistory(scans);
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [url]);
+
+  async function handleRescan() {
+    setRescanning(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.scan_id) {
+          window.location.href = `/scan/${data.scan_id}`;
+          return;
+        }
+      }
+    } catch {}
+    setRescanning(false);
+  }
+
+  if (!loaded) return null;
+
+  // Need at least 1 previous scan to show history
+  const prevScans = history.filter((h) => h.score !== currentScore || history.length > 1);
+  if (prevScans.length === 0 && history.length <= 1) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
+            History
+          </h2>
+          <button
+            onClick={handleRescan}
+            disabled={rescanning}
+            className="text-xs px-3 py-1.5 rounded-lg border border-card-border hover:border-accent/30 transition-colors disabled:opacity-50"
+          >
+            {rescanning ? "Scanning..." : "Rescan now"}
+          </button>
+        </div>
+        <div className="glass-card rounded-xl px-6 py-4 text-center">
+          <p className="text-xs text-muted">First scan for this URL. Rescan later to track changes.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const sorted = [...history].sort(
+    (a, b) => new Date(a.scanned_at).getTime() - new Date(b.scanned_at).getTime()
+  );
+  const prev = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
+  const scoreDelta = prev ? currentScore - prev.score : 0;
+
+  // Simple SVG sparkline
+  const maxScore = 100;
+  const points = sorted.map((s, i) => {
+    const x = sorted.length > 1 ? (i / (sorted.length - 1)) * 280 + 10 : 150;
+    const y = 60 - (s.score / maxScore) * 50 + 5;
+    return `${x},${y}`;
+  });
+  const polyline = points.join(" ");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xs font-mono text-accent uppercase tracking-widest flex items-center gap-2">
+          History
+          {scoreDelta !== 0 && (
+            <span className={`text-xs font-bold ${scoreDelta > 0 ? "text-score-green" : "text-score-red"}`}>
+              {scoreDelta > 0 ? "+" : ""}{scoreDelta}
+            </span>
+          )}
+        </h2>
+        <button
+          onClick={handleRescan}
+          disabled={rescanning}
+          className="text-xs px-3 py-1.5 rounded-lg border border-card-border hover:border-accent/30 transition-colors disabled:opacity-50 cursor-pointer"
+        >
+          {rescanning ? "Scanning..." : "Rescan now"}
+        </button>
+      </div>
+
+      <div className="glass-card rounded-xl px-6 py-5">
+        <div className="flex flex-col sm:flex-row gap-6">
+          {/* Score timeline chart */}
+          <div className="flex-1">
+            <p className="text-[10px] text-muted font-mono mb-2">SCORE TREND ({sorted.length} scans)</p>
+            <svg viewBox="0 0 300 70" className="w-full h-16">
+              {/* Grid lines */}
+              <line x1="10" y1="5" x2="290" y2="5" stroke="rgba(255,255,255,0.05)" />
+              <line x1="10" y1="30" x2="290" y2="30" stroke="rgba(255,255,255,0.05)" />
+              <line x1="10" y1="55" x2="290" y2="55" stroke="rgba(255,255,255,0.05)" />
+              {/* Score line */}
+              <polyline
+                fill="none"
+                stroke={scoreColor(currentScore)}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={polyline}
+              />
+              {/* Score dots */}
+              {sorted.map((s, i) => {
+                const x = sorted.length > 1 ? (i / (sorted.length - 1)) * 280 + 10 : 150;
+                const y = 60 - (s.score / maxScore) * 50 + 5;
+                return (
+                  <circle
+                    key={i}
+                    cx={x}
+                    cy={y}
+                    r="3"
+                    fill={scoreColor(s.score)}
+                    stroke="rgba(0,0,0,0.3)"
+                    strokeWidth="1"
+                  />
+                );
+              })}
+            </svg>
+          </div>
+
+          {/* Dimension diff (vs previous) */}
+          {prev?.dimensions && (
+            <div className="sm:w-48 space-y-2">
+              <p className="text-[10px] text-muted font-mono">VS PREVIOUS SCAN</p>
+              {Object.entries(currentDimensions).map(([key, dim]) => {
+                const prevScore = prev.dimensions?.[key] ?? 0;
+                const delta = dim.score - (typeof prevScore === "number" ? prevScore : 0);
+                return (
+                  <div key={key} className="flex items-center justify-between text-[11px]">
+                    <span className="text-muted capitalize truncate">{DIMENSION_META[key]?.label || key}</span>
+                    <span className={`font-mono font-bold ${delta > 0 ? "text-score-green" : delta < 0 ? "text-score-red" : "text-muted/50"}`}>
+                      {delta > 0 ? "+" : ""}{delta}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Scan history list */}
+        <div className="mt-4 pt-3 border-t border-card-border/20">
+          <div className="flex flex-wrap gap-2">
+            {sorted.map((s, i) => (
+              <a
+                key={s.scan_id}
+                href={`/scan/${s.scan_id}`}
+                className={`text-[10px] font-mono px-2 py-1 rounded border transition-colors ${
+                  i === sorted.length - 1
+                    ? "border-accent/40 text-accent bg-accent/5"
+                    : "border-card-border/30 text-muted hover:border-accent/20"
+                }`}
+              >
+                {new Date(s.scanned_at).toLocaleDateString("en", { month: "short", day: "numeric" })}
+                {" "}
+                <span className={`font-bold ${i === sorted.length - 1 ? "" : ""}`}>{s.score}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ----- Free Actions Section -----
 
 function FreeActions({ result }: { result: ScanResult }) {
@@ -960,7 +1301,7 @@ function FreeActions({ result }: { result: ScanResult }) {
       <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
         Free Tools
       </h2>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {/* Badge embed */}
         <div className="glass-card rounded-xl px-5 py-4 space-y-3">
           <div className="flex items-center gap-2">
@@ -1034,6 +1375,33 @@ function FreeActions({ result }: { result: ScanResult }) {
           <p className="text-xs text-muted">Download score + top 3 recommendations as text</p>
           <span className="text-xs text-accent">Download .txt →</span>
         </button>
+
+        {/* SARIF / CI/CD */}
+        <div className="glass-card rounded-xl px-5 py-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17l-5.09-2.71a2.5 2.5 0 01-.06-4.38l5.09-2.71a2.5 2.5 0 012.52.06l4.59 2.98a2.5 2.5 0 01-.06 4.28l-4.59 2.98a2.5 2.5 0 01-2.4-.5z" />
+            </svg>
+            <span className="text-xs font-semibold">CI/CD</span>
+          </div>
+          <p className="text-xs text-muted">SARIF export for GitHub Code Scanning + CI pipeline</p>
+          <div className="flex gap-2">
+            <a
+              href={`${API_BASE}/api/scan/${result.scan_id}/sarif`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 text-center text-xs py-1.5 rounded-lg border border-card-border hover:border-accent/30 transition-colors"
+            >
+              SARIF ↓
+            </a>
+            <Link
+              href="/docs#ci-cd"
+              className="flex-1 text-center text-xs py-1.5 rounded-lg border border-card-border hover:border-accent/30 transition-colors text-accent"
+            >
+              Guide →
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1357,6 +1725,12 @@ function ScanResultView({
 
       {/* Agent Accessibility Probe (Data Moat C) */}
       <AgentProbeSection url={result.url} />
+
+      {/* Improvement Playbook */}
+      <PlaybookSection scanId={result.scan_id} />
+
+      {/* History & Trends */}
+      <HistorySection url={result.url} currentScore={result.clarvia_score} currentDimensions={result.dimensions} />
 
       {/* Recommendations — show only top 3 free */}
       {result.top_recommendations.length > 0 && (

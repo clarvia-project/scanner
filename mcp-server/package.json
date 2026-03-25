@@ -1,11 +1,11 @@
 {
-  "name": "@clarvia/mcp-server",
+  "name": "clarvia-mcp-server",
   "version": "1.0.0",
   "description": "Clarvia MCP Server - Search and evaluate AI services via Model Context Protocol",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "clarvia-mcp": "./dist/index.js"
+    "clarvia-mcp": "dist/index.js"
   },
   "files": [
     "dist",
@@ -23,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/clarvia/scanner.git",
+    "url": "git+https://github.com/clarvia/scanner.git",
     "directory": "mcp-server"
   },
   "keywords": [
