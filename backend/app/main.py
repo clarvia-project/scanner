@@ -207,8 +207,8 @@ async def health():
 
     # 2. Supabase / DB connectivity
     try:
-        from .services.supabase_client import get_client
-        client = get_client()
+        from .services.supabase_client import get_supabase
+        client = get_supabase()
         if client:
             checks["database"] = {"status": "ok"}
         else:
