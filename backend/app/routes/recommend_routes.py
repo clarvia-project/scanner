@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
 from ..recommender import get_engine
@@ -70,6 +70,57 @@ async def recommend_tools_get(
 
     response.headers["X-Clarvia-Method"] = result["method"]
     return result
+
+
+@router.get("/similar/{scan_id}")
+async def get_similar_tools(
+    scan_id: str,
+    response: Response,
+    limit: int = Query(5, ge=1, le=20),
+):
+    """Get similar tools based on category and type."""
+    _ensure_index_built()
+
+    # Find the target tool
+    from . import index_routes
+
+    index_routes._ensure_loaded()
+    index_routes._load_collected()
+
+    target = index_routes._by_scan_id.get(scan_id)
+    if not target:
+        for t in index_routes._collected_tools:
+            if t["scan_id"] == scan_id:
+                target = t
+                break
+
+    if not target:
+        raise HTTPException(status_code=404, detail="Tool not found")
+
+    # Find similar: same category + same type, sorted by score
+    cat = target.get("category", "other")
+    stype = target.get("service_type", "general")
+
+    scanned_ids = {s["scan_id"] for s in index_routes._services}
+    all_tools = list(index_routes._services) + [
+        t for t in index_routes._collected_tools if t["scan_id"] not in scanned_ids
+    ]
+
+    similar = [
+        t
+        for t in all_tools
+        if t.get("category") == cat
+        and t.get("service_type") == stype
+        and t["scan_id"] != scan_id
+    ]
+    similar.sort(key=lambda x: x.get("clarvia_score", 0), reverse=True)
+
+    from .index_routes import _compact_service
+
+    return {
+        "similar": [_compact_service(t) for t in similar[:limit]],
+        "based_on": {"category": cat, "service_type": stype},
+    }
 
 
 def _ensure_index_built() -> None:

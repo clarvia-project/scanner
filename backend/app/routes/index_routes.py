@@ -460,6 +460,32 @@ async def list_categories(response: Response):
     }
 
 
+@router.get("/compare")
+async def compare_services(
+    response: Response,
+    ids: str = Query(..., description="Comma-separated scan_ids (max 4)"),
+):
+    """Compare up to 4 services side by side."""
+    _ensure_loaded()
+    _load_collected()
+    _add_headers(response)
+
+    scan_ids = [s.strip() for s in ids.split(",")][:4]
+    results = []
+
+    for sid in scan_ids:
+        service = _by_scan_id.get(sid)
+        if not service:
+            for t in _collected_tools:
+                if t["scan_id"] == sid:
+                    service = t
+                    break
+        if service:
+            results.append(_compact_service(service))
+
+    return {"services": results, "count": len(results)}
+
+
 @router.get("/stats")
 async def get_stats(
     response: Response,

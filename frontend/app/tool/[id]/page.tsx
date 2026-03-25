@@ -6,6 +6,34 @@ import Link from "next/link";
 import Image from "next/image";
 import { API_BASE } from "@/lib/api";
 
+function ShareButtons({ url, title }: { url: string; title: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const shareTwitter = () => {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank');
+  };
+
+  const shareLinkedIn = () => {
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+  };
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <button onClick={shareTwitter} className="glass-subtle px-3 py-1.5 rounded-lg text-xs font-mono hover:text-accent transition-colors cursor-pointer">&#x1D54F; Share</button>
+      <button onClick={shareLinkedIn} className="glass-subtle px-3 py-1.5 rounded-lg text-xs font-mono hover:text-accent transition-colors cursor-pointer">LinkedIn</button>
+      <button onClick={copyLink} className="glass-subtle px-3 py-1.5 rounded-lg text-xs font-mono hover:text-accent transition-colors cursor-pointer">
+        {copied ? "Copied!" : "Copy Link"}
+      </button>
+    </div>
+  );
+}
+
 function getFaviconUrl(url: string): string | null {
   if (!url) return null;
   try {
@@ -52,12 +80,145 @@ function scoreBg(score: number) {
   return "bg-score-red/10 border-score-red/20";
 }
 
+interface SimilarTool {
+  name: string;
+  scan_id: string;
+  clarvia_score: number;
+  service_type: string;
+  url: string;
+}
+
+function QuickInstall({ tool }: { tool: ToolDetail }) {
+  const [copied, setCopied] = useState(false);
+
+  let command = "";
+  let label = "";
+
+  if (tool.service_type === "mcp_server") {
+    const pkg = tool.type_config?.npm_package as string | undefined;
+    command = pkg
+      ? `npx -y ${pkg}`
+      : `claude mcp add ${tool.name.toLowerCase().replace(/[^a-z0-9-]/g, "-")}`;
+    label = "Add to Claude Code";
+  } else if (tool.service_type === "cli_tool") {
+    command =
+      (tool.type_config?.install_command as string) ||
+      `npm install ${tool.name}`;
+    label = "Install CLI";
+  } else if (tool.service_type === "api") {
+    command = (tool.type_config?.base_url as string) || tool.url;
+    label = "API Endpoint";
+  }
+
+  if (!command) return null;
+
+  const copy = () => {
+    navigator.clipboard.writeText(command);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="glass-card rounded-xl p-4">
+      <h3 className="text-sm font-semibold mb-3">{label}</h3>
+      <div className="flex items-center gap-2">
+        <code className="flex-1 bg-black/30 px-3 py-2 rounded-lg text-xs font-mono text-accent overflow-x-auto">
+          {command}
+        </code>
+        <button
+          onClick={copy}
+          className="glass-subtle px-3 py-2 rounded-lg text-xs font-mono cursor-pointer hover:text-accent transition-colors"
+        >
+          {copied ? "Copied!" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SimilarTools({ scanId }: { scanId: string }) {
+  const [similar, setSimilar] = useState<SimilarTool[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/v1/similar/${scanId}?limit=5`)
+      .then((r) => r.json())
+      .then((data) => setSimilar(data.similar || []))
+      .catch(() => setSimilar([]))
+      .finally(() => setIsLoading(false));
+  }, [scanId]);
+
+  if (isLoading) {
+    return (
+      <div className="glass-card rounded-xl p-4">
+        <h3 className="text-sm font-semibold mb-3">Similar Tools</h3>
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-10 bg-card-border/20 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (similar.length === 0) return null;
+
+  const typeShortLabels: Record<string, string> = {
+    mcp_server: "MCP",
+    api: "API",
+    cli_tool: "CLI",
+    skill: "Skill",
+    general: "General",
+  };
+
+  return (
+    <div className="glass-card rounded-xl p-4">
+      <h3 className="text-sm font-semibold mb-3">Similar Tools</h3>
+      <div className="space-y-2">
+        {similar.map((t) => (
+          <Link
+            key={t.scan_id}
+            href={t.scan_id.startsWith("tool_") ? `/tool/${t.scan_id}` : `/scan/${t.scan_id}`}
+            className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-card-border/10 hover:bg-card-border/20 transition-colors group"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs font-medium truncate group-hover:text-accent transition-colors">
+                {t.name}
+              </span>
+              <span className="text-[10px] font-mono text-muted/50">
+                {typeShortLabels[t.service_type] || t.service_type}
+              </span>
+            </div>
+            <span
+              className={`text-xs font-mono font-bold flex-shrink-0 ${
+                t.clarvia_score >= 70
+                  ? "text-score-green"
+                  : t.clarvia_score >= 40
+                  ? "text-score-yellow"
+                  : "text-score-red"
+              }`}
+            >
+              {t.clarvia_score}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ToolDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const [tool, setTool] = useState<ToolDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (tool) {
+      document.title = `${tool.name} — Clarvia Score ${tool.clarvia_score}`;
+    }
+  }, [tool]);
 
   useEffect(() => {
     if (!id) return;
@@ -129,6 +290,12 @@ export default function ToolDetailPage() {
                 Register
               </Link>
               <Link
+                href="/compare"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Compare
+              </Link>
+              <Link
                 href="/docs"
                 className="text-sm text-muted hover:text-foreground transition-colors"
               >
@@ -184,6 +351,11 @@ export default function ToolDetailPage() {
               </div>
               <div className="text-xs text-muted mt-1">{tool.rating}</div>
             </div>
+          </div>
+
+          {/* Share */}
+          <div className="mb-4">
+            <ShareButtons url={`https://clarvia.art/tool/${id}`} title={`${tool.name} — Clarvia Score ${tool.clarvia_score}/100`} />
           </div>
 
           {/* URL + Quick actions */}
@@ -278,6 +450,25 @@ export default function ToolDetailPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Quick Install + Similar + Compare */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div className="space-y-4">
+            <QuickInstall tool={tool} />
+            <Link
+              href={`/compare?ids=${tool.scan_id}`}
+              className="glass-subtle rounded-xl p-4 flex items-center justify-center gap-2 hover:border-accent/30 transition-all group block text-center"
+            >
+              <svg className="w-4 h-4 text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+              <span className="text-sm text-muted group-hover:text-accent transition-colors">
+                Compare with others
+              </span>
+            </Link>
+          </div>
+          <SimilarTools scanId={tool.scan_id} />
         </div>
 
         {/* Back */}
