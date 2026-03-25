@@ -269,6 +269,12 @@ export default function ToolsPage() {
                 Register
               </Link>
               <Link
+                href="/compare"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Compare
+              </Link>
+              <Link
                 href="/docs"
                 className="text-sm text-muted hover:text-foreground transition-colors"
               >

@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "name": "Clarvia",
+  "description": "AI Agent Tool Directory — Search 12,800+ tools (MCP servers, APIs, CLIs, Skills) scored for agent readiness",
+  "url": "https://clarvia.art",
+  "api": {
+    "type": "rest",
+    "base_url": "https://clarvia-api.onrender.com",
+    "documentation": "https://clarvia.art/docs",
+    "endpoints": [
+      {
+        "path": "/v1/services",
+        "method": "GET",
+        "description": "Search and filter 12,800+ agent tools",
+        "parameters": ["q", "category", "service_type", "min_score", "sort", "source", "limit", "offset"]
+      },
+      {
+        "path": "/v1/recommend",
+        "method": "POST",
+        "description": "Intent-based tool recommendation. Send natural language intent, get ranked tool suggestions.",
+        "parameters": ["intent", "filters", "limit"]
+      },
+      {
+        "path": "/v1/compare",
+        "method": "GET",
+        "description": "Compare up to 4 tools side by side",
+        "parameters": ["ids"]
+      },
+      {
+        "path": "/v1/similar/{scan_id}",
+        "method": "GET",
+        "description": "Get similar tools based on category and type"
+      },
+      {
+        "path": "/api/scan",
+        "method": "POST",
+        "description": "Run AEO scan on any URL"
+      }
+    ]
+  },
+  "capabilities": [
+    "tool_discovery",
+    "tool_recommendation",
+    "tool_comparison",
+    "aeo_scoring"
+  ],
+  "contact": "https://clarvia.art/about"
+}

@@ -6,6 +6,34 @@ import Link from "next/link";
 import Image from "next/image";
 import { API_BASE } from "@/lib/api";
 
+function ShareButtons({ url, title }: { url: string; title: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const shareTwitter = () => {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank');
+  };
+
+  const shareLinkedIn = () => {
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+  };
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <button onClick={shareTwitter} className="glass-subtle px-3 py-1.5 rounded-lg text-xs font-mono hover:text-accent transition-colors cursor-pointer">&#x1D54F; Share</button>
+      <button onClick={shareLinkedIn} className="glass-subtle px-3 py-1.5 rounded-lg text-xs font-mono hover:text-accent transition-colors cursor-pointer">LinkedIn</button>
+      <button onClick={copyLink} className="glass-subtle px-3 py-1.5 rounded-lg text-xs font-mono hover:text-accent transition-colors cursor-pointer">
+        {copied ? "Copied!" : "Copy Link"}
+      </button>
+    </div>
+  );
+}
+
 // ----- Types -----
 
 interface SubFactor {
@@ -1275,6 +1303,12 @@ function ScanResultView({
       <div className="text-center space-y-3">
         <h1 className="text-3xl font-bold">{result.service_name}</h1>
         <p className="text-sm text-muted font-mono">{result.url}</p>
+        <div className="flex justify-center pt-1">
+          <ShareButtons
+            url={`https://clarvia.art/scan/${result.scan_id}`}
+            title={`${result.service_name} scored ${result.clarvia_score}/100 on Clarvia — AI Agent Readiness Scanner`}
+          />
+        </div>
       </div>
 
       {/* Score + Grade */}
@@ -1467,6 +1501,12 @@ export default function ScanResultPage() {
   const [error, setError] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [appeared, setAppeared] = useState(false);
+
+  useEffect(() => {
+    if (result) {
+      document.title = `${result.service_name} — Clarvia Score ${result.clarvia_score}`;
+    }
+  }, [result]);
 
   useEffect(() => {
     if (!scanId) return;
