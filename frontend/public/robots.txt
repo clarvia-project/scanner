@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /marketing
 
 User-agent: GPTBot
 Allow: /
@@ -11,4 +12,17 @@ Allow: /
 User-agent: Applebot
 Allow: /
 
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
 Sitemap: https://clarvia.art/sitemap.xml
+LLMs: https://clarvia.art/llms.txt

@@ -525,6 +525,28 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ─── What is Clarvia ─── */}
+        <section className="relative px-6 py-20 bg-gradient-section">
+          <div className="divider-gradient absolute top-0 left-0 right-0" />
+          <div className="max-w-3xl mx-auto">
+            <div className="glass-card rounded-2xl p-10 space-y-4">
+              <p className="text-xs font-mono text-accent uppercase tracking-widest">About</p>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight">What is Clarvia?</h2>
+              <p className="text-sm md:text-base text-muted leading-relaxed">
+                Clarvia is the AEO (AI Engine Optimization) standard for the agent economy.
+                It scans any API, MCP server, CLI tool, or skill and scores it on a 0-100 scale
+                for AI agent readiness. With 12,800+ tools indexed across the ecosystem,
+                Clarvia helps developers find the best tools for their AI agents,
+                and helps API providers optimize their services to be discovered by AI systems.
+                The Clarvia Score evaluates four dimensions: API Accessibility, Data Structuring,
+                Agent Compatibility, and Trust Signals. Free features include scanning,
+                intent-based tool recommendations, side-by-side comparisons, weekly trending,
+                and embeddable AEO badges for READMEs.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* ─── What We Measure ─── */}
         <section className="relative px-6 py-24 bg-gradient-section">
           <div className="divider-gradient absolute top-0 left-0 right-0" />

@@ -1,0 +1,88 @@
+# Clarvia — The AEO Standard for AI Agents
+
+> Clarvia scores how easily AI agents can discover and use any API, MCP server, CLI tool, or skill.
+
+## What is Clarvia?
+
+Clarvia is an AI Engine Optimization (AEO) scanner and agent tool directory. It indexes 12,800+ tools across the agent ecosystem and scores each one on a 0-100 scale for agent readiness.
+
+Think of it as "Lighthouse for AI agents" — instead of measuring web performance, it measures how well a service can be found and used by autonomous AI agents.
+
+## Core Features
+
+- **AEO Scan**: Enter any URL → get a Clarvia Score (0-100) with improvement recommendations
+- **Tool Directory**: Search 12,800+ MCP servers, APIs, CLIs, and Skills
+- **Intent-Based Recommendation**: Describe what you want to do → get ranked tool suggestions
+- **Tool Comparison**: Compare up to 4 tools side-by-side with dimension breakdowns
+- **Trending**: Weekly top-performing tools by category
+- **Improvement Playbook**: Code snippets (Python/Node.js/Go) to fix specific score gaps
+- **CI/CD Integration**: SARIF export + GitHub Actions for automated AEO checks
+- **AEO Badge**: Embeddable score badge for READMEs and docs
+
+## API (No Auth Required)
+
+Base URL: https://api.clarvia.art
+
+### Scan a URL
+```
+POST /api/scan
+{"url": "stripe.com"}
+→ Returns: scan_id, clarvia_score, rating, dimensions (4), recommendations
+```
+
+### Search Tools
+```
+GET /v1/services?source=all&q=github&service_type=mcp_server
+→ Returns: paginated list of tools with scores
+```
+
+### Intent-Based Recommendation
+```
+POST /v1/recommend
+{"intent": "I want to automate PR reviews", "limit": 5}
+→ Returns: ranked recommendations with match reasons and install hints
+```
+
+### Compare Tools
+```
+GET /v1/compare?ids=scan_abc,tool_xyz
+→ Returns: side-by-side dimension comparison
+```
+
+### Trending Tools
+```
+GET /v1/trending
+→ Returns: top tools, rising stars, category leaders
+```
+
+### SARIF Export (for CI/CD)
+```
+GET /api/scan/{scan_id}/sarif
+→ Returns: SARIF 2.1.0 JSON for GitHub Code Scanning
+```
+
+## Scoring Dimensions (100 points total)
+
+| Dimension | Max | What it measures |
+|-----------|-----|-----------------|
+| API Accessibility | 25 | Endpoints, response speed, auth, rate limits, versioning |
+| Data Structuring | 25 | OpenAPI schema, error format, types, webhooks |
+| Agent Compatibility | 25 | MCP server, robots.txt, discovery, idempotency, streaming |
+| Trust Signals | 25 | Uptime, docs quality, update frequency, security headers |
+
+## Who Uses Clarvia?
+
+- MCP server developers checking agent discoverability
+- API product managers benchmarking against competitors
+- DevRel teams creating content around agent compatibility
+- AI agent builders choosing which tools to connect
+- Platform engineers auditing tool quality at scale
+
+## Links
+
+- Website: https://clarvia.art
+- API Docs: https://clarvia.art/docs
+- Tool Directory: https://clarvia.art/tools
+- Trending: https://clarvia.art/trending
+- Methodology: https://clarvia.art/methodology
+- Guide: https://clarvia.art/guide

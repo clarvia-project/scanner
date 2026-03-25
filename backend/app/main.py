@@ -1,13 +1,66 @@
 """FastAPI application entry point."""
 
 import logging
+import json as _json_mod
+import sys
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+
+# ---------------------------------------------------------------------------
+# H3: Structured JSON logging
+# ---------------------------------------------------------------------------
+
+class _JsonFormatter(logging.Formatter):
+    """Emit log records as single-line JSON objects."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        log_entry = {
+            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "module": record.module,
+        }
+        if record.exc_info and record.exc_info[0] is not None:
+            log_entry["exception"] = self.formatException(record.exc_info)
+        return _json_mod.dumps(log_entry, ensure_ascii=False)
+
+
+_handler = logging.StreamHandler(sys.stdout)
+_handler.setFormatter(_JsonFormatter())
+logging.basicConfig(level=logging.INFO, handlers=[_handler], force=True)
+
+
+# ---------------------------------------------------------------------------
+# H6: Request body size limiter middleware
+# ---------------------------------------------------------------------------
+
+class BodySizeLimitMiddleware(BaseHTTPMiddleware):
+    """Reject requests whose body exceeds max_bytes (default 1 MB)."""
+
+    def __init__(self, app: ASGIApp, max_bytes: int = 1_048_576) -> None:  # 1 MB
+        super().__init__(app)
+        self.max_bytes = max_bytes
+
+    async def dispatch(self, request: Request, call_next):
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > self.max_bytes:
+            return JSONResponse(
+                status_code=413,
+                content={
+                    "error": {
+                        "type": "payload_too_large",
+                        "message": f"Request body exceeds {self.max_bytes} bytes limit.",
+                    }
+                },
+            )
+        return await call_next(request)
 
 from .config import settings
 from .middleware import RateLimitMiddleware, SecurityHeadersMiddleware
@@ -18,6 +71,8 @@ from .routes.feedback_routes import router as feedback_router
 from .routes.index_routes import router as index_router
 from .routes.profile_routes import router as profile_router
 from .routes.recommend_routes import router as recommend_router
+from .routes.marketing_routes import router as marketing_router
+from .routes.trending_routes import router as trending_router
 from .scanner import cleanup_cache, get_cached_scan, run_scan
 
 logger = logging.getLogger(__name__)
@@ -63,6 +118,9 @@ app.add_middleware(RateLimitMiddleware)
 
 # Security headers
 app.add_middleware(SecurityHeadersMiddleware)
+
+# Body size limit (1 MB)
+app.add_middleware(BodySizeLimitMiddleware, max_bytes=1_048_576)
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +174,8 @@ app.include_router(profile_router)
 app.include_router(feedback_router)
 app.include_router(admin_router)
 app.include_router(badge_router)
+app.include_router(trending_router)
+app.include_router(marketing_router)
 
 # Payment: Lemon Squeezy (primary) with Stripe fallback
 try:
@@ -137,7 +197,48 @@ except ImportError:
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    """Enhanced health check with real system status."""
+    checks: dict[str, Any] = {}
+    overall = "healthy"
+
+    # 1. Cache status
+    from .scanner import _scan_cache
+    checks["cache"] = {"status": "ok", "entries": len(_scan_cache)}
+
+    # 2. Supabase / DB connectivity
+    try:
+        from .services.supabase_client import get_client
+        client = get_client()
+        if client:
+            checks["database"] = {"status": "ok"}
+        else:
+            checks["database"] = {"status": "not_configured"}
+    except Exception as exc:
+        checks["database"] = {"status": "error", "detail": str(exc)}
+        overall = "degraded"
+
+    # 3. Memory usage (stdlib resource module — no extra dependency)
+    try:
+        import resource
+        rusage = resource.getrusage(resource.RUSAGE_SELF)
+        # macOS: ru_maxrss in bytes; Linux: in KB
+        import sys as _sys
+        rss_bytes = rusage.ru_maxrss if _sys.platform == "darwin" else rusage.ru_maxrss * 1024
+        checks["memory"] = {
+            "status": "ok",
+            "rss_mb": round(rss_bytes / 1_048_576, 1),
+        }
+        if rss_bytes > 536_870_912:  # > 512 MB
+            checks["memory"]["status"] = "warning"
+            overall = "degraded"
+    except Exception:
+        checks["memory"] = {"status": "unavailable"}
+
+    return {
+        "status": overall,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "checks": checks,
+    }
 
 
 @app.post("/api/scan", response_model=ScanResponse)
@@ -1718,6 +1819,77 @@ async def generate_fix(request: Request):
         "install": tmpl.get("install", ""),
         "estimated_time": tmpl.get("estimated_time", "15 min"),
         "potential_gain": tmpl.get("potential_gain", 0),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Improvement Playbook — batch fix suggestions for a scan
+# ---------------------------------------------------------------------------
+
+@app.get("/api/v1/playbook")
+async def get_playbook(scan_id: str):
+    """Return actionable fix suggestions for all low-scoring sub-factors in a scan.
+
+    Aggregates FIX_TEMPLATES for every sub_factor that scored below its max.
+    Sorted by potential_gain (highest impact first).
+    """
+    # Get scan result
+    cached = get_cached_scan(scan_id)
+    if not cached:
+        raise HTTPException(status_code=404, detail="Scan not found. Run a scan first.")
+
+    items = []
+    dimensions = cached.get("dimensions", {})
+    for dim_key, dim_data in dimensions.items():
+        sub_factors = dim_data.get("sub_factors", {})
+        for sf_key, sf_data in sub_factors.items():
+            score = sf_data.get("score", 0)
+            max_score = sf_data.get("max", 0)
+            if max_score <= 0 or score >= max_score:
+                continue  # already at max
+
+            gap = max_score - score
+            if gap < 1:
+                continue
+
+            # Check if we have a fix template
+            if sf_key not in FIX_TEMPLATES:
+                continue
+
+            fixes = {}
+            for stack in ("python", "nodejs", "go"):
+                tmpl = FIX_TEMPLATES[sf_key].get(stack)
+                if tmpl:
+                    fixes[stack] = {
+                        "title": tmpl["title"],
+                        "code": tmpl["code"].strip(),
+                        "install": tmpl.get("install", ""),
+                        "estimated_time": tmpl.get("estimated_time", "15 min"),
+                    }
+
+            if not fixes:
+                continue
+
+            items.append({
+                "sub_factor": sf_key,
+                "dimension": dim_key,
+                "label": sf_data.get("label", sf_key.replace("_", " ").title()),
+                "current_score": score,
+                "max_score": max_score,
+                "potential_gain": gap,
+                "fixes": fixes,
+            })
+
+    # Sort by potential gain (biggest improvements first)
+    items.sort(key=lambda x: x["potential_gain"], reverse=True)
+
+    return {
+        "scan_id": scan_id,
+        "service_name": cached.get("service_name", ""),
+        "items": items,
+        "total_potential_gain": sum(i["potential_gain"] for i in items),
+        "current_score": cached.get("clarvia_score", 0),
+        "projected_score": min(100, cached.get("clarvia_score", 0) + sum(i["potential_gain"] for i in items)),
     }
 
 

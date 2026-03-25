@@ -4,11 +4,13 @@ import json
 import logging
 import secrets
 import string
+import time
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 
 from ..auth import ApiKeyDep
@@ -37,6 +39,8 @@ def _data_path() -> Path:
 
 def _load_profiles() -> None:
     global _profiles
+
+    # 1. 로컬 JSON 파일에서 로드
     path = _data_path()
     if path.exists():
         try:
@@ -45,19 +49,63 @@ def _load_profiles() -> None:
             _profiles = {p["profile_id"]: p for p in data}
             logger.info("Loaded %d profiles from %s", len(_profiles), path)
         except Exception as e:
-            logger.error("Failed to load profiles: %s", e)
-    else:
-        logger.info("No profiles file found, starting empty")
+            logger.error("Failed to load profiles from file: %s", e)
+
+    # 2. Supabase에서 병합 (파일에 없는 프로필 추가)
+    try:
+        from ..services.supabase_client import get_supabase
+        client = get_supabase()
+        if client:
+            result = client.table("profiles").select("*").execute()
+            if result.data:
+                for row in result.data:
+                    pid = row["profile_id"]
+                    if pid not in _profiles:
+                        _profiles[pid] = row
+                logger.info("Merged Supabase profiles, total: %d", len(_profiles))
+    except Exception as e:
+        logger.debug("Supabase profile load skipped: %s", e)
+
+    if not _profiles:
+        logger.info("No profiles found, starting empty")
 
 
 def _save_profiles() -> None:
+    # 1. JSON 파일 (로컬 백업)
     path = _data_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
         with open(path, "w") as f:
             json.dump(list(_profiles.values()), f, indent=2, default=str)
     except Exception as e:
-        logger.error("Failed to save profiles: %s", e)
+        logger.error("Failed to save profiles to file: %s", e)
+
+    # 2. Supabase (프로덕션 영속성)
+    try:
+        from ..services.supabase_client import get_supabase
+        client = get_supabase()
+        if client and _profiles:
+            for p in _profiles.values():
+                row = {
+                    "profile_id": p["profile_id"],
+                    "name": p["name"],
+                    "url": p["url"],
+                    "description": p.get("description", ""),
+                    "category": p.get("category", "other"),
+                    "service_type": p.get("service_type", "general"),
+                    "github_url": p.get("github_url"),
+                    "type_config": p.get("type_config"),
+                    "tags": p.get("tags", []),
+                    "status": p.get("status", "pending"),
+                    "clarvia_score": p.get("clarvia_score", 0) or 0,
+                    "scan_result": p.get("scan_result"),
+                }
+                try:
+                    client.table("profiles").upsert(row, on_conflict="profile_id").execute()
+                except Exception:
+                    pass  # 테이블 미존재 시 무시, 파일 백업은 이미 완료
+    except Exception as e:
+        logger.debug("Supabase profile sync skipped: %s", e)
 
 
 def _gen_id() -> str:
@@ -162,12 +210,43 @@ def _make_badge_svg(score: int | None) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Simple IP-based rate limiter for POST /profiles (5 req/min per IP)
+# ---------------------------------------------------------------------------
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
+_RATE_LIMIT_MAX = 5
+_RATE_LIMIT_WINDOW = 60  # seconds
+
+
+def _check_rate_limit(ip: str) -> None:
+    """Raise 429 if IP exceeds 5 requests per minute."""
+    now = time.time()
+    timestamps = _rate_limit_store[ip]
+    # Prune old entries
+    _rate_limit_store[ip] = [t for t in timestamps if now - t < _RATE_LIMIT_WINDOW]
+    if len(_rate_limit_store[ip]) >= _RATE_LIMIT_MAX:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Max {_RATE_LIMIT_MAX} profile registrations per minute.",
+        )
+    _rate_limit_store[ip].append(now)
+    # Evict stale IPs to prevent unbounded growth
+    if len(_rate_limit_store) > 10_000:
+        cutoff = now - _RATE_LIMIT_WINDOW
+        stale = [k for k, v in _rate_limit_store.items() if not v or v[-1] < cutoff]
+        for k in stale:
+            del _rate_limit_store[k]
+
+
+# ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 
 @router.post("/profiles")
-async def create_profile(req: ProfileCreateRequest):
+async def create_profile(req: ProfileCreateRequest, request: Request):
     """Register a new service. No API key required — open registration."""
+    # Rate limit: 5 per minute per IP
+    client_ip = request.client.host if request.client else "unknown"
+    _check_rate_limit(client_ip)
     # Validate service_type
     stype = req.service_type or "general"
     if stype not in SERVICE_TYPES:

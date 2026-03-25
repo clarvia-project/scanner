@@ -443,6 +443,91 @@ const SECTIONS: Section[] = [
       },
     ],
   },
+  {
+    id: "ci-cd",
+    title: "CI/CD Integration",
+    description: "Automate AEO scanning in your deployment pipeline. SARIF export + GitHub Actions.",
+    color: "text-orange-400",
+    endpoints: [
+      {
+        method: "GET" as const,
+        path: "/api/scan/{scan_id}/sarif",
+        title: "SARIF Export",
+        description: "Download scan results in SARIF 2.1.0 format for GitHub Code Scanning, VS Code SARIF Viewer, or any SARIF-compatible tool.",
+        params: [
+          { name: "scan_id", in: "path" as const, type: "string", required: true, description: "The scan ID from a completed scan" },
+        ],
+        curl: `# Step 1: Run a scan
+SCAN_ID=$(curl -s -X POST ${API_DOCS_BASE}/api/scan \\
+  -H "Content-Type: application/json" \\
+  -d '{"url":"stripe.com"}' | jq -r '.scan_id')
+
+# Step 2: Download SARIF report
+curl "${API_DOCS_BASE}/api/scan/$SCAN_ID/sarif" \\
+  -o report.sarif.json`,
+        response: `{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [{
+    "tool": { "driver": { "name": "Clarvia AEO Scanner" } },
+    "results": [
+      {
+        "ruleId": "aeo/api-accessibility",
+        "level": "warning",
+        "message": { "text": "Rate limit headers not exposed" },
+        "properties": { "score": 2, "maxScore": 6 }
+      }
+    ]
+  }]
+}`,
+        rateLimit: "30 req/min",
+      },
+      {
+        method: "POST" as const,
+        path: "GitHub Actions Workflow",
+        title: "GitHub Actions — AEO Check on Push",
+        description: "Add this workflow to .github/workflows/aeo-check.yml to automatically scan your API on every push and upload results to GitHub Code Scanning.",
+        params: [],
+        curl: `# .github/workflows/aeo-check.yml
+name: AEO Check
+on: [push, pull_request]
+
+jobs:
+  aeo-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run AEO Scan
+        id: scan
+        run: |
+          RESULT=$(curl -s -X POST https://api.clarvia.art/api/scan \\
+            -H "Content-Type: application/json" \\
+            -d '{"url":"\${{ vars.API_URL }}"}')
+          echo "scan_id=$(echo $RESULT | jq -r '.scan_id')" >> $GITHUB_OUTPUT
+          SCORE=$(echo $RESULT | jq -r '.clarvia_score')
+          echo "AEO Score: $SCORE"
+          if [ "$SCORE" -lt 60 ]; then
+            echo "::warning::AEO Score $SCORE is below threshold (60)"
+          fi
+
+      - name: Download SARIF
+        run: |
+          curl -s "https://api.clarvia.art/api/scan/\${{ steps.scan.outputs.scan_id }}/sarif" \\
+            -o results.sarif.json
+
+      - name: Upload SARIF to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif.json`,
+        response: `# After setup, every push will:
+# 1. Scan your API for AEO readiness
+# 2. Upload SARIF results to GitHub Code Scanning
+# 3. Show warnings if score drops below threshold
+#
+# View results in your repo's Security tab → Code scanning alerts`,
+        rateLimit: "N/A",
+      },
+    ],
+  },
 ];
 
 /* ────────── Components ────────── */
