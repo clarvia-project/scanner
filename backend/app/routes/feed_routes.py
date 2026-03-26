@@ -209,16 +209,30 @@ async def feed_badge_data(
     services = _load_all_services()
     url_lower = url.lower().rstrip("/")
 
-    for s in services:
-        if s.get("url", "").lower().rstrip("/") == url_lower:
-            return {
-                "url": url,
-                "score": s.get("clarvia_score", 0),
-                "rating": s.get("rating", ""),
-                "badge_svg": f"https://clarvia-api.onrender.com/badge/{s.get('scan_id', '')}",
-                "detail_url": f"https://clarvia.art/scan/{s.get('scan_id', '')}",
-                "found": True,
-            }
+    # Also check live index (includes recent scans not yet in prebuilt file)
+    try:
+        from .index_routes import _services as live_services
+        all_services = services + [s for s in live_services if s.get("scan_id") not in {x.get("scan_id") for x in services}]
+    except Exception:
+        all_services = services
+
+    # Find best match (highest score if multiple scans)
+    best = None
+    for s in all_services:
+        s_url = s.get("url", "").lower().rstrip("/")
+        if s_url == url_lower:
+            if best is None or s.get("clarvia_score", 0) > best.get("clarvia_score", 0):
+                best = s
+
+    if best:
+        return {
+            "url": url,
+            "score": best.get("clarvia_score", 0),
+            "rating": best.get("rating", ""),
+            "badge_svg": f"https://clarvia-api.onrender.com/badge/{best.get('scan_id', '')}",
+            "detail_url": f"https://clarvia.art/scan/{best.get('scan_id', '')}",
+            "found": True,
+        }
 
     return {
         "url": url,
