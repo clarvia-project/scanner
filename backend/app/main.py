@@ -3304,6 +3304,102 @@ async def validate_agents_json(request: Request):
 
 
 # ---------------------------------------------------------------------------
+# A2A Agent Card — Google Agent-to-Agent protocol discovery
+# ---------------------------------------------------------------------------
+
+@app.get("/.well-known/agent.json", tags=["system"])
+async def a2a_agent_card():
+    """Google A2A protocol agent card.
+
+    Allows orchestrator agents to discover Clarvia as a specialist agent
+    for tool quality assessment and AEO scoring via the Agent-to-Agent protocol.
+    Spec: https://google.github.io/A2A/
+    """
+    return {
+        "schema_version": "1.0",
+        "name": "Clarvia AEO Scanner",
+        "description": "AI Engine Optimization (AEO) specialist agent. Scores any web service, API, or MCP server for agent-readiness on a 0-100 scale. Use this agent when you need to evaluate tool quality, find agent-compatible APIs, or optimize a service for AI discoverability.",
+        "url": "https://clarvia.art",
+        "provider": {
+            "name": "Clarvia",
+            "url": "https://clarvia.art",
+        },
+        "version": "1.1.0",
+        "capabilities": {
+            "streaming": False,
+            "push_notifications": False,
+            "state_transition_history": False,
+        },
+        "authentication": {
+            "schemes": ["api_key"],
+            "credentials": {
+                "type": "api_key",
+                "in": "header",
+                "name": "X-API-Key",
+                "description": "Free tier available — no key required for basic scans",
+            },
+        },
+        "skills": [
+            {
+                "id": "scan_service",
+                "name": "Scan Service for AEO Score",
+                "description": "Score any URL for AI/agent readiness. Returns 0-100 score with breakdown across 5 dimensions: API Accessibility, Data Structuring, Agent Compatibility, Trust Signals, Onchain/Verifiability.",
+                "input_modes": ["text"],
+                "output_modes": ["text", "data"],
+                "examples": [
+                    "Score https://api.stripe.com for agent readiness",
+                    "Is OpenAI's API well-structured for autonomous agents?",
+                    "What is the AEO score for github.com?",
+                ],
+            },
+            {
+                "id": "batch_check",
+                "name": "Batch Quality Gate Check",
+                "description": "Check multiple services at once with pass/fail gate. Use before selecting tools in an agentic workflow.",
+                "input_modes": ["text", "data"],
+                "output_modes": ["data"],
+                "examples": [
+                    "Which of these 5 APIs should my agent use?",
+                    "Gate check: stripe.com, paypal.com, square.com",
+                ],
+            },
+            {
+                "id": "find_alternatives",
+                "name": "Find Agent-Compatible Alternatives",
+                "description": "Given a service that scored poorly, find better-scoring alternatives in the same category.",
+                "input_modes": ["text"],
+                "output_modes": ["text", "data"],
+                "examples": [
+                    "Find alternatives to Twilio that score above 70",
+                    "What are the best agent-ready payment APIs?",
+                ],
+            },
+            {
+                "id": "search_indexed",
+                "name": "Search 15,400+ Indexed Tools",
+                "description": "Search Clarvia's index of pre-scored tools by category, score threshold, or keyword.",
+                "input_modes": ["text"],
+                "output_modes": ["data"],
+                "examples": [
+                    "Show me all MCP servers with AEO score > 80",
+                    "Find database tools scored by Clarvia",
+                ],
+            },
+        ],
+        "mcp_server": {
+            "package": "clarvia-mcp-server",
+            "install": "npx clarvia-mcp-server",
+            "npm": "https://www.npmjs.com/package/clarvia-mcp-server",
+        },
+        "contact": {
+            "url": "https://clarvia.art",
+            "documentation": "https://clarvia-api.onrender.com/docs",
+            "openapi": "https://clarvia-api.onrender.com/openapi.json",
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
 # Monitor lifecycle
 # ---------------------------------------------------------------------------
 
