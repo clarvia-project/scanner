@@ -87,6 +87,45 @@ print(result.rating)        # ServiceRating enum
 print(result.alternatives)  # List of suggested alternatives
 ```
 
+## CrewAI Integration
+
+`clarvia-langchain` works with any LangChain-compatible framework, including [CrewAI](https://github.com/crewAIInc/crewAI).
+
+```python
+from crewai import Agent, Task, Crew
+from crewai_tools import SerperDevTool
+from clarvia_langchain import CriteriaGate, GatedTool
+
+# 1. Set up the gate
+gate = CriteriaGate(api_key="clv_xxx", min_rating="AGENT_FRIENDLY")
+
+# 2. Wrap any CrewAI-compatible tool
+search = SerperDevTool()
+gated_search = GatedTool(
+    tool=search,
+    gate=gate,
+    service_url="https://serper.dev",
+)
+
+# 3. Use with CrewAI agents
+researcher = Agent(
+    role="Research Analyst",
+    goal="Find reliable data from agent-friendly sources",
+    tools=[gated_search],
+)
+
+task = Task(
+    description="Research the latest trends in AI agent tooling",
+    agent=researcher,
+    expected_output="A summary of key trends",
+)
+
+crew = Crew(agents=[researcher], tasks=[task])
+result = crew.kickoff()
+```
+
+The gate transparently checks AEO scores before each tool call. If a service scores below the threshold, the agent receives a structured error with suggested alternatives, allowing it to adapt its strategy.
+
 ## API Behavior
 
 - **Caching**: Scores are cached in-memory with a 1-hour TTL by default. Use `gate.clear_cache()` to reset.
