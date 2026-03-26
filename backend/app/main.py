@@ -247,7 +247,8 @@ app.include_router(setup_router)
 # MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
 try:
     from .mcp_server import mcp_app
-    app.mount("/mcp", mcp_app)
+    from starlette.routing import Mount
+    app.router.routes.insert(0, Mount("/mcp", app=mcp_app))
     logger.info("MCP Streamable HTTP server mounted at /mcp")
 except Exception as exc:
     logger.warning("MCP server not available: %s", exc)
