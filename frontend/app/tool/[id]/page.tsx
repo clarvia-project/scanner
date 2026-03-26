@@ -6,6 +6,52 @@ import Link from "next/link";
 import Image from "next/image";
 import { API_BASE } from "@/lib/api";
 
+function BadgeEmbed({ toolId }: { toolId: string }) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const badgeUrl = `https://clarvia.art/api/badge/${toolId}`;
+  const profileUrl = `https://clarvia.art/tool/${toolId}`;
+  const markdown = `[![Clarvia Score](${badgeUrl})](${profileUrl})`;
+  const html = `<a href="${profileUrl}"><img src="${badgeUrl}" alt="Clarvia Score" /></a>`;
+
+  const copy = async (text: string, key: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  return (
+    <div className="glass-card rounded-xl p-6">
+      <h2 className="text-sm font-semibold mb-3">Embed AEO Badge</h2>
+      <p className="text-xs text-muted/60 mb-4">Add this badge to your README to show your Clarvia Score.</p>
+      <div className="mb-4 flex items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={badgeUrl} alt="Clarvia Score badge preview" height={20} />
+        <span className="text-xs text-muted/50">live badge</span>
+      </div>
+      <div className="space-y-3">
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] text-muted/50 font-mono uppercase">Markdown</span>
+            <button onClick={() => copy(markdown, "md")} className="text-[10px] text-muted/50 hover:text-accent transition-colors cursor-pointer">
+              {copied === "md" ? "Copied!" : "Copy"}
+            </button>
+          </div>
+          <div className="text-xs font-mono bg-card-border/20 rounded-lg px-3 py-2 break-all">{markdown}</div>
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] text-muted/50 font-mono uppercase">HTML</span>
+            <button onClick={() => copy(html, "html")} className="text-[10px] text-muted/50 hover:text-accent transition-colors cursor-pointer">
+              {copied === "html" ? "Copied!" : "Copy"}
+            </button>
+          </div>
+          <div className="text-xs font-mono bg-card-border/20 rounded-lg px-3 py-2 break-all">{html}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ShareButtons({ url, title }: { url: string; title: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -469,6 +515,11 @@ export default function ToolDetailPage() {
             </Link>
           </div>
           <SimilarTools scanId={tool.scan_id} />
+        </div>
+
+        {/* Badge Embed */}
+        <div className="mt-6">
+          <BadgeEmbed toolId={id} />
         </div>
 
         {/* Back */}
