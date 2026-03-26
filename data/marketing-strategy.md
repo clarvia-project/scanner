@@ -973,3 +973,35 @@ or the package ranking being too low. Consider:
 - Vercel deployment may be protected by CI status check
 - Need to fix ruff errors to unblock Vercel deploys
 - Short-term workaround: manual Vercel deploy if possible
+
+---
+
+## Field Notes
+
+### 2026-03-27 (Session 3 — Automated Marketing Loop)
+
+**What was done:**
+- **S4 (Tool JSON-LD)**: Created `tool/[id]/layout.tsx` server component with `generateMetadata` + `SoftwareApplication` JSON-LD schema. All 15,400+ tool pages now have tool-specific title, OG tags, and structured data. This was the highest-leverage unfinished item.
+- **S14 (Badge system)**: Created `/api/badge/[name]` Edge route (proxies to backend badge generator). Added `BadgeEmbed` component to tool detail pages with live preview + copy buttons.
+- **R4/SEO**: Added 14 category URLs + /trending to sitemap. Previously missing.
+- **R5 (Awesome-lists)**: PRs to jim-schwoebel/awesome_ai_agents (#138, 1500 stars) and heilcheng/awesome-agent-skills (#135, 3413 stars).
+
+**Blocked:**
+- npm publish v1.1.1 requires OTP — manual step needed.
+- API (clarvia-api.onrender.com) was returning 502 during this session.
+
+**Insights:**
+- Tool pages were missing tool-specific JSON-LD (only had generic homepage JSON-LD). Fixed.
+- Backend badge API already existed but was unreachable from clarvia.art domain. Frontend proxy route fixes this.
+- Category pages existed but were missing from sitemap entirely.
+- heilcheng/awesome-agent-skills (3413 stars) is HIGH value — specifically lists AI agent skill collections.
+
+## Field Notes
+
+### 2026-03-26 Session (Cycle 3)
+- **Smithery CLI publish**: `smithery mcp publish` requires paid plan for hosted deploy. Free option needs an HTTP shttp endpoint, not just stdio. Added `createSandboxServer` export to MCP server (needed for Smithery scan). Manual account registration at smithery.ai still needed.
+- **GitHub Action clarvia-action**: Was missing `scan.sh` — added and released v1.0.1. Action was non-functional before. Added 9 discoverability topics to the repo.
+- **PR strategy**: Some repos (wong2, hesreallyhim) don't allow external PRs via GitHub API — use issues instead. VoltAgent accepts PRs for subagents.
+- **High-value targets remaining**: hesreallyhim/awesome-claude-code issue submitted, awaiting review. VoltAgent/awesome-claude-code-subagents PR #146 open.
+- **Total open PRs**: 27+ across major awesome-list repos.
+- **npm downloads**: Stable at 232/day — no spike yet from PR submissions (expected lag of days-weeks).
