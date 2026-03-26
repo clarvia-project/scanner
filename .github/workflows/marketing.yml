@@ -4,6 +4,8 @@ on:
   schedule:
     # Morning plan + execute (9am KST = 0am UTC)
     - cron: '3 0 * * *'
+    # Midday marketing batch (3pm KST = 6am UTC)
+    - cron: '3 6 * * *'
     # Evening report (10pm KST = 1pm UTC)
     - cron: '3 13 * * *'
     # Keep-alive ping every 14 min
@@ -43,6 +45,8 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "mode=${{ inputs.mode }}" >> $GITHUB_OUTPUT
           elif [ "${{ github.event.schedule }}" = "3 0 * * *" ]; then
+            echo "mode=morning" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.schedule }}" = "3 6 * * *" ]; then
             echo "mode=morning" >> $GITHUB_OUTPUT
           elif [ "${{ github.event.schedule }}" = "3 13 * * *" ]; then
             echo "mode=evening" >> $GITHUB_OUTPUT
