@@ -108,12 +108,29 @@ async def scan_url(session: aiohttp.ClientSession, url: str) -> dict | None:
 
 async def validate_url(session: aiohttp.ClientSession, url: str) -> bool:
     """Validate that a URL is reachable and not blocked."""
-    blocked_domains = [
-        "localhost", "127.0.0.1", "0.0.0.0", "10.", "172.16.",
-        "192.168.", "169.254.", "::1",
-    ]
-    for blocked in blocked_domains:
-        if blocked in url:
+    from urllib.parse import urlparse
+
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return False
+
+    if parsed.scheme not in ("http", "https"):
+        return False
+
+    hostname = (parsed.hostname or "").lower()
+
+    # Block private/reserved hostnames and IPs
+    blocked_exact = {"localhost", "127.0.0.1", "0.0.0.0", "::1", ""}
+    if hostname in blocked_exact:
+        return False
+
+    blocked_prefixes = ("10.", "172.16.", "172.17.", "172.18.", "172.19.",
+                        "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
+                        "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
+                        "172.30.", "172.31.", "192.168.", "169.254.")
+    for prefix in blocked_prefixes:
+        if hostname.startswith(prefix):
             return False
 
     try:

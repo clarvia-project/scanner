@@ -150,8 +150,9 @@ def check_score_distribution(catalog: list[dict]) -> dict:
     result = {"check": "score_distribution", "status": "ok", "issues": []}
 
     all_scores = [
-        t.get("score", 0) for t in catalog
-        if isinstance(t.get("score"), (int, float)) and t.get("score", 0) > 0
+        t.get("clarvia_score", t.get("score", 0)) for t in catalog
+        if isinstance(t.get("clarvia_score", t.get("score")), (int, float))
+        and (t.get("clarvia_score", t.get("score", 0)) or 0) > 0
     ]
 
     if len(all_scores) < 10:
@@ -176,7 +177,7 @@ def check_score_distribution(catalog: list[dict]) -> dict:
                 if dt.tzinfo is None:
                     dt = dt.replace(tzinfo=timezone.utc)
                 if dt >= cutoff:
-                    score = t.get("score", 0)
+                    score = t.get("clarvia_score", t.get("score", 0))
                     if isinstance(score, (int, float)):
                         recent_scores.append(score)
             except (ValueError, TypeError):
@@ -247,7 +248,7 @@ def check_duplicates(catalog: list[dict]) -> dict:
     # Build comparison lists
     tools = []
     for t in catalog:
-        name = (t.get("name") or "").lower().strip()
+        name = (t.get("service_name") or t.get("name") or "").lower().strip()
         url = (t.get("url") or "").lower().strip().rstrip("/")
         if name or url:
             tools.append({"name": name, "url": url, "original": t})
@@ -352,7 +353,7 @@ def check_completeness(catalog: list[dict]) -> dict:
     result = {"check": "completeness", "status": "ok", "issues": [], "incomplete_tools": []}
 
     required_fields = ["description", "category", "url"]
-    score_field = "score"
+    score_field = "clarvia_score"
 
     missing_desc = 0
     missing_category = 0
@@ -361,7 +362,7 @@ def check_completeness(catalog: list[dict]) -> dict:
 
     for t in catalog:
         missing = []
-        name = t.get("name") or t.get("url", "unknown")
+        name = t.get("service_name") or t.get("name") or t.get("url", "unknown")
 
         if not t.get("description"):
             missing_desc += 1
@@ -389,20 +390,23 @@ def check_completeness(catalog: list[dict]) -> dict:
     result["missing_score"] = missing_score
     result["missing_url"] = missing_url
 
+    # Calculate percentage before trimming for readability
+    incomplete_count = len(result["incomplete_tools"])
+    incomplete_pct = incomplete_count / total if total > 0 else 0
+
     # Trim incomplete list for readability
     result["incomplete_tools"] = result["incomplete_tools"][:50]
-
-    incomplete_pct = len(result["incomplete_tools"]) / total if total > 0 else 0
+    result["incomplete_count"] = incomplete_count
     if incomplete_pct > 0.2:
         result["status"] = "alert"
         result["issues"].append(
-            f"{len(result['incomplete_tools'])} tools ({incomplete_pct*100:.0f}%) "
+            f"{incomplete_count} tools ({incomplete_pct*100:.0f}%) "
             f"are missing essential fields"
         )
-    elif result["incomplete_tools"]:
+    elif incomplete_count > 0:
         result["status"] = "warning"
         result["issues"].append(
-            f"{len(result['incomplete_tools'])} tools have incomplete data"
+            f"{incomplete_count} tools have incomplete data"
         )
 
     return result
@@ -472,8 +476,8 @@ def fix_exact_duplicates(catalog: list[dict]) -> tuple[list[dict], int]:
         if url in seen_urls:
             # Keep the one with the higher score
             existing_idx = seen_urls[url]
-            existing_score = to_keep[existing_idx].get("score", 0) or 0
-            new_score = tool.get("score", 0) or 0
+            existing_score = to_keep[existing_idx].get("clarvia_score", to_keep[existing_idx].get("score", 0)) or 0
+            new_score = tool.get("clarvia_score", tool.get("score", 0)) or 0
             if new_score > existing_score:
                 to_keep[existing_idx] = tool
             removed += 1

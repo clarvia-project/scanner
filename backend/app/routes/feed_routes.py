@@ -199,7 +199,7 @@ async def feed_top(
                 "url": s.get("url", ""),
                 "score": s.get("clarvia_score", 0),
                 "rating": s.get("rating", ""),
-                "badge_url": f"https://clarvia-api.onrender.com/badge/{s.get('scan_id', '')}",
+                "badge_url": f"https://clarvia-api.onrender.com/v1/badge/{s.get('scan_id', '')}",
             }
             for s in services
         ],
@@ -349,7 +349,7 @@ async def feed_badge_data(
             "url": url,
             "score": best.get("clarvia_score", 0),
             "rating": best.get("rating", ""),
-            "badge_svg": f"https://clarvia-api.onrender.com/badge/{best.get('scan_id', '')}",
+            "badge_svg": f"https://clarvia-api.onrender.com/v1/badge/{best.get('scan_id', '')}",
             "detail_url": f"https://clarvia.art/scan/{best.get('scan_id', '')}",
             "found": True,
         }

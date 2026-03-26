@@ -99,14 +99,24 @@ def _validate_url(url: str) -> tuple[bool, str]:
     if not parsed.netloc:
         return False, "URL must include a domain"
 
-    domain = parsed.netloc.split(":")[0].lower()
-    if domain in _BLOCKED_DOMAINS:
-        return False, f"Domain {domain} is not allowed"
+    hostname = (parsed.hostname or "").lower()
+    if hostname in _BLOCKED_DOMAINS:
+        return False, f"Domain {hostname} is not allowed"
 
-    # Block private IP ranges
-    for prefix in ("10.", "172.16.", "192.168.", "169.254."):
-        if domain.startswith(prefix):
+    # Block private IP ranges (IPv4)
+    private_prefixes = (
+        "10.", "172.16.", "172.17.", "172.18.", "172.19.",
+        "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
+        "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
+        "172.30.", "172.31.", "192.168.", "169.254.",
+    )
+    for prefix in private_prefixes:
+        if hostname.startswith(prefix):
             return False, "Private IP addresses are not allowed"
+
+    # Block IPv6 loopback
+    if hostname in ("::1", "[::1]"):
+        return False, "Loopback addresses are not allowed"
 
     return True, ""
 

@@ -70,7 +70,20 @@ def load_config() -> list[dict]:
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
-    return data.get("tasks", [])
+    raw_tasks = data.get("tasks", {})
+
+    # config.yaml stores tasks as a dict {name: {script, schedule, ...}}.
+    # Normalize to a list of dicts, each with a "name" key.
+    if isinstance(raw_tasks, dict):
+        tasks = []
+        for name, cfg in raw_tasks.items():
+            if isinstance(cfg, dict):
+                cfg["name"] = name
+                tasks.append(cfg)
+        return tasks
+
+    # Already a list (legacy format)
+    return raw_tasks
 
 
 def load_state() -> dict[str, str]:

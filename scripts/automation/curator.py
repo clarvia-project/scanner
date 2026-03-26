@@ -67,7 +67,7 @@ def _load_feedback_signals() -> dict[str, float]:
                     continue
                 entry = json.loads(line)
                 url = entry.get("url", "").rstrip("/").lower()
-                pop = entry.get("popularity_signal", 0)
+                pop = entry.get("popularity_boost", entry.get("popularity_signal", 0))
                 if url:
                     # Keep the highest signal if there are duplicates
                     signals[url] = max(signals.get(url, 0), pop)

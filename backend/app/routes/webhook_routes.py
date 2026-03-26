@@ -50,11 +50,24 @@ def _ensure_dir() -> None:
 
 def _save_webhook(wh_id: str, wh: dict[str, Any]) -> None:
     _ensure_dir()
+    wh_id = _sanitize_webhook_id(wh_id)
+    if not wh_id:
+        return
     path = _WEBHOOKS_DIR / f"{wh_id}.json"
     path.write_text(_json.dumps(wh, indent=2, default=str))
 
 
+def _sanitize_webhook_id(wh_id: str) -> str:
+    """Sanitize webhook ID to prevent path traversal."""
+    import re
+    # Only allow alphanumeric, underscore, and hyphen
+    return re.sub(r"[^a-zA-Z0-9_\-]", "", wh_id)
+
+
 def _load_webhook(wh_id: str) -> dict[str, Any] | None:
+    wh_id = _sanitize_webhook_id(wh_id)
+    if not wh_id:
+        return None
     path = _WEBHOOKS_DIR / f"{wh_id}.json"
     if not path.exists():
         return None
@@ -76,6 +89,9 @@ def _load_all_webhooks() -> list[dict[str, Any]]:
 
 
 def _delete_webhook(wh_id: str) -> bool:
+    wh_id = _sanitize_webhook_id(wh_id)
+    if not wh_id:
+        return False
     path = _WEBHOOKS_DIR / f"{wh_id}.json"
     if path.exists():
         path.unlink()
@@ -238,7 +254,7 @@ async def fire_webhooks(event: str, payload: dict[str, Any]) -> int:
                 # We can't recover the secret from the hash, but the
                 # registration response gave the user the raw secret.
                 # For signing, we use the hash itself as a shared token.
-                signature = hmac.new(
+                signature = hmac.HMAC(
                     secret_hash.encode(), body.encode(), hashlib.sha256
                 ).hexdigest()
                 headers["X-Clarvia-Signature"] = f"sha256={signature}"

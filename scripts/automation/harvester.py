@@ -183,7 +183,7 @@ def compute_quality_score(discovery: dict) -> int:
             pass
 
     # --- Has description (0-15) ---
-    desc = discovery.get("description", "")
+    desc = discovery.get("description") or ""
     if len(desc) > 50:
         score += 15
     elif len(desc) > 10:
@@ -201,7 +201,7 @@ def compute_quality_score(discovery: dict) -> int:
         score += 15
 
     # --- README length bonus (0-15) ---
-    readme_len = discovery.get("readme_length", 0)
+    readme_len = discovery.get("readme_length") or 0
     if readme_len > 2000:
         score += 15
     elif readme_len > 500:

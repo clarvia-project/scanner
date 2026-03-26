@@ -62,7 +62,7 @@ KEEP_EVERYTHING_DAYS = 90
 
 REQUIRED_PACKAGES = [
     "requests",
-    "yaml",
+    "pyyaml",
     "aiohttp",
 ]
 
@@ -339,12 +339,13 @@ def check_dependencies(*, dry_run: bool = False) -> dict:
     }
 
     for pkg_name in REQUIRED_PACKAGES:
-        import_name = pkg_name
         # Map pip names to import names
-        if pkg_name == "yaml":
-            import_name = "yaml"
-        elif pkg_name == "aiohttp":
-            import_name = "aiohttp"
+        pip_to_import = {
+            "pyyaml": "yaml",
+            "aiohttp": "aiohttp",
+            "requests": "requests",
+        }
+        import_name = pip_to_import.get(pkg_name, pkg_name)
 
         try:
             __import__(import_name)

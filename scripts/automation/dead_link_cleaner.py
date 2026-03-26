@@ -83,13 +83,13 @@ async def check_url(
     }
 
     try:
-        start = asyncio.get_event_loop().time()
+        start = asyncio.get_running_loop().time()
         async with session.head(
             url,
             timeout=aiohttp.ClientTimeout(total=CHECK_TIMEOUT),
             allow_redirects=False,
         ) as resp:
-            elapsed = (asyncio.get_event_loop().time() - start) * 1000
+            elapsed = (asyncio.get_running_loop().time() - start) * 1000
             result["status_code"] = resp.status
             result["response_time_ms"] = round(elapsed, 1)
 
@@ -139,7 +139,7 @@ async def check_all_urls(
         async with semaphore:
             return await check_url(session, url)
 
-    connector = aiohttp.TCPConnector(limit=concurrency, ssl=False)
+    connector = aiohttp.TCPConnector(limit=concurrency)
     async with aiohttp.ClientSession(connector=connector) as session:
         tasks = [_bounded_check(session, url) for url in urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)

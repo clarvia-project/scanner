@@ -123,6 +123,7 @@ class CircuitBreaker:
         self.total_failures = saved.get("total_failures", 0)
         self.total_successes = saved.get("total_successes", 0)
         self.total_rejected = saved.get("total_rejected", 0)
+        self._half_open_probe_sent = False
 
     def _persist(self) -> None:
         """Save current state to disk."""
@@ -165,8 +166,12 @@ class CircuitBreaker:
                 return False
 
         if self.state == CBState.HALF_OPEN:
-            # In HALF_OPEN, allow exactly one probe
-            return True
+            # In HALF_OPEN, allow exactly one probe request
+            if not self._half_open_probe_sent:
+                self._half_open_probe_sent = True
+                return True
+            self.total_rejected += 1
+            return False
 
         return False
 
@@ -182,6 +187,7 @@ class CircuitBreaker:
                 self.name, self.state.value.upper(),
             )
             self.state = CBState.CLOSED
+            self._half_open_probe_sent = False
 
         self._persist()
 
@@ -199,6 +205,7 @@ class CircuitBreaker:
             )
             self.state = CBState.OPEN
             self.opened_at = time.time()
+            self._half_open_probe_sent = False
 
         elif self.state == CBState.CLOSED:
             if self.failure_count >= self.failure_threshold:
@@ -218,6 +225,7 @@ class CircuitBreaker:
         )
         self.state = CBState.OPEN
         self.opened_at = time.time()
+        self._half_open_probe_sent = False
         self._persist()
 
     def force_close(self) -> None:
@@ -225,6 +233,7 @@ class CircuitBreaker:
         logger.info("Circuit breaker [%s]: forced CLOSED", self.name)
         self.state = CBState.CLOSED
         self.failure_count = 0
+        self._half_open_probe_sent = False
         self._persist()
 
     def get_status(self) -> dict[str, Any]:

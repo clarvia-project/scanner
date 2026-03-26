@@ -385,7 +385,8 @@ def run_all_tests(api_url: str) -> list[IntegrationResult]:
         try:
             r = test_fn()
         except Exception as exc:
-            r = IntegrationResult(test_fn.__name__, "error")
+            fn_name = getattr(test_fn, "__name__", "unknown_test")
+            r = IntegrationResult(fn_name, "error")
             r.message = f"Uncaught exception: {exc}"
         results.append(r)
         logger.info(
@@ -470,11 +471,14 @@ def main() -> int:
     failed = report["summary"]["failed"]
     if failed > 0:
         msg = format_telegram_message(report)
-        send_alert(
-            "Integration Test Failures",
-            msg,
-            level="ERROR",
-        ) if not args.dry_run else logger.info("[DRY RUN] Would send alert:\n%s", msg)
+        if not args.dry_run:
+            send_alert(
+                "Integration Test Failures",
+                msg,
+                level="ERROR",
+            )
+        else:
+            logger.info("[DRY RUN] Would send alert:\n%s", msg)
         return 1
 
     logger.info("All %d tests passed", report["summary"]["total"])
