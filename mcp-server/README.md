@@ -1,27 +1,30 @@
-# Clarvia MCP Server
+<div align="center">
 
-MCP (Model Context Protocol) server that exposes Clarvia's AI service evaluation platform as tools for LLM agents.
+# clarvia-mcp-server
 
-## Tools
+**MCP server for Clarvia AEO Scanner -- search, evaluate, and gate-check 12,800+ AI agent tools**
 
-| Tool | Description |
-|------|-------------|
-| `search_services` | Search indexed services by keyword, category, or minimum score |
-| `scan_service` | Scan a URL for Clarvia evaluation |
-| `get_service_details` | Get detailed results for a specific scan |
-| `list_categories` | List all service categories |
-| `get_stats` | Get platform-wide statistics |
-| `register_service` | Register a new service for evaluation |
+[![npm version](https://img.shields.io/npm/v/clarvia-mcp-server?color=cb3837)](https://www.npmjs.com/package/clarvia-mcp-server)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![MCP Tools](https://img.shields.io/badge/MCP_tools-11-6366f1)](#tools)
 
-## Installation
+</div>
+
+---
+
+## Install
 
 ```bash
-cd mcp-server
-npm install
-npm run build
+npx clarvia-mcp-server
 ```
 
-## Configuration
+Or use the remote endpoint (no install needed):
+
+```
+https://clarvia-api.onrender.com/mcp/
+```
+
+## Configure
 
 ### Claude Desktop
 
@@ -31,8 +34,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "clarvia": {
-      "command": "node",
-      "args": ["/absolute/path/to/scanner/mcp-server/dist/index.js"]
+      "command": "npx",
+      "args": ["clarvia-mcp-server"]
     }
   }
 }
@@ -40,53 +43,84 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ### Claude Code
 
-Add to `.claude/settings.json` or use `claude mcp add`:
-
 ```bash
-claude mcp add clarvia node /absolute/path/to/scanner/mcp-server/dist/index.js
+claude mcp add clarvia -- npx clarvia-mcp-server
 ```
 
-### Cursor
+### Cursor / Windsurf
 
-Add to `.cursor/mcp.json`:
+Add to `.cursor/mcp.json` or `.windsurf/mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "clarvia": {
-      "command": "node",
-      "args": ["/absolute/path/to/scanner/mcp-server/dist/index.js"]
+      "command": "npx",
+      "args": ["clarvia-mcp-server"]
     }
   }
 }
 ```
 
+---
+
+## Tools
+
+| Tool | Description |
+|------|-------------|
+| `search_services` | Search 12,800+ indexed AI tools by keyword, category, or minimum score |
+| `scan_service` | Run a full AEO audit on any URL |
+| `get_service_details` | Get detailed scoring breakdown for a scanned service |
+| `list_categories` | List all tool categories with service counts |
+| `get_stats` | Get platform-wide statistics (averages, distributions) |
+| `register_service` | Submit a new service for indexing and scoring |
+| `clarvia_gate_check` | Quick pass/fail safety check before using a tool |
+| `clarvia_batch_check` | Batch-check up to 10 URLs in one call |
+| `clarvia_find_alternatives` | Find higher-rated alternatives in a category |
+| `clarvia_probe` | Live accessibility probe (HTTP, latency, OpenAPI, MCP) |
+| `clarvia_submit_feedback` | Report tool usage outcomes to improve reliability data |
+
+---
+
 ## Usage Examples
 
-**Search for AI coding tools:**
+**Search for AI tools:**
 ```
-Use search_services with query "code assistant"
+Use search_services with query "code assistant" to find coding tools
+```
+
+**Gate-check before calling a tool:**
+```
+Use clarvia_gate_check with url "https://api.example.com" and min_score 60
 ```
 
 **Scan a new service:**
 ```
-Use scan_service with url "https://example.com"
+Use scan_service with url "https://example.com" to get a full AEO audit
 ```
 
-**Check platform stats:**
+**Find alternatives when a tool fails:**
 ```
-Use get_stats to see overall Clarvia statistics
+Use clarvia_find_alternatives with category "payment" and min_score 70
 ```
 
-**Register a service:**
-```
-Use register_service with name, url, description, and category
-```
+---
 
 ## Development
 
 ```bash
+npm install
 npm run dev    # Watch mode
 npm run build  # Production build
 npm start      # Run server
 ```
+
+## Links
+
+- **Website**: [clarvia.art](https://clarvia.art)
+- **GitHub**: [clarvia-project/scanner](https://github.com/clarvia-project/scanner)
+- **MCP Registry**: `io.github.digitamaz/clarvia`
+
+## License
+
+[MIT](LICENSE)

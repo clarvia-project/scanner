@@ -8,11 +8,17 @@
     "name": "Clarvia",
     "url": "https://clarvia.art"
   },
-  "transport": {
-    "type": "stdio",
-    "command": "npx",
-    "args": ["@clarvia/mcp-server"]
-  },
+  "transport": [
+    {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["clarvia-mcp-server"]
+    },
+    {
+      "type": "streamable-http",
+      "url": "https://clarvia-api.onrender.com/mcp/"
+    }
+  ],
   "tools": [
     {
       "name": "search_services",
