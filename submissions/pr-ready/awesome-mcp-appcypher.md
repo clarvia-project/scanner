@@ -7,7 +7,7 @@ Under the **"Testing & Quality Assurance"** section in README.md. If that sectio
 ## Exact markdown entry to add
 
 ```markdown
-- <img src="https://clarvia.art/favicon.ico" height="14"/> [Clarvia](https://github.com/clarvia-project/scanner) - AEO scoring and tool discovery platform for AI agents — search 12,800+ indexed tools, gate-check services before use, compare alternatives, and submit quality feedback
+- <img src="https://clarvia.art/favicon.ico" height="14"/> [Clarvia](https://github.com/clarvia-project/scanner) - AEO scoring and tool discovery platform for AI agents — search 15,400+ indexed tools, gate-check services before use, compare alternatives, and submit quality feedback
 ```
 
 ## PR title
@@ -19,7 +19,7 @@ Add Clarvia - AEO scoring and tool discovery for AI agents
 ## PR body
 
 ```markdown
-**Clarvia** is an AEO (Agent Engine Optimization) scoring and tool discovery platform. It indexes 12,800+ AI agent tools (MCP servers, APIs, CLIs) and scores them on agent-readiness.
+**Clarvia** is an AEO (Agent Engine Optimization) scoring and tool discovery platform. It indexes 15,400+ AI agent tools (MCP servers, APIs, CLIs) and scores them on agent-readiness.
 
 **16 MCP tools** including:
 - `search_services` — Search indexed tools by keyword, category, or score

@@ -7,7 +7,7 @@ Under the **"Developer Tools"** section in README.md.
 ## Exact markdown entry to add
 
 ```markdown
-- **[Clarvia](https://github.com/clarvia-project/scanner)** - AEO scoring and tool discovery platform for AI agents. Search 12,800+ indexed MCP servers, APIs, and CLIs with agent-readiness scores, gate-check tools before use, compare alternatives, and submit quality feedback. [![npm](https://img.shields.io/npm/v/clarvia-mcp-server)](https://www.npmjs.com/package/clarvia-mcp-server)
+- **[Clarvia](https://github.com/clarvia-project/scanner)** - AEO scoring and tool discovery platform for AI agents. Search 15,400+ indexed MCP servers, APIs, and CLIs with agent-readiness scores, gate-check tools before use, compare alternatives, and submit quality feedback. [![npm](https://img.shields.io/npm/v/clarvia-mcp-server)](https://www.npmjs.com/package/clarvia-mcp-server)
 ```
 
 ## PR title
@@ -21,7 +21,7 @@ Add Clarvia - AEO scoring and tool discovery for AI agents
 ```markdown
 ### What is this MCP server?
 
-[Clarvia](https://clarvia.art) is an AEO (Agent Engine Optimization) scoring and tool discovery platform. It indexes 12,800+ AI agent tools and scores them on agent-readiness (0-100).
+[Clarvia](https://clarvia.art) is an AEO (Agent Engine Optimization) scoring and tool discovery platform. It indexes 15,400+ AI agent tools and scores them on agent-readiness (0-100).
 
 ### Tools (16 total)
 

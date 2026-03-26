@@ -6,7 +6,7 @@
 
 **AEO (Agent Engine Optimization) Scanner for AI Agent Tools**
 
-Score, discover, and validate 12,800+ AI agent tools for quality, accessibility, and agent-readiness.
+Score, discover, and validate 15,400+ AI agent tools for quality, accessibility, and agent-readiness.
 
 [![npm version](https://img.shields.io/npm/v/clarvia-mcp-server?color=cb3837&label=npm)](https://www.npmjs.com/package/clarvia-mcp-server)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -164,7 +164,7 @@ No local installation required.
 
 | Tool | Description |
 |------|-------------|
-| `search_services` | Search 12,800+ indexed AI tools by keyword, category, or minimum score |
+| `search_services` | Search 15,400+ indexed AI tools by keyword, category, or minimum score |
 | `scan_service` | Run a full AEO audit on any URL |
 | `get_service_details` | Get detailed scoring breakdown for a scanned service |
 | `list_categories` | List all tool categories with service counts |

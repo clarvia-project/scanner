@@ -29,7 +29,7 @@ mcp = FastMCP(
     "clarvia",
     instructions=(
         "Clarvia is an AEO (AI Engine Optimization) scanner and directory "
-        "for 12,800+ AI agent tools. Use these tools to search, evaluate, "
+        "for 15,400+ AI agent tools. Use these tools to search, evaluate, "
         "and validate services for AI agent compatibility."
     ),
     stateless_http=True,
@@ -99,7 +99,7 @@ async def search_services(
     min_score: float | None = None,
     limit: int | None = None,
 ) -> str:
-    """Search 12,800+ AI agent tools (MCP servers, APIs, CLIs) by keyword, category, or score.
+    """Search 15,400+ AI agent tools (MCP servers, APIs, CLIs) by keyword, category, or score.
 
     Use when you need to find the best tool for a specific task, compare
     alternatives, or check agent readiness. Returns Clarvia AEO scores (0-100)

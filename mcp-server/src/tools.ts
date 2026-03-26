@@ -23,7 +23,7 @@ export function registerTools(server: McpServer): void {
   // 1. search_services
   server.tool(
     "search_services",
-    "Search 12,800+ AI agent tools (MCP servers, APIs, CLIs) by keyword, category, or score. Use when you need to find the best tool for a specific task, compare alternatives, or check agent readiness. Returns Clarvia AEO scores (0-100) indicating how easily AI agents can discover and use each service.",
+    "Search 15,400+ AI agent tools (MCP servers, APIs, CLIs) by keyword, category, or score. Use when you need to find the best tool for a specific task, compare alternatives, or check agent readiness. Returns Clarvia AEO scores (0-100) indicating how easily AI agents can discover and use each service.",
     {
       query: z.string().optional().describe("Search keyword"),
       category: z.string().optional().describe("Filter by category"),

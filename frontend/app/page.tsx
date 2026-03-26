@@ -396,7 +396,7 @@ export default function LandingPage() {
             >
               <span className="text-sm text-muted group-hover:text-foreground transition-colors">
                 Or explore{" "}
-                <span className="text-foreground font-semibold font-mono">12,800+</span>{" "}
+                <span className="text-foreground font-semibold font-mono">15,400+</span>{" "}
                 agent tools
               </span>
               <svg className="w-4 h-4 text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -535,7 +535,7 @@ export default function LandingPage() {
               <p className="text-sm md:text-base text-muted leading-relaxed">
                 Clarvia is the AEO (AI Engine Optimization) standard for the agent economy.
                 It scans any API, MCP server, CLI tool, or skill and scores it on a 0-100 scale
-                for AI agent readiness. With 12,800+ tools indexed across the ecosystem,
+                for AI agent readiness. With 15,400+ tools indexed across the ecosystem,
                 Clarvia helps developers find the best tools for their AI agents,
                 and helps API providers optimize their services to be discovered by AI systems.
                 The Clarvia Score evaluates four dimensions: API Accessibility, Data Structuring,

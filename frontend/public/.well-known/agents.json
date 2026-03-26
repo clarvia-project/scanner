@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "name": "Clarvia",
-  "description": "AI Agent Tool Directory — Search 12,800+ tools (MCP servers, APIs, CLIs, Skills) scored for agent readiness",
+  "description": "AI Agent Tool Directory — Search 15,400+ tools (MCP servers, APIs, CLIs, Skills) scored for agent readiness",
   "url": "https://clarvia.art",
   "api": {
     "type": "rest",

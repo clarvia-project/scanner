@@ -5,7 +5,7 @@
   "type": "mcp",
   "title": "Clarvia",
   "description": {
-    "en": "AEO scoring and tool discovery platform for AI agents. Search 12,800+ indexed MCP servers, APIs, and CLIs with agent-readiness scores. Gate-check tools before use, compare alternatives, and submit quality feedback."
+    "en": "AEO scoring and tool discovery platform for AI agents. Search 15,400+ indexed MCP servers, APIs, and CLIs with agent-readiness scores. Gate-check tools before use, compare alternatives, and submit quality feedback."
   },
   "author": "Clarvia",
   "homepage": "https://clarvia.art",
@@ -28,7 +28,7 @@
   "tools": [
     {
       "name": "search_services",
-      "description": "Search 12,800+ AI agent tools by keyword, category, or minimum score.",
+      "description": "Search 15,400+ AI agent tools by keyword, category, or minimum score.",
       "parameters": {
         "type": "object",
         "properties": {

@@ -5,7 +5,7 @@
 ```
 Clarvia: the quality index for AI agent tools.
 
-Search 12,800+ MCP servers, APIs & CLIs scored on agent-readiness (0-100). Gate-check tools before calling, find alternatives, benchmark your setup.
+Search 15,400+ MCP servers, APIs & CLIs scored on agent-readiness (0-100). Gate-check tools before calling, find alternatives, benchmark your setup.
 
 Free MCP server: npx clarvia-mcp-server
 
@@ -20,7 +20,7 @@ https://clarvia.art
 
 **Title:**
 ```
-Clarvia - Open tool discovery and quality scoring for AI agents (12,800+ indexed MCP servers, APIs, CLIs)
+Clarvia - Open tool discovery and quality scoring for AI agents (15,400+ indexed MCP servers, APIs, CLIs)
 ```
 
 **Body:**
@@ -30,7 +30,7 @@ Hey r/AI_Agents,
 We built Clarvia to solve a problem we kept hitting: how do you know which MCP server or API is actually good before your agent calls it?
 
 **What it does:**
-Clarvia indexes 12,800+ AI agent tools and scores each one on agent-readiness (0-100) across five dimensions: description quality, documentation, ecosystem presence, agent compatibility, and trust signals.
+Clarvia indexes 15,400+ AI agent tools and scores each one on agent-readiness (0-100) across five dimensions: description quality, documentation, ecosystem presence, agent compatibility, and trust signals.
 
 **How agents use it:**
 - `search_services` — find the best tool for a task
@@ -67,12 +67,12 @@ Happy to answer questions or take feedback.
 
 **Title:**
 ```
-Show HN: Clarvia - Quality index for AI agent tools (12,800+ MCP servers scored)
+Show HN: Clarvia - Quality index for AI agent tools (15,400+ MCP servers scored)
 ```
 
 **Body:**
 ```
-Clarvia is an open tool discovery and quality scoring platform for AI agents. We index 12,800+ MCP servers, APIs, and CLIs, and score each on agent-readiness across five dimensions.
+Clarvia is an open tool discovery and quality scoring platform for AI agents. We index 15,400+ MCP servers, APIs, and CLIs, and score each on agent-readiness across five dimensions.
 
 The core use case: before your agent calls an external tool, run `clarvia_gate_check` to verify it meets a minimum quality threshold. If it fails, `clarvia_find_alternatives` returns better-scored options in the same category.
 
