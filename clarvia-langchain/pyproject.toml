@@ -10,7 +10,10 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
-    { name = "Clarvia", email = "dev@clarvia.com" },
+    { name = "digitamaz", email = "dev@clarvia.com" },
+]
+maintainers = [
+    { name = "digitamaz", email = "dev@clarvia.com" },
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
