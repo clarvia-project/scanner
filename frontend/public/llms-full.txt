@@ -1,0 +1,690 @@
+# Clarvia — Complete API & MCP Server Documentation
+
+> Clarvia is the AEO (AI Engine Optimization) standard for AI agent tool quality. It scores how easily AI agents can discover and use any API, MCP server, CLI tool, or skill.
+
+Website: https://clarvia.art
+API Base URL: https://api.clarvia.art
+MCP Server: npx clarvia-mcp-server
+
+---
+
+## 1. What is Clarvia?
+
+Clarvia indexes 12,800+ tools across the AI agent ecosystem and scores each one on a 0-100 scale (the "Clarvia Score") for agent readiness. Think of it as "Lighthouse for AI agents" — instead of measuring web performance, it measures how well a service can be found and used by autonomous AI agents.
+
+### What is AEO?
+
+AEO (AI Engine Optimization) measures how easily AI agents can discover and use your API or MCP server. It is the equivalent of SEO for the agent economy — instead of optimizing for search engines, AEO optimizes for AI systems that autonomously consume APIs, tools, and services.
+
+### Agent Grades
+
+Based on the Clarvia Score, each tool receives an agent grade:
+
+- **AGENT_NATIVE** (90-100): Purpose-built for AI agents. Excellent discoverability, structured data, MCP support, strong trust signals.
+- **AGENT_FRIENDLY** (70-89): Well-suited for agent consumption. Good API design, documentation, and compatibility.
+- **AGENT_POSSIBLE** (50-69): Usable by agents with effort. Some gaps in documentation, error handling, or discovery.
+- **AGENT_HOSTILE** (0-49): Difficult for agents to use. Missing key signals, poor documentation, or inaccessible.
+
+---
+
+## 2. Scoring Dimensions (100 points total)
+
+The Clarvia Score is composed of 4 equally-weighted dimensions, each contributing up to 25 points:
+
+### 2.1 API Accessibility (0-25)
+
+Measures how easily an agent can reach and interact with the service.
+
+Sub-factors:
+- **Endpoint availability**: Are API endpoints reachable and responding?
+- **Response speed**: What is the average response latency?
+- **Authentication clarity**: Is the auth method documented and standard (API key, OAuth, etc.)?
+- **Rate limit transparency**: Are rate limits documented in headers or docs?
+- **API versioning**: Is there a versioning strategy (URL path, headers)?
+- **CORS support**: Does the API support cross-origin requests?
+
+### 2.2 Data Structuring (0-25)
+
+Measures how well the service's data is organized for machine consumption.
+
+Sub-factors:
+- **OpenAPI/Swagger spec**: Is there a machine-readable API schema?
+- **Consistent error format**: Are errors returned in a structured, predictable format?
+- **Type safety**: Are request/response types well-defined?
+- **Pagination support**: Does the API support pagination for list endpoints?
+- **Webhook support**: Are webhooks available for event-driven consumption?
+- **Content negotiation**: Does the API support JSON and handle Accept headers?
+
+### 2.3 Agent Compatibility (0-25)
+
+Measures direct support for AI agent consumption patterns.
+
+Sub-factors:
+- **MCP server availability**: Is there a Model Context Protocol server?
+- **robots.txt AI crawler policy**: Does robots.txt explicitly allow AI crawlers?
+- **Discovery endpoints**: Are there .well-known/agents.json or ai-plugin.json files?
+- **Idempotency support**: Are write operations idempotent (safe to retry)?
+- **Streaming support**: Does the API support SSE or streaming responses?
+- **Tool descriptions**: Are tools/endpoints described in agent-friendly language?
+
+### 2.4 Trust Signals (0-25)
+
+Measures reliability and trustworthiness indicators.
+
+Sub-factors:
+- **Uptime history**: Is there evidence of reliable uptime?
+- **Documentation quality**: Is the documentation comprehensive and accurate?
+- **Update frequency**: Is the service actively maintained?
+- **Security headers**: Are proper security headers present (HSTS, CSP, etc.)?
+- **Status page**: Is there a public status page?
+- **Community signals**: GitHub stars, npm downloads, community activity.
+
+---
+
+## 3. MCP Server — 11 Tools
+
+Install and run the Clarvia MCP server to access all tools from any MCP-compatible AI agent.
+
+### Installation
+
+**Option A — npx (no install)**
+```json
+{
+  "mcpServers": {
+    "clarvia": {
+      "command": "npx",
+      "args": ["-y", "clarvia-mcp-server"]
+    }
+  }
+}
+```
+
+**Option B — Remote URL (Streamable HTTP)**
+```
+https://clarvia-mcp.sangho2.workers.dev/mcp
+```
+
+**Option C — pip (Python wrapper)**
+```bash
+pip install clarvia-mcp-server
+```
+
+### Tool Reference
+
+#### 3.1 search_services
+
+Search 12,800+ AI agent tools by keyword, category, or score.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| query | string | No | Search keyword (matches name, description, URL, tags) |
+| category | string | No | Filter by category (ai, developer_tools, payments, communication, data, productivity, blockchain, mcp, other) |
+| service_type | enum | No | Filter by type: mcp_server, skill, cli_tool, api, general |
+| min_score | number (0-100) | No | Minimum Clarvia score filter |
+| limit | number (1-100) | No | Max results to return (default: 20) |
+
+**Returns:**
+```json
+{
+  "total": 150,
+  "services": [
+    {
+      "name": "Stripe",
+      "url": "https://stripe.com",
+      "description": "Payment processing platform",
+      "category": "payments",
+      "service_type": "api",
+      "clarvia_score": 88,
+      "rating": "Strong",
+      "dimensions": {
+        "api_accessibility": 22,
+        "data_structuring": 23,
+        "agent_compatibility": 20,
+        "trust_signals": 23
+      },
+      "scan_id": "scn_abc123"
+    }
+  ],
+  "pagination": { "limit": 20, "offset": 0, "has_more": true }
+}
+```
+
+#### 3.2 scan_service
+
+Run a full AEO audit on any URL. Evaluates agent discoverability, API quality, documentation, and MCP readiness.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| url | string (URL) | Yes | URL to scan |
+
+**Returns:**
+```json
+{
+  "scan_id": "scn_bd5feadb71b9",
+  "service_name": "Stripe",
+  "url": "https://stripe.com",
+  "clarvia_score": 88,
+  "rating": "Strong",
+  "dimensions": {
+    "api_accessibility": { "score": 22, "max": 25, "sub_factors": [...] },
+    "data_structuring": { "score": 23, "max": 25, "sub_factors": [...] },
+    "agent_compatibility": { "score": 20, "max": 25, "sub_factors": [...] },
+    "trust_signals": { "score": 23, "max": 25, "sub_factors": [...] }
+  },
+  "top_recommendations": ["Add MCP server support", "Implement agents.json"],
+  "scanned_at": "2026-03-20T12:00:00Z"
+}
+```
+
+#### 3.3 get_service_details
+
+Get the full AEO evaluation report for a previously scanned service.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| scan_id | string | Yes | Scan ID from a previous scan or search result |
+
+**Returns:** Full service object with dimensions, sub_factors, and scoring breakdown.
+
+#### 3.4 list_categories
+
+List all tool categories in the Clarvia directory with service counts.
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+  "categories": [
+    { "name": "ai", "count": 45 },
+    { "name": "developer_tools", "count": 120 },
+    { "name": "payments", "count": 30 }
+  ]
+}
+```
+
+#### 3.5 get_stats
+
+Get aggregate statistics for the entire Clarvia tool directory.
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+  "total_services": 12800,
+  "avg_score": 52.3,
+  "score_distribution": {
+    "excellent": 120,
+    "strong": 450,
+    "moderate": 3200,
+    "weak": 9030
+  },
+  "by_category": {
+    "ai": { "count": 45, "avg_score": 71.2 },
+    "developer_tools": { "count": 120, "avg_score": 65.8 }
+  },
+  "by_type": {
+    "mcp_server": 8500,
+    "api": 2100,
+    "cli_tool": 1200,
+    "skill": 800,
+    "general": 200
+  }
+}
+```
+
+#### 3.6 register_service
+
+Submit a new AI tool for Clarvia indexing and AEO scoring.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| name | string | Yes | Service name |
+| url | string (URL) | Yes | Service URL |
+| description | string | Yes | Brief description |
+| category | string | Yes | Service category |
+| github_url | string (URL) | No | GitHub repository URL |
+
+**Returns:**
+```json
+{
+  "profile_id": "prf_abc123def456",
+  "name": "My MCP Server",
+  "url": "https://example.com",
+  "status": "pending_scan",
+  "created_at": "2026-03-20T12:00:00Z",
+  "service_url": "https://clarvia.art/service/prf_abc123def456"
+}
+```
+
+#### 3.7 clarvia_gate_check
+
+Quick pass/fail safety check for agent tool-use decisions. Returns an agent grade with a boolean pass result.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| url | string (URL) | Yes | Service URL to check |
+| min_rating | enum | No | Minimum acceptable grade: AGENT_NATIVE, AGENT_FRIENDLY (default), AGENT_POSSIBLE, AGENT_HOSTILE |
+
+**Returns:**
+```json
+{
+  "url": "https://stripe.com",
+  "score": 88,
+  "rating": "Strong",
+  "agent_grade": "AGENT_FRIENDLY",
+  "pass": true,
+  "reason": "Service scored 88 (AGENT_FRIENDLY), meets minimum AGENT_FRIENDLY"
+}
+```
+
+#### 3.8 clarvia_batch_check
+
+Batch-check up to 10 service URLs in a single call.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| urls | string[] (URLs, max 10) | Yes | List of service URLs to check |
+
+**Returns:**
+```json
+{
+  "results": [
+    { "url": "...", "score": 88, "agent_grade": "AGENT_FRIENDLY", "pass": true, "reason": "..." },
+    { "url": "...", "score": 42, "agent_grade": "AGENT_HOSTILE", "pass": false, "reason": "..." }
+  ],
+  "checked_at": "2026-03-20T12:00:00Z"
+}
+```
+
+#### 3.9 clarvia_find_alternatives
+
+Find higher-rated alternative tools in a given category, ranked by agent-readiness score.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| category | string | Yes | Service category (e.g. "payment", "ai", "crypto") |
+| min_score | number (0-100) | No | Minimum score (default: 70) |
+| limit | number (1-20) | No | Max results (default: 10) |
+
+**Returns:** Array of service objects sorted by Clarvia score descending.
+
+#### 3.10 clarvia_probe
+
+Run a live accessibility probe on a service URL. Checks HTTP reachability, response latency, OpenAPI spec presence, MCP server-card availability, and agents.json discovery.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| url | string (URL) | Yes | Service URL to probe |
+
+**Returns:**
+```json
+{
+  "url": "https://stripe.com",
+  "reachable": true,
+  "response_time_ms": 142,
+  "has_openapi": true,
+  "has_mcp": false,
+  "has_agents_json": false,
+  "checks": {
+    "http_reachable": true,
+    "openapi_spec": true,
+    "mcp_server_card": false,
+    "agents_json": false,
+    "robots_txt": true
+  }
+}
+```
+
+#### 3.11 clarvia_submit_feedback
+
+Report the outcome after using a tool (success/failure/partial) to contribute to Clarvia's reliability dataset.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| profile_id | string | Yes | Profile ID of the service used |
+| outcome | enum | Yes | Usage outcome: success, failure, partial |
+| agent_id | string | No | Your agent identifier |
+| error_message | string | No | Error details if failed |
+| latency_ms | number | No | Response latency in ms |
+
+**Returns:**
+```json
+{
+  "status": "ok",
+  "total_feedback": 5
+}
+```
+
+---
+
+## 4. REST API Reference
+
+Base URL: `https://api.clarvia.art`
+
+No authentication required for public endpoints. API key required for endpoints marked with [AUTH].
+
+### 4.1 Scanning
+
+#### POST /api/scan
+Scan a URL and get its Clarvia Score.
+
+**Request:**
+```json
+{ "url": "stripe.com" }
+```
+
+**Response:** Full scan result with scan_id, clarvia_score, rating, dimensions (4), sub_factors, and top_recommendations.
+
+#### GET /api/scan/{scan_id}
+Retrieve a previous scan result by scan_id.
+
+#### GET /api/scan/{scan_id}/sarif
+Export scan results in SARIF 2.1.0 format for GitHub Code Scanning integration.
+
+#### POST /api/scan/authenticated [AUTH]
+Scan with authentication credentials for private APIs.
+
+### 4.2 Tool Directory
+
+#### GET /v1/services
+Search and filter services. Supports compound filters.
+
+**Query Parameters:**
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| q | string | - | Text search in name/description/URL/tags |
+| category | string | - | Filter by category |
+| service_type | string | - | Filter: mcp_server, skill, cli_tool, api, general |
+| min_score | int (0-100) | 0 | Minimum Clarvia Score |
+| max_score | int (0-100) | - | Maximum Clarvia Score |
+| sort | enum | score_desc | Sort: score_desc, score_asc, name_asc, name_desc, recent |
+| source | string | - | "all" for 12,800+ tools, "collected" for registry tools only |
+| limit | int (1-100) | 20 | Page size |
+| offset | int | 0 | Pagination offset |
+
+**Response:**
+```json
+{
+  "total": 150,
+  "services": [...],
+  "pagination": { "limit": 20, "offset": 0, "has_more": true }
+}
+```
+
+#### GET /v1/services/{scan_id}
+Get full details for a specific service by scan_id.
+
+#### GET /v1/categories
+List available categories with service counts.
+
+#### GET /v1/compare?ids={scan_id1},{scan_id2}
+Compare up to 4 services side by side. Comma-separated scan_ids.
+
+#### GET /v1/stats
+Aggregate statistics across all indexed services. Pass `source=all` to include collected tools.
+
+### 4.3 Recommendations
+
+#### POST /v1/recommend
+Intent-based tool recommendation using natural language.
+
+**Request:**
+```json
+{
+  "intent": "I want to automate PR reviews",
+  "filters": { "service_type": "mcp_server", "min_score": 60 },
+  "limit": 5
+}
+```
+
+**Response:** Ranked list of tools with match reasons and relevance scores.
+
+#### GET /v1/recommend
+GET version for simple usage: `/v1/recommend?intent=github+pr+review&limit=5`
+
+#### GET /v1/similar/{scan_id}
+Get similar tools based on category and service type.
+
+### 4.4 Trending
+
+#### GET /v1/trending
+Get trending tools — top-scored tools by category with rising stars.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| category | string | Filter by category |
+| service_type | string | Filter by type |
+| limit | int (1-50) | Max results (default: 20) |
+
+**Response:**
+```json
+{
+  "top_tools": [...],
+  "by_category": { "ai": [...], "payments": [...] },
+  "rising_stars": [...],
+  "service_type_leaders": { "mcp_server": {...}, "api": {...} },
+  "category_stats": { "ai": { "count": 45, "avg_score": 71.2, "top_score": 95 } },
+  "total_indexed": 12800
+}
+```
+
+### 4.5 Profiles (Service Registration)
+
+#### POST /v1/profiles
+Register a new service. No auth required. Rate limited: 5/min per IP.
+
+**Request:**
+```json
+{
+  "name": "My MCP Server",
+  "url": "https://example.com",
+  "description": "A tool for doing X",
+  "category": "developer_tools",
+  "service_type": "mcp_server",
+  "type_config": {
+    "npm_package": "@my/mcp-server",
+    "transport": "stdio",
+    "tools": 5
+  },
+  "github_url": "https://github.com/user/repo",
+  "tags": ["typescript", "developer"]
+}
+```
+
+#### GET /v1/profiles
+List registered profiles with optional filters (category, service_type, status, min_score, q).
+
+#### GET /v1/profiles/{profile_id}
+Get full profile details.
+
+#### PUT /v1/profiles/{profile_id} [AUTH]
+Update an existing profile.
+
+#### POST /v1/profiles/{profile_id}/scan [AUTH]
+Trigger a rescan for the profile's URL.
+
+#### GET /v1/profiles/{profile_id}/badge
+Get an SVG badge showing the Clarvia Score.
+
+### 4.6 Feedback
+
+#### POST /v1/feedback
+Submit usage feedback for a service. No auth required.
+
+**Request:**
+```json
+{
+  "profile_id": "prf_abc123",
+  "outcome": "success",
+  "agent_id": "my-agent-v1",
+  "latency_ms": 200
+}
+```
+
+#### GET /v1/feedback/{profile_id}/stats
+Get aggregated feedback stats (success rate, avg latency, outcome distribution).
+
+### 4.7 Badges
+
+#### GET /api/badge/{identifier}
+Generate a shields.io-style SVG badge. The identifier can be a scan_id, service name, or URL-encoded service URL.
+
+**Query Parameters:**
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| style | enum | flat | Badge style: flat, flat-square |
+| label | string | AEO | Custom left-side label |
+
+### 4.8 Utilities
+
+#### GET /api/v1/score?url={url}
+Quick score lookup for a URL (returns cached result if available).
+
+#### GET /api/v1/leaderboard
+Top-scoring services across all categories.
+
+#### GET /api/v1/compare?urls={url1},{url2}
+Compare multiple services by URL.
+
+#### GET /api/v1/methodology
+Full scoring methodology documentation with dimension weights and sub-factor details.
+
+#### POST /api/v1/accessibility-probe
+Real-time accessibility probe on a service URL.
+
+**Request:**
+```json
+{ "url": "https://stripe.com" }
+```
+
+#### GET /api/v1/playbook?url={url}
+Get an improvement playbook with code snippets (Python/Node.js/Go) to fix specific score gaps.
+
+#### POST /api/v1/fix
+Get specific fix instructions for a dimension.
+
+#### POST /api/v1/batch-score
+Batch-score up to 10 URLs in a single call.
+
+#### POST /api/v1/ci/check
+CI/CD integration check — returns pass/fail based on threshold.
+
+#### GET /api/v1/export/pdf?scan_id={scan_id}
+Export scan results as a PDF report.
+
+#### GET /api/v1/benchmark?scan_id={scan_id}
+Benchmark a service against its category peers.
+
+#### GET /api/v1/benchmark/percentile?scan_id={scan_id}
+Get percentile ranking within the tool ecosystem.
+
+#### GET /api/v1/history?url={url}
+Get scan history for a URL over time.
+
+#### POST /api/v1/track
+Track a URL for periodic rescanning.
+
+#### GET /api/v1/tracked
+List all tracked URLs.
+
+#### GET /api/v1/trends
+Get score trends for tracked URLs.
+
+#### POST /api/v1/rescan-tracked
+Trigger rescan for all tracked URLs.
+
+#### GET /api/v1/mcp-scan?url={url}
+Specialized scan for MCP servers.
+
+### 4.9 Discovery Endpoints
+
+#### GET /.well-known/agents.json
+Agent discovery manifest — describes Clarvia's capabilities for AI agent consumption.
+
+#### GET /.well-known/ai-plugin.json
+OpenAI plugin manifest for ChatGPT-style integrations.
+
+#### GET /robots.txt
+Robots.txt with AI crawler policies (Googlebot, GPTBot, ClaudeBot, etc. allowed).
+
+### 4.10 Admin [AUTH]
+
+#### GET /admin/health
+Health check with system status, version, uptime.
+
+#### GET /admin/scans
+Overview of all scans with statistics.
+
+#### GET /admin/profiles
+Overview of all registered profiles.
+
+#### POST /admin/rescan-all
+Trigger rescan for all indexed services.
+
+#### GET /admin/dimension-breakdown
+Detailed breakdown of dimension scores across all services.
+
+---
+
+## 5. Usage Scenarios
+
+### Scenario 1: Agent Tool Selection
+An AI agent needs to find the best payment API to integrate. It uses `search_services` with `category=payments&min_score=70` to find highly-rated payment tools, then uses `clarvia_gate_check` on the top result to verify it meets minimum quality standards before integration.
+
+### Scenario 2: Pre-flight Safety Check
+Before calling an external API, an autonomous agent runs `clarvia_gate_check` with `min_rating=AGENT_FRIENDLY`. If the check fails, it automatically calls `clarvia_find_alternatives` to find a replacement tool in the same category.
+
+### Scenario 3: CI/CD Quality Gate
+A development team adds Clarvia to their CI pipeline. On every PR, `POST /api/v1/ci/check` runs against their API URL with a threshold of 70. If the score drops below the threshold, the pipeline fails with SARIF output uploaded to GitHub Code Scanning.
+
+### Scenario 4: Tool Ecosystem Analysis
+A platform engineer needs to audit all MCP servers their team uses. They call `clarvia_batch_check` with up to 10 URLs at once, getting pass/fail results for each. Low-scoring tools are flagged for replacement or improvement using the playbook endpoint.
+
+### Scenario 5: Community Quality Feedback Loop
+After every tool invocation, an agent calls `clarvia_submit_feedback` with the outcome (success/failure/partial), error message, and latency. This data feeds into Clarvia's reliability dataset, improving future tool recommendations for all users.
+
+---
+
+## 6. Rate Limits & Auth
+
+### Public Endpoints (No Auth)
+- **Scan**: 10 scans per minute per IP
+- **Search/Browse**: 60 requests per minute per IP
+- **Profile Registration**: 5 per minute per IP
+- **Feedback**: 30 per minute per IP
+
+### Authenticated Endpoints
+- Require API key via `X-API-Key` header or `api_key` query parameter
+- API keys generated via `POST /api/v1/keys`
+- Validate keys via `GET /api/v1/keys/validate`
+- Higher rate limits for authenticated requests
+
+### Response Headers
+All responses include:
+- `X-Clarvia-Version`: API version (currently "1.0")
+- `X-Clarvia-Total-Services`: Total indexed services count
+
+---
+
+## 7. Links
+
+- Website: https://clarvia.art
+- API Docs: https://clarvia.art/docs
+- Tool Directory: https://clarvia.art/tools
+- Trending: https://clarvia.art/trending
+- Methodology: https://clarvia.art/methodology
+- Improvement Guide: https://clarvia.art/guide
+- llms.txt: https://clarvia.art/llms.txt
+- agents.json: https://api.clarvia.art/.well-known/agents.json

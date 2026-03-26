@@ -79,17 +79,18 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "WebApplication",
+              "@type": "SoftwareApplication",
               "name": "Clarvia",
-              "url": "https://clarvia.art",
-              "description": "AI Agent Tool Directory — Search 12,800+ tools scored for agent readiness",
               "applicationCategory": "DeveloperApplication",
-              "operatingSystem": "Web",
+              "description": "AEO (Agent Engine Optimization) scanner — scores and benchmarks 12,800+ AI agent tools for discoverability, quality, and agent compatibility",
+              "url": "https://clarvia.art",
               "offers": {
                 "@type": "Offer",
                 "price": "0",
                 "priceCurrency": "USD"
               },
+              "operatingSystem": "Web",
+              "softwareVersion": "1.0.2",
               "creator": {
                 "@type": "Organization",
                 "name": "Clarvia",

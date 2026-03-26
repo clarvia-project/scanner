@@ -73,6 +73,7 @@ from .routes.index_routes import router as index_router
 from .routes.profile_routes import router as profile_router
 from .routes.recommend_routes import router as recommend_router
 from .routes.marketing_routes import router as marketing_router
+from .routes.setup_routes import router as setup_router
 from .routes.trending_routes import router as trending_router
 from .scanner import cleanup_cache, get_cached_scan, run_scan
 
@@ -241,6 +242,7 @@ app.include_router(admin_router)
 app.include_router(badge_router)
 app.include_router(trending_router)
 app.include_router(marketing_router)
+app.include_router(setup_router)
 
 # MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
 try:
