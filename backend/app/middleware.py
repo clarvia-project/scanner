@@ -68,43 +68,85 @@ def _get_client_ip(request: Request) -> str:
     return real_ip
 
 
+ENTERPRISE_LIMIT = 999999  # effectively unlimited
+
+
+def _resolve_limit(api_key: str | None) -> tuple[str, int]:
+    """Determine the rate limit key and limit for a request.
+
+    Returns (store_key, limit).
+    """
+    if api_key:
+        # Check if it's a registered Clarvia key with a tier
+        try:
+            from .services.auth_service import _hash_key, _keys_store, PLAN_LIMITS
+            key_hash = _hash_key(api_key)
+            record = _keys_store.get(key_hash)
+            if record:
+                plan = record.get("plan", "free")
+                tier_limit = PLAN_LIMITS.get(plan, {}).get("rate_limit", API_KEY_LIMIT)
+                return f"apikey:{api_key}", tier_limit
+        except Exception:
+            pass
+        return f"apikey:{api_key}", API_KEY_LIMIT
+    return "", FREE_LIMIT
+
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """In-memory rate limiter.
 
     - 10 scans/hour per IP (free tier)
     - 100 scans/hour per API key (X-API-Key header)
-    - Only applies to POST /api/scan
+    - Enforces on POST /api/scan; headers on ALL /api/ and /v1/ responses
     """
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        # Only rate-limit scan endpoints
-        if request.method != "POST" or not request.url.path.startswith("/api/scan"):
+        client_ip = _get_client_ip(request)
+        path = request.url.path
+        is_api = path.startswith(("/api/", "/v1/"))
+        is_scan = request.method == "POST" and path.startswith("/api/scan")
+
+        # Non-API paths pass through without rate limit headers
+        if not is_api:
             return await call_next(request)
 
         # Bypass rate limiting for localhost/internal requests
-        client_ip = _get_client_ip(request)
         if client_ip in ("127.0.0.1", "::1", "localhost"):
-            return await call_next(request)
+            response = await call_next(request)
+            # Still add headers for observability
+            response.headers["X-RateLimit-Limit"] = str(FREE_LIMIT)
+            response.headers["X-RateLimit-Remaining"] = str(FREE_LIMIT)
+            response.headers["X-RateLimit-Reset"] = str(int(time.time() + WINDOW_SECONDS))
+            return response
 
         # Bypass rate limiting for admin API key
-        api_key = request.headers.get("x-api-key")
+        api_key = request.headers.get("x-api-key") or request.headers.get("x-clarvia-key")
         if api_key:
             from .config import settings
             if api_key == getattr(settings, "admin_api_key", None):
-                return await call_next(request)
-        if api_key:
-            key = f"apikey:{api_key}"
-            limit = API_KEY_LIMIT
+                response = await call_next(request)
+                response.headers["X-RateLimit-Limit"] = "unlimited"
+                response.headers["X-RateLimit-Remaining"] = "unlimited"
+                response.headers["X-RateLimit-Reset"] = str(int(time.time() + WINDOW_SECONDS))
+                return response
+
+        store_key, limit = _resolve_limit(api_key)
+        if not store_key:
+            store_key = f"ip:{client_ip}"
+
+        entry = _rate_store[store_key]
+
+        # Only count scan requests against the limit
+        if is_scan:
+            current = entry.increment()
         else:
-            key = f"ip:{client_ip}"
-            limit = FREE_LIMIT
+            # For non-scan requests, peek at current count without incrementing
+            entry.reset_if_expired()
+            current = entry.count
 
-        entry = _rate_store[key]
-        current = entry.increment()
-
-        if current > limit:
+        if is_scan and current > limit:
             retry_after = int(entry.remaining)
-            logger.warning("Rate limit exceeded for %s (count=%d, limit=%d)", key, current, limit)
+            logger.warning("Rate limit exceeded for %s (count=%d, limit=%d)", store_key, current, limit)
             return JSONResponse(
                 status_code=429,
                 content={
@@ -112,12 +154,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "detail": f"Maximum {limit} scans per hour. Try again in {retry_after}s.",
                     "retry_after": retry_after,
                 },
-                headers={"Retry-After": str(retry_after)},
+                headers={
+                    "Retry-After": str(retry_after),
+                    "X-RateLimit-Limit": str(limit),
+                    "X-RateLimit-Remaining": "0",
+                    "X-RateLimit-Reset": str(int(time.time() + entry.remaining)),
+                },
             )
 
         response = await call_next(request)
 
-        # Add rate limit headers
+        # Add rate limit headers to ALL API responses
         response.headers["X-RateLimit-Limit"] = str(limit)
         response.headers["X-RateLimit-Remaining"] = str(max(0, limit - current))
         response.headers["X-RateLimit-Reset"] = str(int(time.time() + entry.remaining))
