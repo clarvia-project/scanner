@@ -26,7 +26,9 @@ router = APIRouter(prefix="/v1/feed", tags=["feed"])
 
 
 def _load_all_services() -> list[dict[str, Any]]:
-    """Load prebuilt + collected services for the feed."""
+    """Load prebuilt + collected services for the feed, with category classification."""
+    from .index_routes import _classify
+
     candidates = [Path("/app/data")]
     base = Path(__file__).resolve()
     for i in range(2, 6):
@@ -42,6 +44,12 @@ def _load_all_services() -> list[dict[str, Any]]:
             with open(prebuilt) as f:
                 services = json.load(f)
             break
+
+    # Apply category classification
+    for s in services:
+        if s.get("category", "other") == "other":
+            s["category"] = _classify(s.get("service_name", ""))
+
     return services
 
 
