@@ -112,32 +112,71 @@ async def feed_scores(
 
 @router.get("/scores.csv")
 async def feed_scores_csv(
-    min_score: int = Query(0, ge=0, le=100),
+    min_score: int = Query(0, ge=0, le=100, description="Minimum score threshold"),
+    max_score: int = Query(100, ge=0, le=100, description="Maximum score threshold"),
+    category: str | None = Query(None, description="Filter by category (e.g. ai, devtools, fintech)"),
+    service_type: str | None = Query(None, description="Filter by service type (e.g. mcp_server, api)"),
+    limit: int = Query(0, ge=0, le=10000, description="Max rows to return (0 = all)"),
+    sort: str = Query("score_desc", description="Sort order: score_desc, score_asc, name_asc"),
 ):
-    """CSV export of all scored services. For data pipelines and spreadsheets."""
+    """CSV export of scored services with filtering.
+
+    Supports filtering by score range, category, service type, and row limit.
+    Returns RFC 4180-compliant CSV with Content-Disposition header for download.
+    Ideal for data pipelines, spreadsheets, and bulk analysis.
+    """
+    from .index_routes import _classify
+
     services = _load_all_services()
+
+    # Apply filters
     if min_score > 0:
         services = [s for s in services if s.get("clarvia_score", 0) >= min_score]
-    services = sorted(services, key=lambda s: s.get("clarvia_score", 0), reverse=True)
+    if max_score < 100:
+        services = [s for s in services if s.get("clarvia_score", 0) <= max_score]
+    if category:
+        services = [s for s in services if s.get("category", "other").lower() == category.lower()]
+    if service_type:
+        services = [s for s in services if s.get("service_type", "general").lower() == service_type.lower()]
 
-    lines = ["name,url,score,rating,category,service_type,scanned_at"]
+    # Sort
+    if sort == "score_asc":
+        services = sorted(services, key=lambda s: s.get("clarvia_score", 0))
+    elif sort == "name_asc":
+        services = sorted(services, key=lambda s: s.get("service_name", "").lower())
+    else:  # score_desc (default)
+        services = sorted(services, key=lambda s: s.get("clarvia_score", 0), reverse=True)
+
+    # Limit
+    if limit > 0:
+        services = services[:limit]
+
+    # RFC 4180 CSV: quote fields that contain commas, quotes, or newlines
+    def _csv_escape(val: str) -> str:
+        if "," in val or '"' in val or "\n" in val:
+            return '"' + val.replace('"', '""') + '"'
+        return val
+
+    lines = ["name,url,score,rating,category,service_type,scan_id,scanned_at"]
     for s in services:
-        name = s.get("service_name", "").replace(",", " ")
-        url = s.get("url", "")
-        score = s.get("clarvia_score", 0)
+        name = _csv_escape(s.get("service_name", ""))
+        url = _csv_escape(s.get("url", ""))
+        score = str(s.get("clarvia_score", 0))
         rating = s.get("rating", "")
         cat = s.get("category", "other")
         stype = s.get("service_type", "general")
+        scan_id = s.get("scan_id", "")
         scanned = s.get("scanned_at", "")
-        lines.append(f"{name},{url},{score},{rating},{cat},{stype},{scanned}")
+        lines.append(f"{name},{url},{score},{rating},{cat},{stype},{scan_id},{scanned}")
 
-    csv_content = "\n".join(lines)
+    csv_content = "\n".join(lines) + "\n"
     return Response(
         content=csv_content,
-        media_type="text/csv",
+        media_type="text/csv; charset=utf-8",
         headers={
-            "Content-Disposition": "attachment; filename=clarvia-scores.csv",
+            "Content-Disposition": 'attachment; filename="clarvia-scores.csv"',
             "Cache-Control": "public, max-age=86400",
+            "X-Total-Count": str(len(services)),
         },
     )
 
