@@ -1,0 +1,47 @@
+# Clarvia Automation Orchestrator Configuration
+# Each task defines a script to run on a schedule.
+#
+# Fields:
+#   name:      Human-readable task name
+#   script:    Path to the script (relative to project root)
+#   schedule:  Cron-like expression (minute hour day_of_month month day_of_week)
+#              OR interval in seconds (e.g., "300" for every 5 minutes)
+#   enabled:   Whether the task is active
+#   timeout:   Max execution time in seconds (0 = no limit)
+#   args:      Additional CLI arguments passed to the script
+
+tasks:
+  - name: "Healthcheck"
+    script: "scripts/healthcheck.py"
+    schedule: "*/5 * * * *"   # every 5 minutes
+    enabled: true
+    timeout: 60
+    args: []
+
+  - name: "Error Monitor"
+    script: "scripts/error_monitor.py"
+    schedule: "*/5 * * * *"   # every 5 minutes
+    enabled: true
+    timeout: 120
+    args: ["--source", "auto"]
+
+  - name: "Daily Backup"
+    script: "scripts/backup.py"
+    schedule: "0 3 * * *"     # daily at 3:00 AM
+    enabled: true
+    timeout: 300
+    args: ["--retain", "7"]
+
+  - name: "Catalog Updater (Incremental)"
+    script: "scripts/catalog_updater.py"
+    schedule: "0 */6 * * *"   # every 6 hours
+    enabled: false
+    timeout: 600
+    args: ["--mode", "incremental"]
+
+  - name: "MCP Registry Sync"
+    script: "scripts/sync_mcp_registry.py"
+    schedule: "0 2 * * *"     # daily at 2:00 AM
+    enabled: false
+    timeout: 900
+    args: []

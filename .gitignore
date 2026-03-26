@@ -8,3 +8,12 @@ venv/
 dist/
 build/
 .pytest_cache/
+.vercel
+
+# Automation runtime data
+backups/
+logs/
+data/healthcheck.log
+data/automation.log
+data/error_monitor_state.json
+data/orchestrator_state.json
