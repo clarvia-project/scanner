@@ -77,6 +77,7 @@ from .routes.setup_routes import router as setup_router
 from .routes.cs_routes import router as cs_router
 from .routes.feed_routes import router as feed_router
 from .routes.trending_routes import router as trending_router
+from .routes.webhook_routes import router as webhook_router
 from .scanner import cleanup_cache, get_cached_scan, run_scan
 
 logger = logging.getLogger(__name__)
@@ -148,13 +149,37 @@ _is_production = os.environ.get("SCANNER_ENV", "production") == "production"
 
 app = FastAPI(
     title="Clarvia AEO Scanner API",
-    description="Scan any URL for AI Engine Optimization readiness. "
-    "Provides AEO scoring, recommendations, and competitive benchmarks.",
-    version="1.1.0",
+    description=(
+        "Scan any URL for AI Engine Optimization (AEO) readiness. "
+        "Provides AEO scoring, actionable recommendations, competitive benchmarks, "
+        "and machine-readable feeds for agent frameworks and MCP registries.\n\n"
+        "**Base URL:** `https://clarvia-api.onrender.com`\n\n"
+        "**Rate limits:** Free tier 10 scans/hr, Pro 100 scans/hr, Enterprise unlimited.\n\n"
+        "**Authentication:** Most read endpoints are public. Write operations require "
+        "an API key via `X-API-Key` header."
+    ),
+    version="1.2.0",
     docs_url=None if _is_production else "/api/docs",
     redoc_url=None if _is_production else "/api/redoc",
-    openapi_url=None if _is_production else "/api/openapi.json",
+    # Always expose OpenAPI spec — required for AEO discoverability
+    openapi_url="/openapi.json",
     lifespan=lifespan,
+    openapi_tags=[
+        {"name": "scan", "description": "Core AEO scanning endpoints"},
+        {"name": "index", "description": "Service index — browse, search, and filter scanned services"},
+        {"name": "feed", "description": "Machine-readable data feeds for registries and agents"},
+        {"name": "profiles", "description": "Service profile management"},
+        {"name": "badge", "description": "Embeddable SVG badges for AEO scores"},
+        {"name": "cs", "description": "Customer support ticket system for agents"},
+        {"name": "recommend", "description": "Service recommendations and alternatives"},
+        {"name": "trending", "description": "Trending services and score changes"},
+        {"name": "feedback", "description": "User feedback and ratings"},
+        {"name": "setup", "description": "Setup wizard for new service onboarding"},
+        {"name": "marketing", "description": "Marketing assets and embeds"},
+        {"name": "webhooks", "description": "Webhook registration for event notifications"},
+        {"name": "keys", "description": "API key self-service management"},
+        {"name": "admin", "description": "Admin-only operations (requires API key)"},
+    ],
 )
 
 # CORS — use settings.cors_origins as the base, add production domains
@@ -253,6 +278,7 @@ app.include_router(marketing_router)
 app.include_router(setup_router)
 app.include_router(cs_router)
 app.include_router(feed_router)
+app.include_router(webhook_router)
 
 # MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
 try:
@@ -281,7 +307,7 @@ except ImportError:
 # Core endpoints
 # ---------------------------------------------------------------------------
 
-@app.get("/health")
+@app.get("/health", tags=["system"])
 async def health():
     """Enhanced health check with real system status."""
     checks: dict[str, Any] = {}
@@ -327,9 +353,13 @@ async def health():
     }
 
 
-@app.post("/api/scan", response_model=ScanResponse)
+@app.post("/api/scan", response_model=ScanResponse, tags=["scan"])
 async def scan_url(req: ScanRequest):
-    """Run a full AEO scan on the provided URL."""
+    """Run a full AEO scan on the provided URL.
+
+    Returns detailed AEO scoring with dimension breakdowns, recommendations,
+    and a unique scan_id for retrieval. Rate limited per IP or API key.
+    """
     if not req.url or not req.url.strip():
         raise HTTPException(status_code=400, detail="URL is required")
 
@@ -385,6 +415,19 @@ async def scan_url(req: ScanRequest):
         except Exception as e:
             logger.warning("Failed to save scan history: %s", e)
 
+        # Fire scan_complete webhooks (non-blocking)
+        try:
+            from .routes.webhook_routes import fire_webhooks
+            asyncio.create_task(fire_webhooks("scan_complete", {
+                "url": result.url,
+                "service_name": result.service_name,
+                "scan_id": result.scan_id,
+                "clarvia_score": result.clarvia_score,
+                "rating": result.rating,
+            }))
+        except Exception:
+            pass  # Webhook delivery is best-effort
+
         return result
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -396,7 +439,7 @@ async def scan_url(req: ScanRequest):
         )
 
 
-@app.get("/api/scan/{scan_id}", response_model=ScanResponse)
+@app.get("/api/scan/{scan_id}", response_model=ScanResponse, tags=["scan"])
 async def get_scan(scan_id: str):
     """Retrieve a cached scan result by ID."""
     result = get_cached_scan(scan_id)
@@ -414,7 +457,7 @@ async def get_scan(scan_id: str):
     return result
 
 
-@app.get("/api/scan/{scan_id}/sarif")
+@app.get("/api/scan/{scan_id}/sarif", tags=["scan"])
 async def get_scan_sarif(scan_id: str):
     """Export scan results as SARIF 2.1.0 JSON for CI/CD integration."""
     result = get_cached_scan(scan_id)
@@ -437,7 +480,7 @@ async def get_scan_sarif(scan_id: str):
     )
 
 
-@app.post("/api/waitlist")
+@app.post("/api/waitlist", tags=["marketing"])
 async def join_waitlist(req: WaitlistRequest):
     """Add an email to the waitlist."""
     if _supabase_client:
@@ -450,7 +493,7 @@ async def join_waitlist(req: WaitlistRequest):
     return {"status": "ok", "message": "You've been added to the waitlist!"}
 
 
-@app.post("/api/cache/cleanup")
+@app.post("/api/cache/cleanup", tags=["admin"])
 async def cache_cleanup(request: Request):
     """Remove expired cache entries. Requires admin API key."""
     # Require admin API key for manual cache cleanup
@@ -468,7 +511,7 @@ async def cache_cleanup(request: Request):
 # Clarvia Public API v1 — programmatic access for agent builders
 # ---------------------------------------------------------------------------
 
-@app.get("/api/v1/score")
+@app.get("/api/v1/score", tags=["scan"])
 async def api_v1_score(url: str):
     """Get Clarvia Score for a URL. Checks cache/prebuilt first, runs live scan if needed.
 
@@ -535,7 +578,7 @@ async def api_v1_score(url: str):
         raise HTTPException(status_code=500, detail="Scan failed due to an internal error. Please try again later.")
 
 
-@app.get("/api/v1/leaderboard")
+@app.get("/api/v1/leaderboard", tags=["index"])
 async def api_v1_leaderboard(category: str | None = None, limit: int = 50, offset: int = 0):
     """Get the Clarvia leaderboard.
 
@@ -575,7 +618,7 @@ async def api_v1_leaderboard(category: str | None = None, limit: int = 50, offse
     }
 
 
-@app.get("/api/v1/compare")
+@app.get("/api/v1/compare", tags=["index"])
 async def api_v1_compare(urls: str):
     """Compare 2-3 services side by side.
 
@@ -638,7 +681,7 @@ async def api_v1_compare(urls: str):
     return {"comparison": results}
 
 
-@app.get("/api/v1/methodology")
+@app.get("/api/v1/methodology", tags=["scan"])
 async def api_v1_methodology():
     """Return the scoring methodology as structured JSON."""
     return {
@@ -722,7 +765,7 @@ async def api_v1_methodology():
 # Authenticated Scan endpoint
 # ---------------------------------------------------------------------------
 
-@app.post("/api/scan/authenticated")
+@app.post("/api/scan/authenticated", tags=["scan"])
 async def authenticated_scan(request: Request):
     """Run an authenticated probe against an API using user-supplied credentials.
 
@@ -877,7 +920,7 @@ async def authenticated_scan(request: Request):
 # MCP Scan endpoint
 # ---------------------------------------------------------------------------
 
-@app.get("/api/v1/mcp-scan")
+@app.get("/api/v1/mcp-scan", tags=["scan"])
 async def mcp_scan(identifier: str):
     """Scan an MCP server by URL, npm package name, or GitHub repo.
 
@@ -1114,7 +1157,7 @@ app = FastAPI()
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-@app.get("/api/resource")
+@app.get("/api/resource", tags=["scan"])
 @limiter.limit("60/minute")
 async def get_resource(request: Request):
     return {"data": "example"}
@@ -1417,7 +1460,7 @@ class ItemList(BaseModel):
     total: int = Field(..., description="Total number of items")
     cursor: Optional[str] = Field(None, description="Cursor for next page")
 
-@app.get("/api/items", response_model=ItemList, summary="List all items")
+@app.get("/api/items", tags=["index"], response_model=ItemList, summary="List all items")
 async def list_items(cursor: Optional[str] = None, limit: int = 20):
     \"\"\"Retrieve a paginated list of items.\"\"\"
     pass  # your implementation
@@ -1542,11 +1585,11 @@ Allow: /
 Sitemap: https://api.example.com/sitemap.xml
 \"\"\"
 
-@app.get("/robots.txt", response_class=PlainTextResponse)
+@app.get("/robots.txt", tags=["system"], response_class=PlainTextResponse)
 async def robots():
     return ROBOTS_TXT
 
-@app.get("/.well-known/ai-plugin.json")
+@app.get("/.well-known/ai-plugin.json", tags=["system"])
 async def ai_plugin():
     return {
         "schema_version": "v1",
@@ -1915,7 +1958,7 @@ func idempotencyMiddleware(next http.Handler) http.Handler {
 _VALID_STACKS = {"python", "nodejs", "go"}
 
 
-@app.post("/api/v1/fix")
+@app.post("/api/v1/fix", tags=["scan"])
 async def generate_fix(request: Request):
     """Generate stack-specific code to fix a scan issue. No LLM calls — uses pre-written templates.
 
@@ -1960,7 +2003,7 @@ async def generate_fix(request: Request):
 # Improvement Playbook — batch fix suggestions for a scan
 # ---------------------------------------------------------------------------
 
-@app.get("/api/v1/playbook")
+@app.get("/api/v1/playbook", tags=["scan"])
 async def get_playbook(scan_id: str):
     """Return actionable fix suggestions for all low-scoring sub-factors in a scan.
 
@@ -2038,7 +2081,7 @@ async def get_playbook(scan_id: str):
 # Agent Traffic Monitoring
 # ---------------------------------------------------------------------------
 
-@app.post("/api/v1/traffic/register")
+@app.post("/api/v1/traffic/register", tags=["trending"])
 async def register_traffic_monitoring(request: Request):
     """Register a URL for agent traffic monitoring.
 
@@ -2069,7 +2112,7 @@ async def register_traffic_monitoring(request: Request):
     }
 
 
-@app.post("/api/v1/traffic/ingest")
+@app.post("/api/v1/traffic/ingest", tags=["trending"])
 async def ingest_traffic(request: Request):
     """Receive traffic events from user's installed middleware.
 
@@ -2094,7 +2137,7 @@ async def ingest_traffic(request: Request):
     return {"status": "ok"}
 
 
-@app.get("/api/v1/traffic/stats")
+@app.get("/api/v1/traffic/stats", tags=["trending"])
 async def get_traffic_stats(tracking_id: str, days: int = 7):
     """Get agent traffic analytics for a registered tracking ID.
 
@@ -2118,7 +2161,7 @@ async def get_traffic_stats(tracking_id: str, days: int = 7):
 # Scan history
 # ---------------------------------------------------------------------------
 
-@app.get("/api/v1/history")
+@app.get("/api/v1/history", tags=["scan"])
 async def scan_history(url: str, limit: int = 20):
     """Get scan history for a URL showing score changes over time."""
     if not url or not url.strip():
@@ -2148,7 +2191,7 @@ async def scan_history(url: str, limit: int = 20):
 _tracked_urls: dict[str, dict] = {}  # url -> {service_name, category, added_at}
 
 
-@app.post("/api/v1/track")
+@app.post("/api/v1/track", tags=["scan"])
 async def track_url(request: Request):
     """Register a URL for periodic tracking. Data moat: builds historical dataset."""
     body = await request.json()
@@ -2182,13 +2225,13 @@ async def track_url(request: Request):
     return {"tracked": True, "url": url, "total_tracked": len(_tracked_urls)}
 
 
-@app.get("/api/v1/tracked")
+@app.get("/api/v1/tracked", tags=["scan"])
 async def list_tracked():
     """List all tracked URLs."""
     return {"urls": [{"url": k, **v} for k, v in _tracked_urls.items()], "total": len(_tracked_urls)}
 
 
-@app.get("/api/v1/trends")
+@app.get("/api/v1/trends", tags=["trending"])
 async def get_trends(url: str, days: int = 90):
     """Get score trend data for a URL — the core data moat feature.
 
@@ -2242,7 +2285,7 @@ async def get_trends(url: str, days: int = 90):
     }
 
 
-@app.post("/api/v1/rescan-tracked")
+@app.post("/api/v1/rescan-tracked", tags=["scan"])
 async def rescan_all_tracked():
     """Trigger a rescan of all tracked URLs. Called by cron/scheduler.
 
@@ -2289,7 +2332,7 @@ async def rescan_all_tracked():
 # ---------------------------------------------------------------------------
 
 
-@app.get("/api/v1/benchmark")
+@app.get("/api/v1/benchmark", tags=["index"])
 async def get_benchmark(category: str = "all"):
     """Get industry benchmark data — network-effect moat.
 
@@ -2394,7 +2437,7 @@ async def get_benchmark(category: str = "all"):
     }
 
 
-@app.get("/api/v1/benchmark/percentile")
+@app.get("/api/v1/benchmark/percentile", tags=["index"])
 async def get_percentile(url: str):
     """Get a specific service's percentile rank among all scanned services."""
     clean_url = url.strip().lower()
@@ -2448,7 +2491,7 @@ async def get_percentile(url: str):
 # ---------------------------------------------------------------------------
 
 
-@app.post("/api/v1/accessibility-probe")
+@app.post("/api/v1/accessibility-probe", tags=["scan"])
 async def accessibility_probe(request: Request):
     """Probe a service as an AI agent would — unique proprietary data.
 
@@ -2635,7 +2678,7 @@ async def _optional_api_key(request: Request) -> dict | None:
     return meta
 
 
-@app.post("/api/v1/keys")
+@app.post("/api/v1/keys", tags=["keys"])
 async def create_key(request: Request):
     """Create a new API key.
 
@@ -2660,7 +2703,7 @@ async def create_key(request: Request):
     return result
 
 
-@app.get("/api/v1/keys/validate")
+@app.get("/api/v1/keys/validate", tags=["keys"])
 async def validate_key(request: Request):
     """Validate an API key passed in X-Clarvia-Key header.
 
@@ -2681,6 +2724,61 @@ async def validate_key(request: Request):
         "key_id": meta.get("key_id"),
         "plan": meta.get("plan", "free"),
         "rate_limit": meta.get("rate_limit", 10),
+    }
+
+
+@app.get("/api/v1/keys/{key_id}/usage", tags=["keys"])
+async def get_key_usage(key_id: str, request: Request):
+    """Get usage statistics for an API key.
+
+    Pass the key_id (e.g. clv_XXXXXXXX) in the URL path and the full key in
+    X-Clarvia-Key header for authentication.
+
+    Returns plan info, rate limits, and current usage within the billing window.
+    """
+    auth_key = request.headers.get("x-clarvia-key")
+    if not auth_key:
+        raise HTTPException(status_code=401, detail="X-Clarvia-Key header required")
+
+    from .services.auth_service import validate_api_key, _hash_key, _rate_hits, PLAN_LIMITS
+    import time as _t
+
+    meta = await validate_api_key(auth_key)
+    if not meta:
+        raise HTTPException(status_code=403, detail="Invalid API key")
+
+    # Verify the key_id matches the provided key
+    if meta.get("key_id") != key_id:
+        raise HTTPException(status_code=403, detail="Key ID does not match the provided API key")
+
+    plan = meta.get("plan", "free")
+    limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
+
+    # Calculate current usage from rate hits
+    key_hash = _hash_key(auth_key)
+    now = _t.monotonic()
+    window = 3600
+    hits = _rate_hits.get(key_hash, [])
+    recent_hits = [t for t in hits if now - t < window]
+
+    return {
+        "key_id": key_id,
+        "plan": plan,
+        "rate_limit": limits["rate_limit"],
+        "scans_per_month": limits["scans_per_month"],
+        "current_window": {
+            "requests_used": len(recent_hits),
+            "requests_remaining": max(0, limits["rate_limit"] - len(recent_hits)),
+            "window_seconds": window,
+            "resets_in_seconds": int(window - (now - recent_hits[0]) if recent_hits else window),
+        },
+        "created_at": meta.get("created_at"),
+        "last_used_at": meta.get("last_used_at"),
+        "tiers": {
+            "free": {"rate_limit": 10, "scans_per_hour": 10},
+            "pro": {"rate_limit": 100, "scans_per_hour": 100},
+            "enterprise": {"rate_limit": "unlimited", "scans_per_hour": "unlimited"},
+        },
     }
 
 
@@ -2728,7 +2826,7 @@ def _check_batch_rate_limit(client_ip: str) -> bool:
     return True
 
 
-@app.post("/api/v1/batch-score", response_model=BatchScanResponse)
+@app.post("/api/v1/batch-score", tags=["scan"], response_model=BatchScanResponse)
 async def batch_score(req: BatchScanRequest, request: Request):
     """Run AEO scans on multiple URLs in parallel (max 10)."""
     # Validate
@@ -2805,7 +2903,7 @@ class CICheckResponse(BaseModel):
     details_url: str
 
 
-@app.post("/api/v1/ci/check", response_model=CICheckResponse)
+@app.post("/api/v1/ci/check", tags=["scan"], response_model=CICheckResponse)
 async def ci_check(req: CICheckRequest, request: Request):
     """CI/CD gate: scan a URL and check if it meets minimum AEO thresholds.
 
@@ -2889,7 +2987,7 @@ async def ci_check(req: CICheckRequest, request: Request):
 # PDF Export (white-label support)
 # ---------------------------------------------------------------------------
 
-@app.get("/api/v1/export/pdf")
+@app.get("/api/v1/export/pdf", tags=["scan"])
 async def export_pdf(
     scan_id: str,
     brand_name: str = "Clarvia",
@@ -2977,7 +3075,7 @@ async def export_pdf(
 # agents.json — opt-in agent discovery protocol
 # ---------------------------------------------------------------------------
 
-@app.get("/.well-known/agents.json")
+@app.get("/.well-known/agents.json", tags=["system"])
 async def agents_json():
     """Serve /.well-known/agents.json — the agent discovery standard.
 
@@ -3053,7 +3151,7 @@ async def agents_json():
     }
 
 
-@app.post("/api/v1/validate-agents-json")
+@app.post("/api/v1/validate-agents-json", tags=["scan"])
 async def validate_agents_json(request: Request):
     """Validate a service's /.well-known/agents.json file.
 
