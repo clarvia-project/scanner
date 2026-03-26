@@ -1,9 +1,9 @@
-name: 'Clarvia AEO Scan'
-description: 'Check your API AEO readiness score with the Clarvia Scanner'
-author: 'Clarvia'
+name: 'Clarvia AEO Score Check'
+description: 'Check AEO (AI Engine Optimization) score of your API/MCP server in CI/CD. Get scored on API accessibility, data structuring, agent compatibility, and trust signals.'
+author: 'digitamaz'
 
 branding:
-  icon: 'shield'
+  icon: 'check-circle'
   color: 'purple'
 
 inputs:
