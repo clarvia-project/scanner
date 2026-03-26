@@ -1,1 +1,1 @@
-# Clarvia automation package
+# Clarvia Growth Engine — Automation Scripts
