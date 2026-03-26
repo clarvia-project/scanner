@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clarvia-langchain"
-version = "0.1.0"
-description = "LangChain integration for Clarvia AEO scoring - gate external API calls based on agent-friendliness"
+version = "0.2.0"
+description = "LangChain integration for Clarvia AEO scoring — gate external API calls based on agent-friendliness. Works with LangChain, CrewAI, AutoGen, and any Python agent framework."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
@@ -16,7 +16,7 @@ maintainers = [
     { name = "digitamaz", email = "dev@clarvia.com" },
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -38,8 +38,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://clarvia.com"
+Homepage = "https://clarvia.art"
+Documentation = "https://clarvia.art/docs"
 Repository = "https://github.com/clarvia/clarvia-langchain"
+Changelog = "https://github.com/clarvia/clarvia-langchain/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/clarvia_langchain"]
