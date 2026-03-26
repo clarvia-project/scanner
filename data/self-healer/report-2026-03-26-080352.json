@@ -1,0 +1,55 @@
+{
+  "timestamp": "2026-03-26T08:03:51.317493+00:00",
+  "checks": [
+    {
+      "check": "task_failures",
+      "status": "skipped",
+      "disabled_tasks": [],
+      "failure_streaks": {},
+      "reason": "No automation log found"
+    },
+    {
+      "check": "resources",
+      "status": "ok",
+      "issues": [],
+      "sizes": {
+        "backups_mb": 0.0,
+        "data_mb": 15.8,
+        "healthcheck.log": 0.0,
+        "github-scan.log": 0.2,
+        "glama-scan.log": 0.3,
+        "mcp-scan.log": 0.3
+      }
+    },
+    {
+      "check": "dependencies",
+      "status": "ok",
+      "issues": [],
+      "packages": {
+        "requests": "ok",
+        "pyyaml": "ok",
+        "aiohttp": "ok"
+      }
+    },
+    {
+      "check": "render_health",
+      "status": "ok",
+      "issues": [],
+      "api_status": "healthy",
+      "api_response_time_ms": 552.7919999999999,
+      "render_platform_status": "none"
+    },
+    {
+      "check": "archival",
+      "status": "ok",
+      "archived": []
+    }
+  ],
+  "summary": {
+    "ok": 4,
+    "warning": 0,
+    "alert": 0,
+    "skipped": 1,
+    "error": 0
+  }
+}

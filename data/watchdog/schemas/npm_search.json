@@ -1,0 +1,54 @@
+{
+  "schema": {
+    "dependents": "str",
+    "downloads": {
+      "monthly": "int",
+      "weekly": "int"
+    },
+    "flags": {
+      "insecure": "int"
+    },
+    "package": {
+      "date": "str",
+      "description": "str",
+      "keywords": [
+        "str"
+      ],
+      "license": "str",
+      "links": {
+        "bugs": "str",
+        "homepage": "str",
+        "npm": "str",
+        "repository": "str"
+      },
+      "maintainers": [
+        {
+          "email": "str",
+          "username": "str"
+        }
+      ],
+      "name": "str",
+      "publisher": {
+        "email": "str",
+        "username": "str"
+      },
+      "sanitized_name": "str",
+      "version": "str"
+    },
+    "score": {
+      "detail": {
+        "maintenance": "int",
+        "popularity": "int",
+        "quality": "int"
+      },
+      "final": "float"
+    },
+    "searchScore": "float",
+    "updated": "str"
+  },
+  "saved_at": "2026-03-26T08:03:52.984144+00:00",
+  "metadata": {
+    "url": "https://registry.npmjs.org/-/v1/search?text=mcp-server&size=1",
+    "schema_key": "objects[0]"
+  }
+}

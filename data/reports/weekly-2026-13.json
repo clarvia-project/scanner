@@ -1,0 +1,787 @@
+{
+  "week_id": "2026-13",
+  "generated_at": "2026-03-26T08:03:53.903282+00:00",
+  "summary": {
+    "total_tools": 175,
+    "previous_total": 175,
+    "net_change": 0,
+    "new_tools_count": 0,
+    "score_improvements": 0,
+    "score_drops": 0
+  },
+  "new_tools": {
+    "count": 0,
+    "top5": []
+  },
+  "score_changes": {
+    "improvements": [],
+    "drops": []
+  },
+  "leaderboard": [
+    {
+      "rank": 1,
+      "name": "Replicate",
+      "score": 80,
+      "rating": "Strong"
+    },
+    {
+      "rank": 2,
+      "name": "Workos",
+      "score": 74,
+      "rating": "Moderate"
+    },
+    {
+      "rank": 3,
+      "name": "Helius",
+      "score": 72,
+      "rating": "Moderate"
+    },
+    {
+      "rank": 4,
+      "name": "Gitbook",
+      "score": 72,
+      "rating": "Moderate"
+    },
+    {
+      "rank": 5,
+      "name": "Grafana",
+      "score": 72,
+      "rating": "Moderate"
+    },
+    {
+      "rank": 6,
+      "name": "Assemblyai",
+      "score": 71,
+      "rating": "Moderate"
+    },
+    {
+      "rank": 7,
+      "name": "Elevenlabs",
+      "score": 70,
+      "rating": "Moderate"
+    },
+    {
+      "rank": 8,
+      "name": "Novu",
+      "score": 70,
+      "rating": "Moderate"
+    },
+    {
+      "rank": 9,
+      "name": "Directus",
+      "score": 69,
+      "rating": "Moderate"
+    },
+    {
+      "rank": 10,
+      "name": "Cerebras",
+      "score": 69,
+      "rating": "Moderate"
+    }
+  ],
+  "category_distribution": {
+    "other": 175
+  },
+  "catalog_snapshot": [
+    {
+      "name": "Replicate",
+      "score": 80
+    },
+    {
+      "name": "Workos",
+      "score": 74
+    },
+    {
+      "name": "Helius",
+      "score": 72
+    },
+    {
+      "name": "Gitbook",
+      "score": 72
+    },
+    {
+      "name": "Grafana",
+      "score": 72
+    },
+    {
+      "name": "Assemblyai",
+      "score": 71
+    },
+    {
+      "name": "Elevenlabs",
+      "score": 70
+    },
+    {
+      "name": "Novu",
+      "score": 70
+    },
+    {
+      "name": "Directus",
+      "score": 69
+    },
+    {
+      "name": "Cerebras",
+      "score": 69
+    },
+    {
+      "name": "Nansen",
+      "score": 68
+    },
+    {
+      "name": "Mintlify",
+      "score": 67
+    },
+    {
+      "name": "Clerk",
+      "score": 67
+    },
+    {
+      "name": "Crewai",
+      "score": 66
+    },
+    {
+      "name": "Newrelic",
+      "score": 64
+    },
+    {
+      "name": "Mapbox",
+      "score": 64
+    },
+    {
+      "name": "Hygraph",
+      "score": 64
+    },
+    {
+      "name": "Postman",
+      "score": 64
+    },
+    {
+      "name": "Monday",
+      "score": 63
+    },
+    {
+      "name": "Linear",
+      "score": 63
+    },
+    {
+      "name": "Figma",
+      "score": 63
+    },
+    {
+      "name": "Groq",
+      "score": 63
+    },
+    {
+      "name": "Stripe",
+      "score": 62
+    },
+    {
+      "name": "Mongodb",
+      "score": 62
+    },
+    {
+      "name": "Resend",
+      "score": 62
+    },
+    {
+      "name": "Readme",
+      "score": 62
+    },
+    {
+      "name": "Cohere",
+      "score": 62
+    },
+    {
+      "name": "Netlify",
+      "score": 62
+    },
+    {
+      "name": "Axiom",
+      "score": 61
+    },
+    {
+      "name": "Retool",
+      "score": 61
+    },
+    {
+      "name": "Sanity",
+      "score": 61
+    },
+    {
+      "name": "Runpod",
+      "score": 61
+    },
+    {
+      "name": "Circleci",
+      "score": 61
+    },
+    {
+      "name": "Qdrant",
+      "score": 61
+    },
+    {
+      "name": "Travis-ci",
+      "score": 61
+    },
+    {
+      "name": "Ai",
+      "score": 61
+    },
+    {
+      "name": "Imgix",
+      "score": 61
+    },
+    {
+      "name": "Auth0",
+      "score": 61
+    },
+    {
+      "name": "Heroku",
+      "score": 61
+    },
+    {
+      "name": "Stytch",
+      "score": 60
+    },
+    {
+      "name": "Cloudflare",
+      "score": 60
+    },
+    {
+      "name": "Supabase",
+      "score": 60
+    },
+    {
+      "name": "Doppler",
+      "score": 60
+    },
+    {
+      "name": "Flagsmith",
+      "score": 60
+    },
+    {
+      "name": "Datadog",
+      "score": 60
+    },
+    {
+      "name": "Insomnia",
+      "score": 60
+    },
+    {
+      "name": "Hoppscotch",
+      "score": 60
+    },
+    {
+      "name": "Snipcart",
+      "score": 60
+    },
+    {
+      "name": "Supertokens",
+      "score": 59
+    },
+    {
+      "name": "Backblaze",
+      "score": 59
+    },
+    {
+      "name": "Planetscale",
+      "score": 59
+    },
+    {
+      "name": "Anyscale",
+      "score": 59
+    },
+    {
+      "name": "Cockroachlabs",
+      "score": 59
+    },
+    {
+      "name": "Buildkite",
+      "score": 59
+    },
+    {
+      "name": "Prefect",
+      "score": 59
+    },
+    {
+      "name": "Huggingface",
+      "score": 58
+    },
+    {
+      "name": "Fusionauth",
+      "score": 58
+    },
+    {
+      "name": "Mastra",
+      "score": 58
+    },
+    {
+      "name": "Baseten",
+      "score": 58
+    },
+    {
+      "name": "Inngest",
+      "score": 58
+    },
+    {
+      "name": "Sambanova",
+      "score": 58
+    },
+    {
+      "name": "Github",
+      "score": 58
+    },
+    {
+      "name": "Bitbucket",
+      "score": 58
+    },
+    {
+      "name": "Fastly",
+      "score": 57
+    },
+    {
+      "name": "Openai",
+      "score": 57
+    },
+    {
+      "name": "Trigger",
+      "score": 57
+    },
+    {
+      "name": "Tatum",
+      "score": 57
+    },
+    {
+      "name": "Twilio",
+      "score": 57
+    },
+    {
+      "name": "Rapidapi",
+      "score": 57
+    },
+    {
+      "name": "Posthog",
+      "score": 57
+    },
+    {
+      "name": "Fireworks",
+      "score": 57
+    },
+    {
+      "name": "Langchain",
+      "score": 56
+    },
+    {
+      "name": "Wasabi",
+      "score": 56
+    },
+    {
+      "name": "Adyen",
+      "score": 56
+    },
+    {
+      "name": "Composio",
+      "score": 56
+    },
+    {
+      "name": "Knock",
+      "score": 56
+    },
+    {
+      "name": "Dagger",
+      "score": 56
+    },
+    {
+      "name": "Temporal",
+      "score": 56
+    },
+    {
+      "name": "Meilisearch",
+      "score": 56
+    },
+    {
+      "name": "Plaid",
+      "score": 55
+    },
+    {
+      "name": "Deepgram",
+      "score": 55
+    },
+    {
+      "name": "Neon",
+      "score": 55
+    },
+    {
+      "name": "Weaviate",
+      "score": 55
+    },
+    {
+      "name": "Launchdarkly",
+      "score": 55
+    },
+    {
+      "name": "Jup",
+      "score": 55
+    },
+    {
+      "name": "Clickup",
+      "score": 54
+    },
+    {
+      "name": "Contentful",
+      "score": 54
+    },
+    {
+      "name": "Prismic",
+      "score": 54
+    },
+    {
+      "name": "Elastic",
+      "score": 54
+    },
+    {
+      "name": "Cloudinary",
+      "score": 54
+    },
+    {
+      "name": "Mailgun",
+      "score": 54
+    },
+    {
+      "name": "Uploadcare",
+      "score": 54
+    },
+    {
+      "name": "Fly",
+      "score": 54
+    },
+    {
+      "name": "Pinecone",
+      "score": 53
+    },
+    {
+      "name": "Turso",
+      "score": 53
+    },
+    {
+      "name": "Redis",
+      "score": 53
+    },
+    {
+      "name": "Earthly",
+      "score": 53
+    },
+    {
+      "name": "Vercel",
+      "score": 53
+    },
+    {
+      "name": "Segment",
+      "score": 53
+    },
+    {
+      "name": "Digitalocean",
+      "score": 53
+    },
+    {
+      "name": "Asana",
+      "score": 52
+    },
+    {
+      "name": "Docs",
+      "score": 52
+    },
+    {
+      "name": "Smithery",
+      "score": 52
+    },
+    {
+      "name": "Infura",
+      "score": 52
+    },
+    {
+      "name": "Mistral",
+      "score": 52
+    },
+    {
+      "name": "Together",
+      "score": 52
+    },
+    {
+      "name": "Pusher",
+      "score": 52
+    },
+    {
+      "name": "Ably",
+      "score": 52
+    },
+    {
+      "name": "Saleor",
+      "score": 51
+    },
+    {
+      "name": "Strapi",
+      "score": 51
+    },
+    {
+      "name": "Storj",
+      "score": 51
+    },
+    {
+      "name": "Milvus",
+      "score": 51
+    },
+    {
+      "name": "Upstash",
+      "score": 51
+    },
+    {
+      "name": "Dune",
+      "score": 51
+    },
+    {
+      "name": "Amplitude",
+      "score": 51
+    },
+    {
+      "name": "Slack",
+      "score": 51
+    },
+    {
+      "name": "Llamaindex",
+      "score": 50
+    },
+    {
+      "name": "Vultr",
+      "score": 50
+    },
+    {
+      "name": "Opencagedata",
+      "score": 50
+    },
+    {
+      "name": "Solana",
+      "score": 50
+    },
+    {
+      "name": "Braintreepayments",
+      "score": 50
+    },
+    {
+      "name": "Modelcontextprotocol",
+      "score": 50
+    },
+    {
+      "name": "Zilliz",
+      "score": 50
+    },
+    {
+      "name": "Quicknode",
+      "score": 50
+    },
+    {
+      "name": "Semaphoreci",
+      "score": 50
+    },
+    {
+      "name": "Scrapingbee",
+      "score": 50
+    },
+    {
+      "name": "Appsmith",
+      "score": 49
+    },
+    {
+      "name": "Firebase",
+      "score": 49
+    },
+    {
+      "name": "Sendgrid",
+      "score": 49
+    },
+    {
+      "name": "Railway",
+      "score": 49
+    },
+    {
+      "name": "Logtail",
+      "score": 48
+    },
+    {
+      "name": "Alchemy",
+      "score": 48
+    },
+    {
+      "name": "Wise",
+      "score": 48
+    },
+    {
+      "name": "Moralis",
+      "score": 48
+    },
+    {
+      "name": "Ankr",
+      "score": 48
+    },
+    {
+      "name": "Typesense",
+      "score": 48
+    },
+    {
+      "name": "Plausible",
+      "score": 48
+    },
+    {
+      "name": "Perplexity",
+      "score": 47
+    },
+    {
+      "name": "Square",
+      "score": 47
+    },
+    {
+      "name": "Polygon",
+      "score": 47
+    },
+    {
+      "name": "Shopify",
+      "score": 47
+    },
+    {
+      "name": "Midjourney",
+      "score": 46
+    },
+    {
+      "name": "Ethereum",
+      "score": 46
+    },
+    {
+      "name": "Lambdatest",
+      "score": 46
+    },
+    {
+      "name": "Here",
+      "score": 45
+    },
+    {
+      "name": "Glama",
+      "score": 45
+    },
+    {
+      "name": "Newsapi",
+      "score": 45
+    },
+    {
+      "name": "Browserstack",
+      "score": 44
+    },
+    {
+      "name": "Postmark",
+      "score": 44
+    },
+    {
+      "name": "Docusaurus",
+      "score": 44
+    },
+    {
+      "name": "Raydium",
+      "score": 44
+    },
+    {
+      "name": "Nextra",
+      "score": 44
+    },
+    {
+      "name": "Autogen",
+      "score": 43
+    },
+    {
+      "name": "Gitlab",
+      "score": 43
+    },
+    {
+      "name": "Stream",
+      "score": 43
+    },
+    {
+      "name": "Thegraph",
+      "score": 42
+    },
+    {
+      "name": "Birdeye",
+      "score": 42
+    },
+    {
+      "name": "Uploadthing",
+      "score": 42
+    },
+    {
+      "name": "Revolut",
+      "score": 41
+    },
+    {
+      "name": "Stability",
+      "score": 40
+    },
+    {
+      "name": "Playwright",
+      "score": 40
+    },
+    {
+      "name": "Serpapi",
+      "score": 40
+    },
+    {
+      "name": "Filebase",
+      "score": 38
+    },
+    {
+      "name": "Openweathermap",
+      "score": 38
+    },
+    {
+      "name": "Cypress",
+      "score": 37
+    },
+    {
+      "name": "Canva",
+      "score": 37
+    },
+    {
+      "name": "Banana",
+      "score": 34
+    },
+    {
+      "name": "Deepseek",
+      "score": 34
+    },
+    {
+      "name": "Akamai",
+      "score": 30
+    },
+    {
+      "name": "Algolia",
+      "score": 30
+    },
+    {
+      "name": "Chainlink",
+      "score": 27
+    },
+    {
+      "name": "Defined",
+      "score": 27
+    },
+    {
+      "name": "Mcp",
+      "score": 25
+    },
+    {
+      "name": "Lepton",
+      "score": 24
+    },
+    {
+      "name": "Brevo",
+      "score": 24
+    }
+  ]
+}

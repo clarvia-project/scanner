@@ -1,0 +1,56 @@
+{
+  "schema": {
+    "author": "null",
+    "author_email": "str",
+    "bugtrack_url": "null",
+    "classifiers": [
+      "str"
+    ],
+    "description": "str",
+    "description_content_type": "str",
+    "docs_url": "null",
+    "download_url": "null",
+    "downloads": {
+      "last_day": "int",
+      "last_month": "int",
+      "last_week": "int"
+    },
+    "dynamic": [
+      "str"
+    ],
+    "home_page": "null",
+    "keywords": "null",
+    "license": "str",
+    "license_expression": "null",
+    "license_files": [
+      "str"
+    ],
+    "maintainer": "null",
+    "maintainer_email": "str",
+    "name": "str",
+    "package_url": "str",
+    "platform": "null",
+    "project_url": "str",
+    "project_urls": {
+      "Documentation": "str",
+      "Source": "str"
+    },
+    "provides_extra": [
+      "str"
+    ],
+    "release_url": "str",
+    "requires_dist": [
+      "str"
+    ],
+    "requires_python": "str",
+    "summary": "str",
+    "version": "str",
+    "yanked": "bool",
+    "yanked_reason": "null"
+  },
+  "saved_at": "2026-03-26T08:03:53.025715+00:00",
+  "metadata": {
+    "url": "https://pypi.org/pypi/requests/json",
+    "schema_key": "info"
+  }
+}

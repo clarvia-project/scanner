@@ -1,0 +1,119 @@
+{
+  "generated_at": "2026-03-26T08:03:58.346535+00:00",
+  "summary": {
+    "total": 9,
+    "passed": 9,
+    "failed": 0,
+    "pass_rate": 100.0
+  },
+  "results": [
+    {
+      "name": "health_endpoint",
+      "category": "rest_api",
+      "passed": true,
+      "message": "Health check OK",
+      "duration_ms": 578.0,
+      "details": {}
+    },
+    {
+      "name": "search_endpoint",
+      "category": "rest_api",
+      "passed": true,
+      "message": "Search endpoint returns valid JSON with results",
+      "duration_ms": 555.4,
+      "details": {
+        "keys": [
+          "total",
+          "services",
+          "pagination"
+        ]
+      }
+    },
+    {
+      "name": "score_endpoint",
+      "category": "rest_api",
+      "passed": true,
+      "message": "Score endpoint returns valid JSON",
+      "duration_ms": 550.0,
+      "details": {
+        "keys": [
+          "url",
+          "score",
+          "rating",
+          "category",
+          "scan_id",
+          "found"
+        ]
+      }
+    },
+    {
+      "name": "leaderboard_endpoint",
+      "category": "rest_api",
+      "passed": true,
+      "message": "Leaderboard endpoint returns valid JSON",
+      "duration_ms": 579.5,
+      "details": {
+        "total": 180
+      }
+    },
+    {
+      "name": "feed_scores",
+      "category": "feed",
+      "passed": true,
+      "message": "Feed scores OK: 175 total, 5 returned",
+      "duration_ms": 585.4,
+      "details": {
+        "total": 175,
+        "sample_count": 5
+      }
+    },
+    {
+      "name": "feed_top",
+      "category": "feed",
+      "passed": true,
+      "message": "Feed top OK: 5 services",
+      "duration_ms": 640.5,
+      "details": {
+        "count": 5,
+        "top_score": 80
+      }
+    },
+    {
+      "name": "feed_stats",
+      "category": "feed",
+      "passed": true,
+      "message": "Feed stats OK: 175 services indexed",
+      "duration_ms": 592.8,
+      "details": {
+        "total_services": 175,
+        "avg_score": 53.4
+      }
+    },
+    {
+      "name": "npm_package",
+      "category": "mcp_server",
+      "passed": true,
+      "message": "npm package v1.0.2 exists",
+      "duration_ms": 261.2,
+      "details": {
+        "published": true,
+        "version": "1.0.2",
+        "has_bin": true,
+        "has_main": true,
+        "name": "clarvia-mcp-server"
+      }
+    },
+    {
+      "name": "mcp_server_local",
+      "category": "mcp_server",
+      "passed": true,
+      "message": "MCP server package v1.0.2 structure OK",
+      "duration_ms": 0.0,
+      "details": {
+        "version": "1.0.2",
+        "has_bin": true,
+        "has_build_script": true
+      }
+    }
+  ]
+}

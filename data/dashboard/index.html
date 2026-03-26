@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clarvia Automation Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --purple: #bc8cff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    padding: 24px; max-width: 1400px; margin: 0 auto;
+  }
+  h1 { color: var(--accent); margin-bottom: 4px; font-size: 1.6rem; }
+  .subtitle { color: var(--text-dim); margin-bottom: 24px; font-size: 0.9rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px;
+  }
+  .card h2 { font-size: 1rem; color: var(--accent); margin-bottom: 12px; }
+  .stat-number { font-size: 2.4rem; font-weight: 700; }
+  .stat-label { color: var(--text-dim); font-size: 0.85rem; }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  th, td {
+    text-align: left; padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--text-dim); font-weight: 600; }
+  code {
+    background: rgba(110,118,129,0.15); padding: 2px 6px;
+    border-radius: 4px; font-size: 0.8rem;
+  }
+  .status { padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+  .status-ok { background: rgba(63,185,80,0.15); color: var(--green); }
+  .status-error { background: rgba(248,81,73,0.15); color: var(--red); }
+  .status-unknown { background: rgba(139,148,158,0.15); color: var(--text-dim); }
+  .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+  .badge-on { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge-off { background: rgba(139,148,158,0.15); color: var(--text-dim); }
+  .delta { font-size: 0.9rem; font-weight: 600; }
+  .delta-up { color: var(--green); }
+  .delta-down { color: var(--red); }
+  .chart-container { position: relative; height: 200px; margin-top: 12px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 160px; padding-top: 10px; }
+  .bar {
+    flex: 1; min-width: 20px; border-radius: 3px 3px 0 0;
+    transition: height 0.3s;
+    position: relative;
+  }
+  .bar:hover::after {
+    content: attr(data-label);
+    position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+    background: var(--card); border: 1px solid var(--border);
+    padding: 4px 8px; border-radius: 4px; font-size: 0.7rem;
+    white-space: nowrap; z-index: 10;
+  }
+  .bar-healthy { background: var(--green); }
+  .bar-unhealthy { background: var(--red); }
+  .bar-score { background: var(--accent); }
+  .bar-source { background: var(--purple); }
+  .source-list { list-style: none; }
+  .source-list li {
+    display: flex; justify-content: space-between;
+    padding: 6px 0; border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .source-list li:last-child { border: none; }
+  .source-count { font-weight: 700; color: var(--accent); }
+  footer {
+    margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border);
+    color: var(--text-dim); font-size: 0.75rem; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <h1>Clarvia Automation Dashboard</h1>
+  <p class="subtitle">Generated: 2026-03-26 08:01 UTC</p>
+
+  <!-- Summary cards -->
+  <div class="grid">
+    <div class="card">
+      <h2>Total Tools Indexed</h2>
+      <div class="stat-number">13,137</div>
+      <div class="stat-label">across 5 sources</div>
+    </div>
+    <div class="card">
+      <h2>Self-Assessment Score</h2>
+      <div class="stat-number">N/A</div>
+      <div class="stat-label">out of 10.0</div>
+    </div>
+    <div class="card">
+      <h2>Queue Size</h2>
+      <div class="stat-number">4,136</div>
+      <div class="stat-label">tools pending classification</div>
+    </div>
+    <div class="card">
+      <h2>Active Tasks</h2>
+      <div class="stat-number">17</div>
+      <div class="stat-label">of 17 configured</div>
+    </div>
+  </div>
+
+  <!-- Automation tasks table -->
+  <div class="card" style="margin-bottom: 24px;">
+    <h2>Automation Tasks</h2>
+    <table>
+      <thead>
+        <tr><th>Task</th><th>Script</th><th>Schedule</th><th>Enabled</th><th>Status</th><th>Last Run</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+            <td><code>healthcheck</code></td>
+            <td><code>scripts/healthcheck.py</code></td>
+            <td><code>*/5 * * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>error_monitor</code></td>
+            <td><code>scripts/error_monitor.py</code></td>
+            <td><code>*/5 * * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>backup</code></td>
+            <td><code>scripts/backup.py</code></td>
+            <td><code>0 3 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>harvester</code></td>
+            <td><code>scripts/automation/harvester.py</code></td>
+            <td><code>0 6 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>classifier</code></td>
+            <td><code>scripts/automation/classifier.py</code></td>
+            <td><code>30 6 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>dead_link_check</code></td>
+            <td><code>scripts/automation/dead_link_cleaner.py</code></td>
+            <td><code>0 4 * * 0</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>daily_report</code></td>
+            <td><code>scripts/automation/daily_report.py</code></td>
+            <td><code>0 22 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>weekly_report</code></td>
+            <td><code>scripts/automation/score_reporter.py</code></td>
+            <td><code>0 10 * * 1</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>self_improvement</code></td>
+            <td><code>scripts/automation/self_improver.py</code></td>
+            <td><code>0 12 * * 0</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>integration_verify</code></td>
+            <td><code>scripts/automation/integration_verifier.py</code></td>
+            <td><code>0 8 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>onboarding</code></td>
+            <td><code>scripts/automation/onboarding.py</code></td>
+            <td><code>*/30 * * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>feedback_engine</code></td>
+            <td><code>scripts/automation/feedback_engine.py</code></td>
+            <td><code>0 2 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>dashboard</code></td>
+            <td><code>scripts/automation/dashboard_generator.py</code></td>
+            <td><code>0 * * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>schema_watchdog</code></td>
+            <td><code>scripts/automation/schema_watchdog.py</code></td>
+            <td><code>0 5 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>curator</code></td>
+            <td><code>scripts/automation/curator.py</code></td>
+            <td><code>30 7 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>data_auditor</code></td>
+            <td><code>scripts/automation/data_auditor.py</code></td>
+            <td><code>0 7 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>self_healer</code></td>
+            <td><code>scripts/automation/self_healer.py</code></td>
+            <td><code>0 */6 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr></tbody>
+    </table>
+  </div>
+
+  <div class="grid">
+    <!-- Uptime chart -->
+    <div class="card">
+      <h2>Uptime (recent checks)</h2>
+      <div class="bar-chart" id="uptime-chart"></div>
+    </div>
+
+    <!-- Self-improvement trend -->
+    <div class="card">
+      <h2>Self-Assessment Trend</h2>
+      <div class="bar-chart" id="trend-chart"></div>
+    </div>
+
+    <!-- Harvester sources -->
+    <div class="card">
+      <h2>Tools by Source</h2>
+      <ul class="source-list" id="sources-list"></ul>
+    </div>
+
+    <!-- Error summary -->
+    <div class="card">
+      <h2>Error Summary</h2>
+      <div class="stat-number" style="color: var(--green)">0</div>
+      <div class="stat-label">total errors detected</div>
+    </div>
+  </div>
+
+  <footer>
+    Clarvia Automation System &mdash; Self-improving AI tool quality platform
+  </footer>
+
+  <script>
+    // Uptime chart
+    const uptimeData = [{"time": "2026-03-26T06:59:58.324319+00:00", "healthy": true}, {"time": "2026-03-26T06:59:58.572780+00:00", "healthy": true}, {"time": "2026-03-26T08:01:30.711763+00:00", "healthy": true}, {"time": "2026-03-26T08:01:30.788155+00:00", "healthy": true}];
+    const uptimeChart = document.getElementById('uptime-chart');
+    uptimeData.forEach((d, i) => {
+      const bar = document.createElement('div');
+      bar.className = 'bar ' + (d.healthy ? 'bar-healthy' : 'bar-unhealthy');
+      bar.style.height = d.healthy ? '100%' : '30%';
+      bar.setAttribute('data-label', (d.time || 'check ' + i) + ': ' + (d.healthy ? 'OK' : 'FAIL'));
+      uptimeChart.appendChild(bar);
+    });
+    if (uptimeData.length === 0) {
+      uptimeChart.innerHTML = '<span style="color:var(--text-dim);font-size:0.85rem">No healthcheck data available</span>';
+    }
+
+    // Self-improvement trend
+    const trendData = [];
+    const trendChart = document.getElementById('trend-chart');
+    const maxScore = 10;
+    trendData.forEach(d => {
+      const bar = document.createElement('div');
+      bar.className = 'bar bar-score';
+      bar.style.height = ((d.score / maxScore) * 100) + '%';
+      bar.setAttribute('data-label', d.date + ': ' + d.score + '/10');
+      trendChart.appendChild(bar);
+    });
+    if (trendData.length === 0) {
+      trendChart.innerHTML = '<span style="color:var(--text-dim);font-size:0.85rem">No self-assessment data yet</span>';
+    }
+
+    // Sources list
+    const sourcesData = {"mcp_registry": 1733, "github": 2592, "glama": 4599, "prebuilt": 175, "all_agent_tools": 4038};
+    const sourcesList = document.getElementById('sources-list');
+    const sortedSources = Object.entries(sourcesData).sort((a, b) => b[1] - a[1]);
+    sortedSources.forEach(([name, count]) => {
+      const li = document.createElement('li');
+      li.innerHTML = '<span>' + name.replace(/_/g, ' ') + '</span><span class="source-count">' + count.toLocaleString() + '</span>';
+      sourcesList.appendChild(li);
+    });
+    if (sortedSources.length === 0) {
+      sourcesList.innerHTML = '<li style="color:var(--text-dim)">No source data available</li>';
+    }
+  </script>
+</body>
+</html>

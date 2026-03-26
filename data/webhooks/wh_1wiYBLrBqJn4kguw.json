@@ -1,0 +1,15 @@
+{
+  "webhook_id": "wh_1wiYBLrBqJn4kguw",
+  "url": "https://example.com/webhook",
+  "events": [
+    "scan_complete"
+  ],
+  "signing_secret_hash": "2d03fa79903259ddc299f142efe3aa34762c6c8837d7e8b5fb1abb3c5c920e56",
+  "signing_secret_preview": "j5w1Ut43...",
+  "description": "test webhook",
+  "owner": "127.0.0.1",
+  "active": true,
+  "failure_count": 0,
+  "created_at": "2026-03-26T07:00:30.781915+00:00",
+  "last_triggered_at": null
+}

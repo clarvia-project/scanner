@@ -1,0 +1,4 @@
+{"timestamp": "2026-03-26T08:03:52.364579+00:00", "api": "github_search", "display_name": "GitHub Search API", "source": "github", "status": "initialized", "severity": "none"}
+{"timestamp": "2026-03-26T08:03:52.699233+00:00", "api": "npm_search", "display_name": "npm Registry Search API", "source": "npm", "status": "initialized", "severity": "none"}
+{"timestamp": "2026-03-26T08:03:52.984486+00:00", "api": "pypi_package", "display_name": "PyPI Package JSON API", "source": "pypi", "status": "initialized", "severity": "none"}
+{"timestamp": "2026-03-26T08:03:53.026054+00:00", "api": "mcp_registry", "display_name": "MCP Registry API", "source": "mcp_registry", "status": "error", "severity": "MAJOR", "error": "Could not navigate to schema_key: [0]"}

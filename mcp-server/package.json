@@ -1,7 +1,7 @@
 {
   "name": "clarvia-mcp-server",
-  "version": "1.0.1",
-  "mcpName": "io.github.clarvia-project/scanner",
+  "version": "1.0.2",
+  "mcpName": "io.github.digitamaz/clarvia",
   "description": "Clarvia MCP Server - Search and evaluate AI services via Model Context Protocol",
   "type": "module",
   "main": "./dist/index.js",

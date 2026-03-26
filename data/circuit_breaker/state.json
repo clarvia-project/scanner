@@ -1,0 +1,35 @@
+{
+  "chaos_test_open": {
+    "state": "open",
+    "failure_count": 3,
+    "last_failure_time": 1774512087.629792,
+    "last_success_time": 0.0,
+    "opened_at": 1774512087.629866,
+    "total_failures": 6,
+    "total_successes": 0,
+    "total_rejected": 0,
+    "updated_at": "2026-03-26T08:01:27.629897+00:00"
+  },
+  "chaos_test_recover": {
+    "state": "closed",
+    "failure_count": 0,
+    "last_failure_time": 1774512087.630413,
+    "last_success_time": 1774512089.136385,
+    "opened_at": 1774512087.63045,
+    "total_failures": 6,
+    "total_successes": 2,
+    "total_rejected": 0,
+    "updated_at": "2026-03-26T08:01:29.136665+00:00"
+  },
+  "chaos_test_halfopen": {
+    "state": "open",
+    "failure_count": 3,
+    "last_failure_time": 1774512089.823953,
+    "last_success_time": 0.0,
+    "opened_at": 1774512089.824002,
+    "total_failures": 6,
+    "total_successes": 0,
+    "total_rejected": 0,
+    "updated_at": "2026-03-26T08:01:29.824029+00:00"
+  }
+}
