@@ -1,8 +1,8 @@
 {
   "name": "clarvia-mcp-server",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "mcpName": "io.github.digitamaz/clarvia",
-  "description": "Clarvia MCP Server - Search and evaluate AI services via Model Context Protocol",
+  "description": "MCP server for Clarvia \u2014 AI agent tool discovery and AEO scoring. Search 15,400+ indexed tools (MCP servers, APIs, CLIs), check agent-compatibility scores, find alternatives, audit dependencies, and get real-time enrichment data.",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
@@ -10,6 +10,7 @@
   },
   "files": [
     "dist",
+    "smithery.yaml",
     "README.md",
     "LICENSE"
   ],
@@ -28,13 +29,27 @@
     "directory": "mcp-server"
   },
   "keywords": [
-    "mcp",
-    "model-context-protocol",
-    "ai",
     "aeo",
+    "agent",
+    "agent-compatibility",
+    "agent-friendly",
+    "agent-tools",
+    "ai",
+    "ai-agent",
+    "ai-tools",
+    "api-scanner",
     "clarvia",
+    "claude",
+    "cline",
+    "cursor",
+    "llm-tools",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
     "scanner",
-    "agent"
+    "tool-discovery",
+    "tool-scoring",
+    "windsurf"
   ],
   "author": "Clarvia",
   "homepage": "https://clarvia.art",
