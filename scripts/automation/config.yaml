@@ -87,3 +87,22 @@ tasks:
     schedule: "0 * * * *"  # hourly
     enabled: true
     timeout: 120
+
+  schema_watchdog:
+    script: scripts/automation/schema_watchdog.py
+    schedule: "0 5 * * *"  # 5am daily
+    enabled: true
+    timeout: 300
+
+  data_auditor:
+    script: scripts/automation/data_auditor.py
+    args: ["--fix"]
+    schedule: "0 7 * * *"  # 7am daily (after harvester at 6am)
+    enabled: true
+    timeout: 300
+
+  self_healer:
+    script: scripts/automation/self_healer.py
+    schedule: "0 */6 * * *"  # every 6 hours
+    enabled: true
+    timeout: 600
