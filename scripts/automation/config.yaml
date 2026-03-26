@@ -94,6 +94,12 @@ tasks:
     enabled: true
     timeout: 300
 
+  curator:
+    script: scripts/automation/curator.py
+    schedule: "30 7 * * *"  # 7:30am daily (after classifier at 6:30am)
+    enabled: true
+    timeout: 300
+
   data_auditor:
     script: scripts/automation/data_auditor.py
     args: ["--fix"]

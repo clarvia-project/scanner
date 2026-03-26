@@ -18,6 +18,7 @@ import json as _json
 import logging
 import secrets
 import time
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path as _Path
 from typing import Any
@@ -29,6 +30,76 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1/webhooks", tags=["webhooks"])
+
+# ---------------------------------------------------------------------------
+# Per-IP rate limiting for webhook registration
+# ---------------------------------------------------------------------------
+
+WEBHOOK_REG_LIMIT = 10  # max registrations per IP per hour
+WEBHOOK_REG_WINDOW = 3600  # 1 hour in seconds
+
+
+class _WebhookRateLimitEntry:
+    """Sliding-window counter for webhook registration rate limiting."""
+    __slots__ = ("count", "window_start")
+
+    def __init__(self) -> None:
+        self.count = 0
+        self.window_start = time.monotonic()
+
+    def _reset_if_expired(self) -> None:
+        now = time.monotonic()
+        if now - self.window_start >= WEBHOOK_REG_WINDOW:
+            self.count = 0
+            self.window_start = now
+
+    def increment(self) -> int:
+        """Increment and return the current count within the window."""
+        self._reset_if_expired()
+        self.count += 1
+        return self.count
+
+    @property
+    def remaining_seconds(self) -> int:
+        """Seconds until the current window resets."""
+        elapsed = time.monotonic() - self.window_start
+        return max(0, int(WEBHOOK_REG_WINDOW - elapsed))
+
+
+_webhook_reg_store: dict[str, _WebhookRateLimitEntry] = defaultdict(_WebhookRateLimitEntry)
+
+
+def _get_request_ip(request: Request) -> str:
+    """Extract client IP, respecting trusted proxy headers."""
+    real_ip = request.client.host if request.client else "unknown"
+    trusted_prefixes = ("10.", "172.16.", "192.168.", "127.")
+    if any(real_ip.startswith(p) for p in trusted_prefixes) or real_ip == "::1":
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+    return real_ip
+
+
+def _check_webhook_rate_limit(request: Request) -> None:
+    """Raise HTTPException(429) if the IP exceeds webhook registration limit."""
+    client_ip = _get_request_ip(request)
+    # Skip rate limiting for localhost
+    if client_ip in ("127.0.0.1", "::1", "localhost"):
+        return
+    entry = _webhook_reg_store[client_ip]
+    current = entry.increment()
+    if current > WEBHOOK_REG_LIMIT:
+        retry_after = entry.remaining_seconds
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "Webhook registration rate limit exceeded",
+                "detail": f"Maximum {WEBHOOK_REG_LIMIT} webhook registrations per hour. Try again in {retry_after}s.",
+                "retry_after": retry_after,
+            },
+            headers={"Retry-After": str(retry_after)},
+        )
+
 
 # ---------------------------------------------------------------------------
 # File-based storage
@@ -122,6 +193,9 @@ async def register_webhook(req: RegisterWebhookRequest, request: Request):
     with JSON payload and optional `X-Clarvia-Signature` header (HMAC-SHA256
     of the body using your shared secret).
     """
+    # Enforce per-IP rate limit for webhook registration
+    _check_webhook_rate_limit(request)
+
     # Validate URL
     url = req.url.strip()
     if not url.startswith("https://"):

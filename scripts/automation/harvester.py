@@ -31,6 +31,8 @@ from urllib.parse import quote_plus
 
 import aiohttp
 
+from circuit_breaker import get_breaker, cache_response, load_cached_response
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -912,6 +914,58 @@ def queue_discoveries(discoveries: list[dict]) -> int:
 # Main orchestrator
 # ---------------------------------------------------------------------------
 
+async def _harvest_source_with_circuit_breaker(
+    source_name: str,
+    breaker_name: str,
+    harvest_fn,
+    session: aiohttp.ClientSession,
+    known_urls: set[str],
+) -> list[dict]:
+    """Wrap a harvest function with circuit breaker protection.
+
+    If the circuit is open, skip the source and return cached discoveries.
+    On success, cache the results and record success.
+    On failure, record failure so the circuit opens after repeated errors.
+    """
+    breaker = get_breaker(breaker_name)
+
+    if not breaker.allow_request():
+        logger.warning(
+            "Source %s circuit open (state=%s), skipping — using cached data if available",
+            source_name, breaker.state.value,
+        )
+        cached = load_cached_response(f"harvester_{source_name}")
+        if cached and isinstance(cached.get("data"), list):
+            logger.info(
+                "Source %s: loaded %d cached discoveries (cached at %s)",
+                source_name, len(cached["data"]), cached.get("cached_at", "unknown"),
+            )
+            return cached["data"]
+        logger.info("Source %s: no cached data available, returning empty", source_name)
+        return []
+
+    try:
+        discoveries = await harvest_fn(session, known_urls)
+        breaker.record_success()
+        # Cache successful results for fallback
+        if discoveries:
+            cache_response(f"harvester_{source_name}", discoveries)
+        return discoveries
+    except Exception as e:
+        error_msg = str(e)[:200]
+        logger.error("Source %s harvest failed: %s", source_name, error_msg)
+        breaker.record_failure(error_msg)
+        # Try cached data as fallback
+        cached = load_cached_response(f"harvester_{source_name}")
+        if cached and isinstance(cached.get("data"), list):
+            logger.info(
+                "Source %s: using %d cached discoveries after failure",
+                source_name, len(cached["data"]),
+            )
+            return cached["data"]
+        return []
+
+
 async def run_harvest(sources: list[str] | None = None, dry_run: bool = False) -> dict[str, Any]:
     """Run the full harvest pipeline."""
     if sources is None:
@@ -925,33 +979,35 @@ async def run_harvest(sources: list[str] | None = None, dry_run: bool = False) -
         "github_token": bool(GITHUB_TOKEN),
     }
 
+    # Map source names to their harvest functions and circuit breaker names
+    source_config = {
+        "github": ("github", harvest_github),
+        "npm": ("npm", harvest_npm),
+        "pypi": ("pypi", harvest_pypi),
+        "mcp": ("mcp_registry", harvest_mcp_registry),
+    }
+
     async with aiohttp.ClientSession() as session:
-        if "github" in sources:
-            gh = await harvest_github(session, known_urls)
-            all_discoveries.extend(gh)
+        for source_key in sources:
+            if source_key not in source_config:
+                continue
+            breaker_name, harvest_fn = source_config[source_key]
+            stat_key = breaker_name  # e.g. "github", "npm", "pypi", "mcp_registry"
+
+            results = await _harvest_source_with_circuit_breaker(
+                source_name=source_key,
+                breaker_name=breaker_name,
+                harvest_fn=harvest_fn,
+                session=session,
+                known_urls=known_urls,
+            )
+            all_discoveries.extend(results)
             # Add to known_urls to avoid cross-source duplicates
-            for d in gh:
-                known_urls.add(d["url"].rstrip("/").lower())
-            stats["sources"]["github"] = len(gh)
-
-        if "npm" in sources:
-            npm = await harvest_npm(session, known_urls)
-            all_discoveries.extend(npm)
-            for d in npm:
-                known_urls.add(d["url"].rstrip("/").lower())
-            stats["sources"]["npm"] = len(npm)
-
-        if "pypi" in sources:
-            pypi = await harvest_pypi(session, known_urls)
-            all_discoveries.extend(pypi)
-            for d in pypi:
-                known_urls.add(d["url"].rstrip("/").lower())
-            stats["sources"]["pypi"] = len(pypi)
-
-        if "mcp" in sources:
-            mcp = await harvest_mcp_registry(session, known_urls)
-            all_discoveries.extend(mcp)
-            stats["sources"]["mcp_registry"] = len(mcp)
+            for d in results:
+                url = d.get("url", "").rstrip("/").lower()
+                if url:
+                    known_urls.add(url)
+            stats["sources"][stat_key] = len(results)
 
     stats["total_discovered"] = len(all_discoveries)
 
