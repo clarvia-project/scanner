@@ -86,6 +86,12 @@ def _load_all_tickets() -> list[dict[str, Any]]:
 # Request/Response models
 # ---------------------------------------------------------------------------
 
+def _sanitize(text: str) -> str:
+    """Strip HTML tags to prevent stored XSS."""
+    import re
+    return re.sub(r"<[^>]+>", "", text).strip()
+
+
 class CreateTicketRequest(BaseModel):
     type: str = Field(..., description="Ticket type: bug, feature, question, security")
     title: str = Field(..., max_length=200, description="Short summary")
@@ -126,8 +132,8 @@ async def create_ticket(req: CreateTicketRequest):
     ticket = {
         "ticket_id": ticket_id,
         "type": req.type,
-        "title": req.title,
-        "description": req.description,
+        "title": _sanitize(req.title),
+        "description": _sanitize(req.description),
         "agent_id": req.agent_id,
         "service_url": req.service_url,
         "severity": req.severity,

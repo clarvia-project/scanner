@@ -42,12 +42,27 @@ class OnchainBonusResult(BaseModel):
 
 # --- Response ---
 
+def _score_to_grade(score: int) -> str:
+    """Convert numeric score to agent grade."""
+    if score >= 80:
+        return "AGENT_NATIVE"
+    if score >= 60:
+        return "AGENT_FRIENDLY"
+    if score >= 40:
+        return "AGENT_POSSIBLE"
+    return "AGENT_HOSTILE"
+
+
 class ScanResponse(BaseModel):
     scan_id: str
     url: str
     service_name: str
     clarvia_score: int
     rating: str
+    agent_grade: str = Field(
+        default="AGENT_POSSIBLE",
+        description="Agent compatibility grade: AGENT_NATIVE (80+), AGENT_FRIENDLY (60-79), AGENT_POSSIBLE (40-59), AGENT_HOSTILE (<40)",
+    )
     dimensions: dict[str, DimensionResult]
     onchain_bonus: OnchainBonusResult
     top_recommendations: list[str]
@@ -57,6 +72,11 @@ class ScanResponse(BaseModel):
         default=False,
         description="Whether this scan used authenticated headers to access the target API.",
     )
+
+    def model_post_init(self, __context: Any) -> None:
+        # Auto-set agent_grade from score
+        if self.agent_grade == "AGENT_POSSIBLE":
+            object.__setattr__(self, "agent_grade", _score_to_grade(self.clarvia_score))
 
 
 class ErrorResponse(BaseModel):
