@@ -82,6 +82,7 @@ from .routes.submission_routes import router as submission_router
 from .routes.collection_routes import router as collection_router
 from .routes.history_routes import router as history_router
 from .routes.team_routes import router as team_router
+from .routes.analytics_routes import router as analytics_router
 from .keepalive import keepalive_loop
 from .scanner import cleanup_cache, get_cached_scan, run_scan
 
@@ -132,6 +133,10 @@ async def lifespan(app: FastAPI):
     # Start keep-alive ping to prevent Render cold starts
     asyncio.create_task(keepalive_loop())
 
+    # Start persistent analytics JSONL writer
+    from .services.analytics_writer import analytics_writer
+    analytics_writer.start()
+
     # Start MCP session manager (required for Streamable HTTP transport)
     try:
         from .mcp_server import mcp_session_manager
@@ -144,6 +149,8 @@ async def lifespan(app: FastAPI):
 
     # --- Shutdown ---
     logger.info("Shutting down gracefully...")
+    # Flush remaining analytics to disk
+    await analytics_writer.stop()
     if _cache_cleanup_task:
         _cache_cleanup_task.cancel()
         try:
@@ -188,6 +195,7 @@ app = FastAPI(
         {"name": "keys", "description": "API key self-service management"},
         {"name": "submissions", "description": "Tool submission and Clarvia badge system"},
         {"name": "admin", "description": "Admin-only operations (requires API key)"},
+        {"name": "admin-analytics", "description": "API traffic analytics and monitoring (requires API key)"},
     ],
 )
 
@@ -292,6 +300,7 @@ app.include_router(submission_router)
 app.include_router(collection_router)
 app.include_router(history_router)
 app.include_router(team_router)
+app.include_router(analytics_router)
 
 # MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
 try:
@@ -694,6 +703,8 @@ async def api_v1_score(url: str):
                     },
                     "scan_id": s["scan_id"],
                     "source": "prebuilt",
+                    "scored_by": "Clarvia AEO",
+                    "clarvia_profile_url": f"https://clarvia.art/tool/{s['scan_id']}",
                 }
 
     # Run live scan
@@ -710,6 +721,8 @@ async def api_v1_score(url: str):
             },
             "scan_id": result.scan_id,
             "source": "live",
+            "scored_by": "Clarvia AEO",
+            "clarvia_profile_url": f"https://clarvia.art/tool/{result.scan_id}",
         }
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
