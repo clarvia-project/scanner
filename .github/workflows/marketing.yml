@@ -1,0 +1,54 @@
+name: Agent Marketing Automation
+
+on:
+  schedule:
+    # Morning plan + execute (9am KST = 0am UTC)
+    - cron: '3 0 * * *'
+    # Evening report (10pm KST = 1pm UTC)
+    - cron: '3 13 * * *'
+    # Keep-alive ping every 14 min
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run mode'
+        required: true
+        default: 'morning'
+        type: choice
+        options:
+          - morning
+          - evening
+          - keepalive
+
+jobs:
+  marketing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      CLARVIA_API_URL: https://clarvia-api.onrender.com
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Determine mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ inputs.mode }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.schedule }}" = "3 0 * * *" ]; then
+            echo "mode=morning" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.schedule }}" = "3 13 * * *" ]; then
+            echo "mode=evening" >> $GITHUB_OUTPUT
+          else
+            echo "mode=keepalive" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run marketing
+        run: python scripts/marketing_execute.py ${{ steps.mode.outputs.mode }}
