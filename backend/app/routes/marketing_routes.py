@@ -106,7 +106,7 @@ async def marketing_kpi(_key: ApiKeyDep):
         {"name": "Glama 등록", "done": False},
         {"name": "PulseMCP 등록", "done": False},
         {"name": ".well-known/mcp 구현", "done": False},
-        {"name": "Schema.org JSON-LD", "done": False},
+        {"name": "Schema.org JSON-LD", "done": True},
         {"name": "프로그래매틱 FAQ 페이지", "done": False},
     ]
 

@@ -12,6 +12,9 @@ import {
   findAlternatives,
   probeService,
   submitFeedback,
+  registerSetup,
+  compareSetup,
+  recommendForSetup,
 } from "./api-client.js";
 
 export function registerTools(server: McpServer): void {
@@ -291,6 +294,76 @@ export function registerTools(server: McpServer): void {
     async ({ profile_id, outcome, agent_id, error_message, latency_ms }) => {
       try {
         const result = await submitFeedback({ profile_id, outcome, agent_id, error_message, latency_ms });
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // --- Setup comparison tools ---
+
+  // 12. register_my_setup — register agent's tool list
+  server.tool(
+    "register_my_setup",
+    "Register your current tool setup (MCP servers, CLIs, APIs, Skills) with Clarvia to get AEO scores and category rankings for each tool. Use when you want to benchmark your agent's toolchain, track setup quality over time, or prepare for comparison and upgrade recommendations. Returns a setup_id for use with compare_my_setup and recommend_upgrades.",
+    {
+      tools: z.array(z.string()).min(1).max(50).describe("List of tool names you currently use (e.g. ['dune-mcp', 'notion-mcp', 'telegram-bot'])"),
+      setup_id: z.string().optional().describe("Custom setup ID (auto-generated hash if omitted)"),
+    },
+    async ({ tools, setup_id }) => {
+      try {
+        const result = await registerSetup(tools, setup_id);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // 13. compare_my_setup — compare setup vs alternatives
+  server.tool(
+    "compare_my_setup",
+    "Compare your registered tool setup against higher-scored alternatives in each category. Shows the best available upgrades for each tool and the category average score. Use after register_my_setup to identify weak spots in your toolchain and find better-rated replacements. Requires a setup_id from register_my_setup.",
+    {
+      setup_id: z.string().describe("Setup ID from register_my_setup"),
+    },
+    async ({ setup_id }) => {
+      try {
+        const result = await compareSetup(setup_id);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // 14. recommend_upgrades — get personalized tool recommendations
+  server.tool(
+    "recommend_upgrades",
+    "Get personalized tool recommendations based on your registered setup. Suggests high-scoring tools you don't have yet — both within your existing categories and in complementary adjacent categories. Uses 'users with X also use Y' heuristics. Requires a setup_id from register_my_setup.",
+    {
+      setup_id: z.string().describe("Setup ID from register_my_setup"),
+      limit: z.number().min(1).max(50).optional().describe("Max recommendations to return (default: 10)"),
+    },
+    async ({ setup_id, limit }) => {
+      try {
+        const result = await recommendForSetup(setup_id, limit || 10);
         return {
           content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
         };

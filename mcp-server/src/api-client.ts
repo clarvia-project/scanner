@@ -243,3 +243,72 @@ export async function probeService(url: string): Promise<ProbeResult> {
     body: { url },
   });
 }
+
+// --- Setup comparison API ---
+
+export interface SetupTool {
+  name: string;
+  input_name: string;
+  score: number | null;
+  category: string;
+  rank_in_category: number | null;
+  scan_id: string | null;
+}
+
+export interface RegisterSetupResult {
+  setup_id: string;
+  tools: SetupTool[];
+  summary: {
+    total: number;
+    matched: number;
+    unmatched: number;
+    avg_score: number;
+  };
+}
+
+export interface CompareResult {
+  setup_id: string;
+  comparisons: Array<{
+    current: { name: string; score: number | null; rank?: number; status?: string };
+    better_alternatives: Array<{ name: string; score: number; scan_id: string }>;
+    category: string;
+    category_avg: number | null;
+    upgrade_potential?: boolean;
+  }>;
+  summary: { total_tools: number; upgradable: number };
+}
+
+export interface RecommendResult {
+  setup_id: string;
+  recommendations: Array<{
+    name: string;
+    score: number;
+    category: string;
+    scan_id: string;
+    reason: string;
+  }>;
+  based_on_categories: string[];
+}
+
+export async function registerSetup(
+  tools: string[],
+  setupId?: string,
+): Promise<RegisterSetupResult> {
+  return request<RegisterSetupResult>("/v1/setup/register", {
+    method: "POST",
+    body: { tools, setup_id: setupId },
+  });
+}
+
+export async function compareSetup(setupId: string): Promise<CompareResult> {
+  return request<CompareResult>(`/v1/setup/${encodeURIComponent(setupId)}/compare`);
+}
+
+export async function recommendForSetup(
+  setupId: string,
+  limit: number = 10,
+): Promise<RecommendResult> {
+  return request<RecommendResult>(`/v1/setup/${encodeURIComponent(setupId)}/recommend`, {
+    params: { limit },
+  });
+}
