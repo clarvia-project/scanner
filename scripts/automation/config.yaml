@@ -112,3 +112,9 @@ tasks:
     schedule: "0 */6 * * *"  # every 6 hours
     enabled: true
     timeout: 600
+
+  auto_merge:
+    script: scripts/automation/auto_merge_and_deploy.py
+    schedule: "0 8 * * *"  # 8am daily (after harvester 6am + classifier 6:30am + auditor 7am)
+    enabled: true
+    timeout: 300

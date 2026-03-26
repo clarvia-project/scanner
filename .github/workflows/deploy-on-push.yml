@@ -1,0 +1,58 @@
+# Continuous deploy: trigger Render deploy after tests pass on main.
+#
+# Complements auto-deploy.yml (tag-based releases) with push-based deploys
+# so that auto-merge catalog commits flow to production automatically.
+
+name: Deploy on Push
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt && pip install pytest pytest-asyncio httpx
+
+      - name: Run backend tests
+        working-directory: backend
+        env:
+          SCANNER_SUPABASE_URL: ""
+          SCANNER_SUPABASE_ANON_KEY: ""
+          SCANNER_STRIPE_SECRET_KEY: ""
+        run: pytest tests/ -v -x -k "not test_scan_valid_url"
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            echo "Triggering Render deploy hook..."
+            HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" "$RENDER_DEPLOY_HOOK")
+            echo "Render responded with HTTP $HTTP_CODE"
+          else
+            echo "RENDER_DEPLOY_HOOK secret not set — skipping deploy"
+            echo "Render auto-deploy on push should handle this"
+          fi
