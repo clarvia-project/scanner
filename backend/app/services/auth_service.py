@@ -30,6 +30,7 @@ PLAN_LIMITS = {
     "free": {"rate_limit": 10, "scans_per_month": 3},
     "starter": {"rate_limit": 30, "scans_per_month": 10},
     "pro": {"rate_limit": 100, "scans_per_month": -1},  # unlimited
+    "enterprise": {"rate_limit": 999999, "scans_per_month": -1},  # unlimited
     "team": {"rate_limit": 500, "scans_per_month": -1},
 }
 
