@@ -480,6 +480,152 @@ def category_stats(data_path: Path | None = None) -> dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Validation fixtures — 50 known tools with expected categories
+# ---------------------------------------------------------------------------
+
+VALIDATION_FIXTURES: list[dict[str, str]] = [
+    # coding (5)
+    {"name": "GitHub Copilot", "description": "AI pair programmer that helps you write code", "expected": "coding"},
+    {"name": "ESLint", "description": "Static analysis tool for JavaScript", "expected": "coding"},
+    {"name": "Prettier", "description": "An opinionated code formatter", "expected": "coding"},
+    {"name": "Ruff", "description": "An extremely fast Python linter, written in Rust", "expected": "coding"},
+    {"name": "Tabnine", "description": "AI code completion for all programming languages", "expected": "coding"},
+    # data (5)
+    {"name": "PostgreSQL MCP", "description": "MCP server for PostgreSQL database queries", "expected": "data"},
+    {"name": "Supabase", "description": "Open source Firebase alternative with Postgres", "expected": "data"},
+    {"name": "Pinecone", "description": "Vector database for machine learning applications", "expected": "data"},
+    {"name": "Snowflake", "description": "Cloud data warehouse platform", "expected": "data"},
+    {"name": "DuckDB", "description": "In-process analytical SQL database", "expected": "data"},
+    # communication (5)
+    {"name": "Slack Bot", "description": "Slack integration for messaging and notifications", "expected": "communication"},
+    {"name": "Discord Tool", "description": "Discord bot framework for agent communication", "expected": "communication"},
+    {"name": "SendGrid", "description": "Email delivery service for transactional emails", "expected": "communication"},
+    {"name": "Twilio", "description": "Cloud communication APIs for voice and SMS", "expected": "communication"},
+    {"name": "Telegram Bot API", "description": "Telegram messaging bot integration", "expected": "communication"},
+    # productivity (5)
+    {"name": "Notion API", "description": "API for Notion workspace and project management", "expected": "productivity"},
+    {"name": "Linear Tool", "description": "Linear issue tracking and project management", "expected": "productivity"},
+    {"name": "Todoist", "description": "Task management and to-do list application", "expected": "productivity"},
+    {"name": "Airtable", "description": "Spreadsheet-database hybrid for collaboration", "expected": "productivity"},
+    {"name": "Zapier", "description": "Workflow automation connecting web applications", "expected": "productivity"},
+    # search (5)
+    {"name": "Brave Search API", "description": "Web search API using Brave search engine", "expected": "search"},
+    {"name": "Tavily", "description": "Search API optimized for AI agents and LLMs", "expected": "search"},
+    {"name": "Algolia", "description": "Search and discovery API platform", "expected": "search"},
+    {"name": "Puppeteer", "description": "Headless Chrome browser automation for scraping", "expected": "search"},
+    {"name": "Exa Search", "description": "Neural search engine for AI applications", "expected": "search"},
+    # security (4)
+    {"name": "Auth0", "description": "Authentication and authorization platform", "expected": "security"},
+    {"name": "Clerk", "description": "User authentication and management", "expected": "security"},
+    {"name": "Vault", "description": "Secret management and encryption service", "expected": "security"},
+    {"name": "Snyk", "description": "Developer security platform for vulnerability scanning", "expected": "security"},
+    # devops (4)
+    {"name": "Docker MCP", "description": "MCP server for Docker container management", "expected": "devops"},
+    {"name": "Terraform", "description": "Infrastructure as code tool by HashiCorp", "expected": "devops"},
+    {"name": "Kubernetes Tool", "description": "Kubernetes cluster management and orchestration", "expected": "devops"},
+    {"name": "Datadog", "description": "Cloud monitoring and observability platform", "expected": "devops"},
+    # ai-ml (5)
+    {"name": "OpenAI API", "description": "API for GPT models and AI completions", "expected": "ai-ml"},
+    {"name": "Anthropic Claude", "description": "Claude AI model API for conversations", "expected": "ai-ml"},
+    {"name": "LangChain", "description": "Framework for building LLM-powered applications", "expected": "ai-ml"},
+    {"name": "Hugging Face", "description": "Machine learning model hub and inference API", "expected": "ai-ml"},
+    {"name": "Whisper", "description": "OpenAI speech recognition and transcription", "expected": "ai-ml"},
+    # finance (3)
+    {"name": "Stripe API", "description": "Payment processing platform for online transactions", "expected": "finance"},
+    {"name": "Plaid", "description": "Banking data aggregation and financial services API", "expected": "finance"},
+    {"name": "QuickBooks", "description": "Accounting and bookkeeping software", "expected": "finance"},
+    # blockchain (3)
+    {"name": "Alchemy", "description": "Blockchain development platform for Ethereum", "expected": "blockchain"},
+    {"name": "Helius", "description": "Solana RPC and blockchain data infrastructure", "expected": "blockchain"},
+    {"name": "Uniswap SDK", "description": "DEX protocol for token swaps on Ethereum", "expected": "blockchain"},
+    # design (3)
+    {"name": "Figma API", "description": "Figma design tool API for programmatic access", "expected": "design"},
+    {"name": "Cloudinary", "description": "Image and video management cloud service", "expected": "design"},
+    {"name": "Sharp", "description": "High-performance image processing library", "expected": "design"},
+    # cms (3)
+    {"name": "Contentful", "description": "Headless CMS for content management", "expected": "cms"},
+    {"name": "Sanity", "description": "Content platform with real-time collaboration", "expected": "cms"},
+    {"name": "Strapi", "description": "Open source headless CMS for Node.js", "expected": "cms"},
+]
+
+
+def validate_classifier() -> dict[str, Any]:
+    """Run validation against the fixture set and compute precision/recall.
+
+    Returns per-category precision, recall, F1, and overall accuracy.
+    """
+    total = len(VALIDATION_FIXTURES)
+    correct = 0
+    # Per-category tracking: true positives, false positives, false negatives
+    tp: Counter = Counter()
+    fp: Counter = Counter()
+    fn: Counter = Counter()
+    misclassifications: list[dict] = []
+
+    for fixture in VALIDATION_FIXTURES:
+        predicted = classify_tool(fixture["name"], fixture["description"])
+        expected = fixture["expected"]
+
+        if predicted == expected:
+            correct += 1
+            tp[expected] += 1
+        else:
+            fp[predicted] += 1
+            fn[expected] += 1
+            misclassifications.append({
+                "name": fixture["name"],
+                "expected": expected,
+                "predicted": predicted,
+            })
+
+    # Compute per-category metrics
+    all_categories = set()
+    for f in VALIDATION_FIXTURES:
+        all_categories.add(f["expected"])
+
+    per_category: dict[str, dict[str, float]] = {}
+    for cat in sorted(all_categories):
+        p = tp[cat] / (tp[cat] + fp[cat]) if (tp[cat] + fp[cat]) > 0 else 0.0
+        r = tp[cat] / (tp[cat] + fn[cat]) if (tp[cat] + fn[cat]) > 0 else 0.0
+        f1 = 2 * p * r / (p + r) if (p + r) > 0 else 0.0
+        per_category[cat] = {
+            "precision": round(p, 3),
+            "recall": round(r, 3),
+            "f1": round(f1, 3),
+            "support": tp[cat] + fn[cat],
+        }
+
+    accuracy = correct / total if total > 0 else 0.0
+
+    result = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "total_fixtures": total,
+        "correct": correct,
+        "accuracy": round(accuracy, 3),
+        "per_category": per_category,
+        "misclassifications": misclassifications,
+    }
+
+    # Save validation results
+    classifier_dir = DATA_DIR / "classifier"
+    classifier_dir.mkdir(parents=True, exist_ok=True)
+    date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    output_path = classifier_dir / f"validation-{date_str}.json"
+    with open(output_path, "w") as f:
+        json.dump(result, f, indent=2)
+
+    logger.info("Validation: %d/%d correct (%.1f%% accuracy)", correct, total, accuracy * 100)
+    logger.info("Saved to %s", output_path)
+
+    if misclassifications:
+        logger.info("Misclassifications:")
+        for m in misclassifications:
+            logger.info("  %s: expected=%s, got=%s", m["name"], m["expected"], m["predicted"])
+
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description="Clarvia Auto-Classification Engine")
     parser.add_argument(
@@ -492,9 +638,17 @@ def main():
         action="store_true",
         help="Show category distribution statistics",
     )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Run classifier validation against 50 known tool fixtures",
+    )
     args = parser.parse_args()
 
-    if args.stats:
+    if args.validate:
+        result = validate_classifier()
+        print(json.dumps(result, indent=2))
+    elif args.stats:
         result = category_stats()
         print(json.dumps(result, indent=2))
     elif args.reclassify:

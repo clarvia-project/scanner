@@ -1,0 +1,139 @@
+{
+  "generated_at": "2026-03-26T07:16:01.708882+00:00",
+  "total": 10,
+  "categories": 5,
+  "tools": [
+    {
+      "name": "Replicate",
+      "url": "https://replicate.com",
+      "category": "ai-ml",
+      "clarvia_score": 80,
+      "curation_score": 60.0,
+      "reason": "Strong AEO score (80); Recently updated",
+      "rating": "Strong",
+      "scan_id": "scn_bd5feadb71b9",
+      "description": ""
+    },
+    {
+      "name": "Helius",
+      "url": "https://helius.dev",
+      "category": "blockchain",
+      "clarvia_score": 72,
+      "curation_score": 56.8,
+      "reason": "Good AEO score (72); Recently updated",
+      "rating": "Moderate",
+      "scan_id": "scn_09874b12cc1d",
+      "description": ""
+    },
+    {
+      "name": "Assemblyai",
+      "url": "https://assemblyai.com",
+      "category": "ai-ml",
+      "clarvia_score": 71,
+      "curation_score": 56.4,
+      "reason": "Good AEO score (71); Recently updated",
+      "rating": "Moderate",
+      "scan_id": "scn_780acf322f17",
+      "description": ""
+    },
+    {
+      "name": "Novu",
+      "url": "https://novu.co",
+      "category": "communication",
+      "clarvia_score": 70,
+      "curation_score": 56.0,
+      "reason": "Good AEO score (70); Recently updated",
+      "rating": "Moderate",
+      "scan_id": "scn_cc82ee7ad45d",
+      "description": ""
+    },
+    {
+      "name": "Mongodb",
+      "url": "https://mongodb.com",
+      "category": "data",
+      "clarvia_score": 62,
+      "curation_score": 52.8,
+      "reason": "Good AEO score (62); Recently updated",
+      "rating": "Moderate",
+      "scan_id": "scn_c16028f6b6e3",
+      "description": ""
+    },
+    {
+      "name": "Netlify",
+      "url": "https://netlify.com",
+      "category": "devops",
+      "clarvia_score": 62,
+      "curation_score": 52.8,
+      "reason": "Good AEO score (62); Recently updated",
+      "rating": "Moderate",
+      "scan_id": "scn_67ae2762d339",
+      "description": ""
+    },
+    {
+      "name": "Resend",
+      "url": "https://resend.com",
+      "category": "communication",
+      "clarvia_score": 62,
+      "curation_score": 52.8,
+      "reason": "Good AEO score (62); Recently updated",
+      "rating": "Moderate",
+      "scan_id": "scn_613f4410d129",
+      "description": ""
+    },
+    {
+      "name": "Qdrant",
+      "url": "https://qdrant.tech",
+      "category": "data",
+      "clarvia_score": 61,
+      "curation_score": 52.4,
+      "reason": "Good AEO score (61); Recently updated",
+      "rating": "Moderate",
+      "scan_id": "scn_c71baa3f9697",
+      "description": ""
+    },
+    {
+      "name": "Axiom",
+      "url": "https://axiom.co",
+      "category": "devops",
+      "clarvia_score": 61,
+      "curation_score": 52.4,
+      "reason": "Good AEO score (61); Recently updated",
+      "rating": "Moderate",
+      "scan_id": "scn_c4cc783ac1f2",
+      "description": ""
+    },
+    {
+      "name": "Infura",
+      "url": "https://infura.io",
+      "category": "blockchain",
+      "clarvia_score": 52,
+      "curation_score": 48.8,
+      "reason": "Recently updated",
+      "rating": "Basic",
+      "scan_id": "scn_b5d2d371d4b8",
+      "description": ""
+    }
+  ],
+  "by_category": {
+    "ai-ml": [
+      "Replicate",
+      "Assemblyai"
+    ],
+    "data": [
+      "Mongodb",
+      "Qdrant"
+    ],
+    "devops": [
+      "Netlify",
+      "Axiom"
+    ],
+    "blockchain": [
+      "Helius",
+      "Infura"
+    ],
+    "communication": [
+      "Novu",
+      "Resend"
+    ]
+  }
+}

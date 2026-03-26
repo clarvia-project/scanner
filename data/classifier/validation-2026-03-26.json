@@ -1,0 +1,107 @@
+{
+  "timestamp": "2026-03-26T07:15:55.385700+00:00",
+  "total_fixtures": 50,
+  "correct": 45,
+  "accuracy": 0.9,
+  "per_category": {
+    "ai-ml": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 5
+    },
+    "blockchain": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 3
+    },
+    "cms": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 3
+    },
+    "coding": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 5
+    },
+    "communication": {
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.889,
+      "support": 5
+    },
+    "data": {
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.889,
+      "support": 5
+    },
+    "design": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 3
+    },
+    "devops": {
+      "precision": 0.75,
+      "recall": 0.75,
+      "f1": 0.75,
+      "support": 4
+    },
+    "finance": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 3
+    },
+    "productivity": {
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.889,
+      "support": 5
+    },
+    "search": {
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.889,
+      "support": 5
+    },
+    "security": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 4
+    }
+  },
+  "misclassifications": [
+    {
+      "name": "Supabase",
+      "expected": "data",
+      "predicted": "devops"
+    },
+    {
+      "name": "Telegram Bot API",
+      "expected": "communication",
+      "predicted": "automation"
+    },
+    {
+      "name": "Zapier",
+      "expected": "productivity",
+      "predicted": "automation"
+    },
+    {
+      "name": "Puppeteer",
+      "expected": "search",
+      "predicted": "testing"
+    },
+    {
+      "name": "Datadog",
+      "expected": "devops",
+      "predicted": "monitoring"
+    }
+  ]
+}

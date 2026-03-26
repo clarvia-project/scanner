@@ -240,6 +240,87 @@ async def feed_stats():
     }
 
 
+@router.get("/top50")
+async def feed_top50():
+    """Curated Top 50 AI agent tools, selected by composite score.
+
+    Cached for 24 hours. Returns the best tools per category with
+    curation score and selection reason.
+    """
+    import time
+
+    # Simple in-memory cache (24h TTL)
+    cache_attr = "_top50_cache"
+    cache_ts_attr = "_top50_cache_ts"
+    now = time.time()
+    cached = getattr(feed_top50, cache_attr, None)
+    cached_ts = getattr(feed_top50, cache_ts_attr, 0)
+
+    if cached and (now - cached_ts) < 86400:
+        return cached
+
+    # Load curated data from file
+    candidates = [Path("/app/data")]
+    base = Path(__file__).resolve()
+    for i in range(2, 6):
+        try:
+            candidates.append(base.parents[i] / "data")
+        except IndexError:
+            break
+
+    curated_data = None
+    for p in candidates:
+        curated_path = p / "curated" / "top50.json"
+        if curated_path.exists():
+            try:
+                with open(curated_path) as f:
+                    curated_data = json.load(f)
+                break
+            except Exception as exc:
+                logger.warning("Failed to load top50.json from %s: %s", curated_path, exc)
+
+    if not curated_data or not curated_data.get("tools"):
+        return {
+            "total": 0,
+            "tools": [],
+            "message": "Curation data not yet generated. Run: python scripts/automation/curator.py",
+            "meta": {
+                "source": "clarvia.art",
+                "cache_ttl_hours": 24,
+            },
+        }
+
+    result = {
+        "total": curated_data.get("total", 0),
+        "categories": curated_data.get("categories", 0),
+        "generated_at": curated_data.get("generated_at", ""),
+        "tools": [
+            {
+                "name": t.get("name", ""),
+                "category": t.get("category", ""),
+                "clarvia_score": t.get("clarvia_score", 0),
+                "curation_score": t.get("curation_score", 0),
+                "reason": t.get("reason", ""),
+                "url": t.get("url", ""),
+                "rating": t.get("rating", ""),
+            }
+            for t in curated_data.get("tools", [])
+        ],
+        "meta": {
+            "source": "clarvia.art",
+            "api_version": "1.0",
+            "cache_ttl_hours": 24,
+            "docs": "https://clarvia.art/docs",
+        },
+    }
+
+    # Cache the result
+    setattr(feed_top50, cache_attr, result)
+    setattr(feed_top50, cache_ts_attr, now)
+
+    return result
+
+
 @router.get("/badge-data")
 async def feed_badge_data(
     url: str = Query(..., description="Service URL to get badge data for"),
