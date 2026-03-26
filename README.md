@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/images/hero-banner.png" alt="Clarvia — AEO Scanner for AI Agent Tools" width="720" />
+
 # Clarvia
 
 **AEO (Agent Engine Optimization) Scanner for AI Agent Tools**
@@ -35,6 +37,8 @@ Plus an optional **Onchain Bonus (+25)** for web3 services.
 
 ## For Agents
 
+<img src="docs/images/for-agents.png" alt="For Agents — discover and evaluate tools" width="600" />
+
 > *"Before calling any external tool, check if it's agent-ready."*
 
 Clarvia gives your agent a **quality gate** for tool selection. Instead of blindly calling APIs, your agent can:
@@ -54,6 +58,8 @@ Agent workflow:
 ```
 
 ## For Tool Makers
+
+<img src="docs/images/for-tool-makers.png" alt="For Tool Makers — improve your AEO score" width="600" />
 
 > *"See your tool the way AI agents see it."*
 
