@@ -78,6 +78,7 @@ from .routes.cs_routes import router as cs_router
 from .routes.feed_routes import router as feed_router
 from .routes.trending_routes import router as trending_router
 from .routes.webhook_routes import router as webhook_router
+from .routes.submission_routes import router as submission_router
 from .scanner import cleanup_cache, get_cached_scan, run_scan
 
 logger = logging.getLogger(__name__)
@@ -178,6 +179,7 @@ app = FastAPI(
         {"name": "marketing", "description": "Marketing assets and embeds"},
         {"name": "webhooks", "description": "Webhook registration for event notifications"},
         {"name": "keys", "description": "API key self-service management"},
+        {"name": "submissions", "description": "Tool submission and Clarvia badge system"},
         {"name": "admin", "description": "Admin-only operations (requires API key)"},
     ],
 )
@@ -279,6 +281,7 @@ app.include_router(setup_router)
 app.include_router(cs_router)
 app.include_router(feed_router)
 app.include_router(webhook_router)
+app.include_router(submission_router)
 
 # MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
 try:
