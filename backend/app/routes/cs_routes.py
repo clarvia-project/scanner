@@ -266,6 +266,21 @@ async def update_ticket(ticket_id: str, req: UpdateTicketRequest, _key: ApiKeyDe
 
     ticket["updated_at"] = datetime.now(timezone.utc).isoformat()
     _save_ticket(ticket_id, ticket)
+
+    # Fire ticket_status_change webhook if status changed
+    if req.status:
+        try:
+            import asyncio
+            from .webhook_routes import fire_webhooks
+            asyncio.create_task(fire_webhooks("ticket_status_change", {
+                "ticket_id": ticket_id,
+                "new_status": req.status,
+                "title": ticket["title"],
+                "type": ticket["type"],
+            }))
+        except Exception:
+            pass  # Webhook delivery is best-effort
+
     return {"status": "updated", "ticket": ticket}
 
 
