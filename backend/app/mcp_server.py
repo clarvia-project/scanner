@@ -1,8 +1,7 @@
 """Clarvia MCP server — Streamable HTTP transport.
 
-Registers the same 11 tools as the Node.js stdio MCP server, but calls
-the Clarvia REST API internally (same process) instead of making HTTP
-round-trips.
+Registers tools for the Clarvia AEO scanner, calling the Clarvia REST API
+internally (same process) instead of making HTTP round-trips.
 
 Mount into the FastAPI app with:
     from .mcp_server import mcp_app
@@ -11,6 +10,7 @@ Mount into the FastAPI app with:
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
@@ -29,8 +29,12 @@ mcp = FastMCP(
     "clarvia",
     instructions=(
         "Clarvia is an AEO (AI Engine Optimization) scanner and directory "
-        "for 15,400+ AI agent tools. Use these tools to search, evaluate, "
-        "and validate services for AI agent compatibility."
+        "for 15,400+ AI agent tools with 21+ tools. Use these tools to search, "
+        "evaluate, and validate services for AI agent compatibility. Features: "
+        "search & filter, gate checks, batch audits, security signals, "
+        "stakeholder reports, trending tools, featured picks, search demand "
+        "intelligence, category rankings, agent feedback, tool similarity, "
+        "embeddable widgets, and rescan capability for tool authors."
     ),
     stateless_http=True,
     streamable_http_path="/",
@@ -104,6 +108,8 @@ async def search_services(
     Use when you need to find the best tool for a specific task, compare
     alternatives, or check agent readiness. Returns Clarvia AEO scores (0-100)
     indicating how easily AI agents can discover and use each service.
+
+    Results include: pricing, difficulty, capabilities, code_snippet, popularity, and rank.
     """
     data = await _api_request(
         "/v1/services",
@@ -115,7 +121,6 @@ async def search_services(
             "limit": limit,
         },
     )
-    import json
     return json.dumps(data, indent=2)
 
 
@@ -127,7 +132,6 @@ async def scan_service(url: str) -> str:
     readiness. Returns a Clarvia score (0-100) with detailed breakdown.
     """
     data = await _api_request("/api/scan", method="POST", json_body={"url": url})
-    import json
     return json.dumps(data, indent=2)
 
 
@@ -141,7 +145,6 @@ async def get_service_details(scan_id: str) -> str:
     scan_service results.
     """
     data = await _api_request(f"/v1/services/{scan_id}")
-    import json
     return json.dumps(data, indent=2)
 
 
@@ -149,7 +152,6 @@ async def get_service_details(scan_id: str) -> str:
 async def list_categories() -> str:
     """List all tool categories in the Clarvia directory with service counts."""
     data = await _api_request("/v1/categories")
-    import json
     return json.dumps(data, indent=2)
 
 
@@ -157,7 +159,6 @@ async def list_categories() -> str:
 async def get_stats() -> str:
     """Get aggregate statistics — total indexed services, average AEO score, score distribution, and category breakdown."""
     data = await _api_request("/v1/stats")
-    import json
     return json.dumps(data, indent=2)
 
 
@@ -182,7 +183,6 @@ async def register_service(
     if github_url:
         body["github_url"] = github_url
     data = await _api_request("/v1/profiles", method="POST", json_body=body)
-    import json
     return json.dumps(data, indent=2)
 
 
@@ -231,26 +231,38 @@ async def clarvia_gate_check(
 
 
 @mcp.tool()
-async def clarvia_batch_check(urls: list[str]) -> str:
-    """Batch-check up to 10 service URLs — returns pass/fail and agent grade for each.
+async def clarvia_batch_check(urls: list[str], similar_to: str | None = None) -> str:
+    """Batch-check up to 100 service URLs — returns pass/fail and agent grade for each.
 
-    More efficient than calling gate_check repeatedly.
+    More efficient than calling gate_check repeatedly. Optionally pass similar_to
+    (a scan_id) to also find alternatives in the same category.
+
+    Also available: clarvia_audit (package list check), clarvia_featured (picks),
+    clarvia_demand (search intelligence), clarvia_security (security signals),
+    clarvia_team_check (team compliance).
     """
-    import json
     from datetime import datetime, timezone
 
     results = []
-    for u in urls[:10]:
+    for u in urls[:100]:
         try:
             r = json.loads(await clarvia_gate_check(u))
             results.append(r)
         except Exception as e:
             results.append({"url": u, "error": str(e)})
 
-    return json.dumps(
-        {"results": results, "checked_at": datetime.now(timezone.utc).isoformat()},
-        indent=2,
-    )
+    output: dict = {"results": results, "checked_at": datetime.now(timezone.utc).isoformat()}
+
+    if similar_to:
+        try:
+            alt_data = await _api_request(
+                "/v1/services", params={"similar_to": similar_to, "limit": 5, "source": "all"}
+            )
+            output["similar_alternatives"] = alt_data
+        except Exception:
+            pass
+
+    return json.dumps(output, indent=2)
 
 
 @mcp.tool()
@@ -258,13 +270,19 @@ async def clarvia_find_alternatives(
     category: str,
     min_score: float = 70,
     limit: int = 10,
+    similar_to: str | None = None,
 ) -> str:
-    """Find higher-rated alternative tools in a given category, ranked by agent-readiness score."""
+    """Find higher-rated alternative tools in a given category, ranked by agent-readiness score.
+
+    Optionally pass a scan_id via similar_to to find tools similar to a specific tool.
+    """
+    params: dict[str, Any] = {"category": category, "min_score": min_score, "limit": limit}
+    if similar_to:
+        params["similar_to"] = similar_to
     data = await _api_request(
         "/v1/services",
-        params={"category": category, "min_score": min_score, "limit": limit},
+        params=params,
     )
-    import json
     return json.dumps(data, indent=2)
 
 
@@ -277,7 +295,6 @@ async def clarvia_probe(url: str) -> str:
     data = await _api_request(
         "/api/v1/accessibility-probe", method="POST", json_body={"url": url}
     )
-    import json
     return json.dumps(data, indent=2)
 
 
@@ -302,7 +319,110 @@ async def clarvia_submit_feedback(
     if latency_ms is not None:
         body["latency_ms"] = latency_ms
     data = await _api_request("/v1/feedback", method="POST", json_body=body)
-    import json
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_rescan(profile_id: str) -> str:
+    """Trigger a rescan for a registered tool. Tool authors can use this to update their score after improvements."""
+    data = await _api_request(f"/v1/profiles/{profile_id}/rescan", method="POST")
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_get_rank(profile_id: str) -> str:
+    """Get a tool's rank within its category and overall. Useful for tool authors to understand their position."""
+    data = await _api_request(f"/v1/profiles/{profile_id}/rank")
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_get_feedback(profile_id: str) -> str:
+    """Get aggregated feedback from agents who used a tool. Helps tool authors understand real-world performance."""
+    data = await _api_request(f"/v1/profiles/{profile_id}/feedback")
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_trending(limit: int = 20) -> str:
+    """Get trending tools — top performers, rising stars, and category leaders."""
+    data = await _api_request("/v1/trending", params={"limit": limit})
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_similar(scan_id: str, limit: int = 5) -> str:
+    """Find tools similar to a given tool. Input a scan_id, get alternatives in the same category."""
+    data = await _api_request(f"/v1/similar/{scan_id}", params={"limit": limit})
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_audit(packages: list[str]) -> str:
+    """Audit a list of package names for agent compatibility.
+    Send package names from package.json or requirements.txt.
+    Returns scores and ratings for each found package."""
+    data = await _api_request(
+        "/v1/audit",
+        method="POST",
+        json_body={"packages": packages[:100]},
+    )
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_featured() -> str:
+    """Get featured tools — tool of the week, top 10, and category picks."""
+    data = await _api_request("/v1/featured")
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_demand(days: int = 7) -> str:
+    """Get search demand intelligence — what agents are looking for.
+    Shows top queries, zero-result queries (unmet demand), and category demand."""
+    data = await _api_request("/v1/demand", params={"days": days})
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_security(scan_id: str) -> str:
+    """Get security-relevant information for a tool.
+    Returns HTTPS status, license, auth quality, and security signals.
+    NOTE: Surface-level analysis — not a replacement for security audits."""
+    data = await _api_request(f"/v1/security/{scan_id}")
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_team_check(team_id: str, scan_id: str) -> str:
+    """Check if a tool is approved, blocked, or unreviewed for a team.
+    Teams can maintain approved/blocked lists for compliance."""
+    data = await _api_request(f"/v1/teams/{team_id}/check/{scan_id}")
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_enrich(scan_id: str) -> str:
+    """Enrich a tool with live external data from npm, GitHub, and OSV.dev.
+    Returns real download counts, stars, forks, CVE/vulnerability info, license, and more.
+    All free APIs — no keys needed."""
+    data = await _api_request(f"/v1/enrich/{scan_id}")
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_compliance(scan_id: str) -> str:
+    """Generate a compliance checklist for a tool — SOC2, GDPR, and security hygiene signals.
+    Uses live data from GitHub and OSV.dev to check HTTPS, CVEs, maintenance status, licensing, and more."""
+    data = await _api_request(f"/v1/compliance/{scan_id}")
+    return json.dumps(data, indent=2)
+
+
+@mcp.tool()
+async def clarvia_report(scan_id: str) -> str:
+    """Generate a stakeholder-ready evaluation report with percentile and recommendation."""
+    data = await _api_request(f"/v1/report/{scan_id}")
     return json.dumps(data, indent=2)
 
 

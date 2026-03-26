@@ -47,7 +47,8 @@ class RecommendationEngine:
     def build_index(self, tools: list[dict[str, Any]]) -> None:
         """Build TF-IDF index from tool list.
 
-        Each tool should have: service_name, description, tags, category, service_type.
+        Each tool should have: service_name, description, tags, category, service_type,
+        capabilities, popularity.
         """
         if not tools:
             logger.warning("No tools to index")
@@ -56,7 +57,7 @@ class RecommendationEngine:
         self._tools = tools
         self._name_lower = [t.get("service_name", "").lower().strip() for t in tools]
 
-        # Build document corpus — name repeated for emphasis, plus desc/tags/category
+        # Build document corpus — name repeated for emphasis, plus desc/tags/category/capabilities
         documents = []
         for tool in tools:
             name = tool.get("service_name", "")
@@ -67,6 +68,8 @@ class RecommendationEngine:
                 " ".join(tool.get("tags", [])),
                 tool.get("category", ""),
                 tool.get("service_type", ""),
+                # Include capabilities for better matching
+                " ".join(c.replace("_", " ").replace(":", " ") for c in tool.get("capabilities", [])),
             ]
             tc = tool.get("type_config") or {}
             if tc.get("npm_package"):
@@ -133,6 +136,10 @@ class RecommendationEngine:
             w in intent_words for w in ("want", "need", "how", "to", "can", "should", "help")
         )
 
+        # Tokenize query for keyword hit counting
+        query_tokens = set(re.findall(r"[a-z0-9]{2,}", intent_lower))
+        query_tokens.update(t for t in expanded_terms if len(t) >= 2)
+
         candidates = []
         for idx, sim_score in enumerate(similarities):
             if sim_score < 0.005:
@@ -163,8 +170,24 @@ class RecommendationEngine:
             desc = tool.get("description", "")
             quality_mult = _NO_DESC_PENALTY if len(desc) < 20 else 1.0
 
+            # Count keyword hits across name + description + tags + capabilities
+            tool_text = f"{name_lower} {desc.lower()} {' '.join(tool.get('tags', []))} {' '.join(tool.get('capabilities', []))}".lower()
+            keyword_hits = sum(1 for token in query_tokens if token in tool_text)
+
+            popularity = tool.get("popularity", 0)
+
+            # TF-IDF relevance combined with keyword hits, clarvia score, and popularity
+            # relevance_score = keyword_hits * 10 + clarvia_score * 0.5 + popularity * 0.3
+            relevance_score = keyword_hits * 10 + tool["clarvia_score"] * 0.5 + popularity * 0.3
+
+            # Blend TF-IDF similarity with the new relevance score
             normalized_quality = (tool["clarvia_score"] / max_clarvia) * quality_mult
-            combined = (relevance_weight * sim_score) + (quality_weight * normalized_quality) + boost
+            combined = (
+                relevance_weight * sim_score
+                + quality_weight * normalized_quality
+                + boost
+                + (relevance_score / 200)  # normalize to ~0-1 range for blending
+            )
 
             match_reason = _build_match_reason(intent, tool, expanded_terms)
             install_hint = _build_install_hint(tool)
@@ -180,9 +203,18 @@ class RecommendationEngine:
                 "rating": tool["rating"],
                 "relevance_score": round(float(sim_score), 4),
                 "combined_score": round(float(combined), 4),
+                "match_score": {
+                    "keyword_hits": keyword_hits,
+                    "tfidf_similarity": round(float(sim_score), 4),
+                    "clarvia_component": round(tool["clarvia_score"] * 0.5, 1),
+                    "popularity_component": round(popularity * 0.3, 1),
+                    "raw_relevance": round(relevance_score, 1),
+                },
                 "match_reason": match_reason,
                 "install_hint": install_hint,
                 "tags": tool.get("tags", []),
+                "popularity": popularity,
+                "capabilities": tool.get("capabilities", [])[:5],
             })
 
         # Sort by combined score

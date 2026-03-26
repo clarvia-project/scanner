@@ -155,6 +155,9 @@ def _ensure_index_built() -> None:
                 "rating": t.get("rating", "Low"),
                 "tags": t.get("tags", []),
                 "type_config": t.get("type_config"),
+                "capabilities": t.get("capabilities", []),
+                "popularity": t.get("popularity", 0),
+                "cross_refs": t.get("cross_refs", {}),
             })
 
         engine.build_index(normalized)

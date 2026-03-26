@@ -36,6 +36,7 @@ _DIMENSION_LABELS = {
     "data_structuring": "Data Structuring",
     "agent_compatibility": "Agent Compatibility",
     "trust_signals": "Trust Signals",
+    "metadata_quality": "Metadata Quality",
 }
 
 

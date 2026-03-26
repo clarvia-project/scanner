@@ -543,6 +543,254 @@ async def scan_profile(profile_id: str, _key: ApiKeyDep):
         )
 
 
+# ---------------------------------------------------------------------------
+# Rescan rate limiter: 1 rescan per profile per hour
+# ---------------------------------------------------------------------------
+_rescan_timestamps: dict[str, float] = {}
+_RESCAN_COOLDOWN = 3600  # seconds
+
+
+@router.post("/profiles/{profile_id}/rescan")
+async def rescan_profile(profile_id: str):
+    """Trigger a rescan. No API key needed — open to tool authors."""
+    profile = _profiles.get(profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    # Rate limit: 1 rescan per profile per hour
+    now = time.time()
+    last_rescan = _rescan_timestamps.get(profile_id, 0)
+    if now - last_rescan < _RESCAN_COOLDOWN:
+        remaining = int(_RESCAN_COOLDOWN - (now - last_rescan))
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rescan rate limit: 1 per hour. Try again in {remaining}s.",
+        )
+
+    _rescan_timestamps[profile_id] = now
+    profile["status"] = "scanning"
+    _save_profiles()
+
+    try:
+        from ..scanner import run_scan
+        result = await run_scan(profile["url"])
+
+        profile["clarvia_score"] = result.clarvia_score
+        profile["status"] = "scanned"
+        profile["last_scanned_at"] = datetime.now(timezone.utc).isoformat()
+        profile["scan_result"] = {
+            "scan_id": result.scan_id,
+            "rating": result.rating,
+            "clarvia_score": result.clarvia_score,
+            "dimensions": {
+                k: {"score": v.score, "max": v.max}
+                for k, v in result.dimensions.items()
+            },
+            "top_recommendations": result.top_recommendations,
+            "scanned_at": result.scanned_at.isoformat(),
+        }
+        _save_profiles()
+
+        try:
+            from ..services.supabase_client import save_scan
+            await save_scan(result)
+        except Exception as e:
+            logger.warning("Failed to persist rescan to Supabase: %s", e)
+
+        return {
+            "profile_id": profile_id,
+            "clarvia_score": result.clarvia_score,
+            "rating": result.rating,
+            "status": "scanned",
+            "scan_id": result.scan_id,
+        }
+    except Exception as e:
+        logger.exception("Rescan failed for %s", profile["url"])
+        profile["status"] = "scan_failed"
+        _save_profiles()
+        raise HTTPException(
+            status_code=500,
+            detail="Rescan failed due to an internal error. Please try again later.",
+        )
+
+
+@router.get("/profiles/{profile_id}/rank")
+async def get_profile_rank(profile_id: str):
+    """Get this tool's rank within its category and overall."""
+    profile = _profiles.get(profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    score = profile.get("clarvia_score")
+    if score is None:
+        return {
+            "overall_rank": None,
+            "category_rank": None,
+            "category_total": 0,
+            "percentile": None,
+            "message": "Profile has not been scanned yet.",
+        }
+
+    # Get all scored services from index
+    from .index_routes import _services, _ensure_loaded
+    _ensure_loaded()
+
+    cat = profile.get("category", "other")
+    all_scores = sorted(
+        [s["clarvia_score"] for s in _services if s.get("clarvia_score") is not None],
+        reverse=True,
+    )
+    cat_scores = sorted(
+        [s["clarvia_score"] for s in _services
+         if s.get("clarvia_score") is not None and s.get("category") == cat],
+        reverse=True,
+    )
+
+    overall_rank = sum(1 for sc in all_scores if sc > score) + 1
+    category_rank = sum(1 for sc in cat_scores if sc > score) + 1
+    category_total = len(cat_scores)
+    percentile = round((1 - (overall_rank - 1) / max(len(all_scores), 1)) * 100, 1) if all_scores else None
+
+    return {
+        "overall_rank": overall_rank,
+        "category_rank": category_rank,
+        "category": cat,
+        "category_total": category_total,
+        "percentile": percentile,
+    }
+
+
+@router.get("/profiles/{profile_id}/feedback")
+async def get_profile_feedback(profile_id: str):
+    """Get aggregated feedback from agents who used this tool."""
+    profile = _profiles.get(profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    # Mock structure — to be populated by real feedback later
+    return {
+        "profile_id": profile_id,
+        "total_feedback": 0,
+        "success_rate": None,
+        "avg_latency_ms": None,
+        "recent": [],
+    }
+
+
+@router.post("/profiles/{profile_id}/claim")
+async def claim_profile(profile_id: str, request: Request):
+    """Claim ownership of a tool by verifying you control its GitHub repo.
+
+    Send {"github_username": "your-username"} and we'll check if the profile's
+    github_url belongs to that user/org. If matched, you get owner access.
+    """
+    profile = _profiles.get(profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    body = await request.json()
+    github_username = body.get("github_username", "").strip().lower()
+
+    if not github_username:
+        raise HTTPException(status_code=400, detail="github_username required")
+
+    # Check if profile has a GitHub URL
+    github_url = (profile.get("github_url") or "").lower()
+    if not github_url:
+        raise HTTPException(status_code=400, detail="This profile has no GitHub URL to verify against")
+
+    # Simple verification: check if the username appears in the GitHub URL
+    # e.g., github.com/username/repo or github.com/org/repo
+    if f"github.com/{github_username}/" in github_url or f"github.com/{github_username}" == github_url.rstrip("/"):
+        profile["claimed_by"] = github_username
+        profile["claimed_at"] = datetime.now(timezone.utc).isoformat()
+        profile["updated_at"] = datetime.now(timezone.utc).isoformat()
+        _save_profiles()
+        return {
+            "claimed": True,
+            "profile_id": profile_id,
+            "claimed_by": github_username,
+            "message": "Ownership verified. You can now rescan and manage this profile."
+        }
+
+    raise HTTPException(
+        status_code=403,
+        detail=f"GitHub username '{github_username}' does not match the profile's GitHub URL. "
+               f"The URL must contain github.com/{github_username}/..."
+    )
+
+
+@router.get("/profiles/{profile_id}/claim")
+async def get_claim_status(profile_id: str):
+    """Check if a profile has been claimed."""
+    profile = _profiles.get(profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    return {
+        "profile_id": profile_id,
+        "claimed": bool(profile.get("claimed_by")),
+        "claimed_by": profile.get("claimed_by"),
+        "claimed_at": profile.get("claimed_at"),
+    }
+
+
+@router.post("/profiles/{profile_id}/rate")
+async def rate_tool(profile_id: str, request: Request):
+    """Submit a community rating (1-5 stars) for a tool."""
+    profile = _profiles.get(profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    body = await request.json()
+    rating = body.get("rating", 0)
+    review = body.get("review", "")
+
+    if not (1 <= rating <= 5):
+        raise HTTPException(status_code=400, detail="Rating must be 1-5")
+
+    # Store rating
+    if "community_ratings" not in profile:
+        profile["community_ratings"] = []
+
+    profile["community_ratings"].append({
+        "rating": rating,
+        "review": review[:500],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+    # Compute average
+    ratings = [r["rating"] for r in profile["community_ratings"]]
+    avg = sum(ratings) / len(ratings)
+    profile["community_avg_rating"] = round(avg, 1)
+    profile["community_rating_count"] = len(ratings)
+    _save_profiles()
+
+    return {
+        "submitted": True,
+        "avg_rating": profile["community_avg_rating"],
+        "total_ratings": profile["community_rating_count"],
+    }
+
+
+@router.get("/profiles/{profile_id}/ratings")
+async def get_ratings(profile_id: str):
+    """Get community ratings for a tool."""
+    profile = _profiles.get(profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    ratings = profile.get("community_ratings", [])
+    avg = profile.get("community_avg_rating", 0)
+
+    return {
+        "profile_id": profile_id,
+        "avg_rating": avg,
+        "total_ratings": len(ratings),
+        "ratings": ratings[-20:],  # Last 20
+    }
+
+
 @router.get("/profiles/{profile_id}/badge")
 async def get_badge(profile_id: str):
     """Return an SVG badge showing the Clarvia Score."""

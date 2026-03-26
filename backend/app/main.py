@@ -79,6 +79,10 @@ from .routes.feed_routes import router as feed_router
 from .routes.trending_routes import router as trending_router
 from .routes.webhook_routes import router as webhook_router
 from .routes.submission_routes import router as submission_router
+from .routes.collection_routes import router as collection_router
+from .routes.history_routes import router as history_router
+from .routes.team_routes import router as team_router
+from .keepalive import keepalive_loop
 from .scanner import cleanup_cache, get_cached_scan, run_scan
 
 logger = logging.getLogger(__name__)
@@ -124,6 +128,9 @@ async def lifespan(app: FastAPI):
 
     # Start background cache cleanup
     _cache_cleanup_task = asyncio.create_task(_periodic_cache_cleanup())
+
+    # Start keep-alive ping to prevent Render cold starts
+    asyncio.create_task(keepalive_loop())
 
     # Start MCP session manager (required for Streamable HTTP transport)
     try:
@@ -282,6 +289,9 @@ app.include_router(cs_router)
 app.include_router(feed_router)
 app.include_router(webhook_router)
 app.include_router(submission_router)
+app.include_router(collection_router)
+app.include_router(history_router)
+app.include_router(team_router)
 
 # MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
 try:
