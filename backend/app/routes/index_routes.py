@@ -19,28 +19,74 @@ _CATEGORY_MAP: dict[str, list[str]] = {
     "ai": [
         "openai", "anthropic", "google ai", "mistral", "cohere",
         "replicate", "hugging face", "together", "groq", "perplexity",
+        "assemblyai", "assembly ai", "cerebras", "deepgram", "elevenlabs",
+        "eleven labs", "stability", "stable diffusion", "midjourney",
+        "runway", "jasper", "writesonic", "copy.ai", "claude",
+        "gemini", "llama", "meta ai", "ai21", "anyscale", "fireworks",
+        "deepseek", "zhipu", "baichuan", "moonshot", "minimax",
+        "suno", "udio", "ideogram", "flux", "leonardo",
+        "pinecone", "weaviate", "qdrant", "chroma", "milvus",
+        "langchain", "llamaindex", "crewai", "autogen",
     ],
     "developer_tools": [
         "github", "gitlab", "vercel", "netlify", "supabase",
         "firebase", "aws", "cloudflare", "railway", "render",
+        "heroku", "digital ocean", "digitalocean", "linode", "fly.io",
+        "docker", "kubernetes", "terraform", "pulumi",
+        "sentry", "datadog", "newrelic", "new relic", "grafana",
+        "postman", "insomnia", "swagger", "redoc",
+        "circleci", "travis", "jenkins", "buildkite",
+        "npm", "yarn", "pip", "cargo", "maven",
+        "neon", "planetscale", "turso", "upstash", "redis",
+        "mongodb", "postgres", "mysql", "cockroach",
+        "auth0", "clerk", "workos", "stytch", "okta",
     ],
     "payments": [
-        "stripe", "paypal", "squareup", "plaid", "coinbase", "circle",
+        "stripe", "paypal", "squareup", "square", "plaid", "coinbase", "circle",
+        "adyen", "braintree", "mollie", "razorpay", "paddle", "lemonsqueezy",
+        "lemon squeezy", "wise", "revolut", "mercadopago",
     ],
     "communication": [
         "slack", "discord", "twilio", "sendgrid", "resend",
+        "mailgun", "postmark", "mailchimp", "intercom", "zendesk",
+        "freshdesk", "crisp", "tawk", "drift", "hubspot",
+        "telegram", "whatsapp", "signal", "zoom", "teams",
     ],
     "data": [
         "snowflake", "databricks", "mixpanel", "amplitude", "segment",
+        "bigquery", "redshift", "looker", "metabase", "superset",
+        "fivetran", "airbyte", "stitch", "census", "hightouch",
+        "dbt", "dagster", "prefect", "airflow", "spark",
     ],
     "productivity": [
         "notion", "linear", "atlassian", "asana", "figma", "canva",
+        "airtable", "coda", "clickup", "monday", "trello",
+        "miro", "loom", "calendly", "zapier", "make",
+        "n8n", "ifttt", "retool", "appsmith", "budibase",
     ],
     "blockchain": [
         "solana", "ethereum", "helius", "alchemy", "moralis", "dune",
+        "infura", "quicknode", "chainlink", "thirdweb", "hardhat",
+        "foundry", "wagmi", "viem", "ethers", "web3",
+        "polygon", "arbitrum", "optimism", "avalanche", "near",
+        "cosmos", "polkadot", "sui", "aptos", "ton",
+        "opensea", "rarible", "magic eden", "jupiter", "raydium",
     ],
     "mcp": [
         "mcp", "smithery", "glama",
+    ],
+    "search": [
+        "algolia", "elasticsearch", "elastic", "typesense", "meilisearch",
+        "google search", "bing", "serper", "serpapi", "tavily",
+        "exa", "brave search",
+    ],
+    "storage": [
+        "s3", "gcs", "azure blob", "backblaze", "wasabi",
+        "cloudinary", "imgix", "uploadthing", "uploadcare",
+    ],
+    "cms": [
+        "contentful", "sanity", "strapi", "ghost", "wordpress",
+        "prismic", "storyblok", "hygraph", "payload",
     ],
 }
 
@@ -393,7 +439,7 @@ async def list_services(
     total = len(filtered)
     page = filtered[offset : offset + limit]
 
-    return {
+    result: dict[str, Any] = {
         "total": total,
         "services": [_compact_service(s) for s in page],
         "pagination": {
@@ -402,6 +448,10 @@ async def list_services(
             "has_more": (offset + limit) < total,
         },
     }
+    # Hint for empty/missing query
+    if not q and not category and not service_type and min_score == 0:
+        result["_hint"] = "No filters applied — showing all services. Try ?q=email or ?category=ai for filtered results."
+    return result
 
 
 # Aliases for discoverability — agents try /search, /score, /leaderboard

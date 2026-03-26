@@ -333,6 +333,18 @@ async def scan_url(req: ScanRequest):
     if not req.url or not req.url.strip():
         raise HTTPException(status_code=400, detail="URL is required")
 
+    # Validate URL scheme before any processing
+    from .services.security import is_url_safe
+    url_clean = req.url.strip()
+    if not url_clean.startswith(("http://", "https://")):
+        if url_clean.startswith(("javascript:", "data:", "file:", "ftp:")):
+            raise HTTPException(status_code=422, detail=f"Blocked URL scheme: {url_clean.split(':')[0]}")
+        url_clean = "https://" + url_clean
+    safe, reason = is_url_safe(url_clean)
+    if not safe:
+        raise HTTPException(status_code=422, detail=reason)
+    req.url = url_clean
+
     try:
         result = await run_scan(req.url, auth_headers=req.auth_headers)
 
