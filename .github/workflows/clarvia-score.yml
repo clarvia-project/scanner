@@ -1,0 +1,143 @@
+name: Clarvia AEO Score Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "Comma-separated URLs to scan"
+        required: true
+        type: string
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Collect URLs to scan
+        id: urls
+        run: |
+          URLS=""
+
+          # 1. Manual dispatch URLs
+          if [ -n "${{ github.event.inputs.urls }}" ]; then
+            URLS=$(echo "${{ github.event.inputs.urls }}" | tr ',' '\n')
+          fi
+
+          # 2. PR: detect URL changes in code files
+          if [ -z "$URLS" ] && [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Check data files for URL changes
+            DATA_URLS=$(git diff origin/${{ github.base_ref }}..HEAD -- '*.json' '*.yaml' '*.yml' '*.toml' '*.env*' \
+              | grep -oP 'https?://[a-zA-Z0-9._/-]+' \
+              | grep -v 'github.com\|localhost\|127.0.0.1\|example.com' \
+              | sort -u || true)
+
+            # Check for new API base URLs in code
+            CODE_URLS=$(git diff origin/${{ github.base_ref }}..HEAD -- '*.py' '*.ts' '*.js' \
+              | grep -oP '(BASE_URL|API_URL|ENDPOINT)\s*=\s*["\x27]https?://[^"\x27]+' \
+              | grep -oP 'https?://[^"\x27]+' \
+              | sort -u || true)
+
+            URLS="${DATA_URLS}
+            ${CODE_URLS}"
+            URLS=$(echo "$URLS" | grep -v '^$' | sort -u)
+          fi
+
+          if [ -z "$URLS" ]; then
+            echo "No URLs to scan."
+            echo "has_urls=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_urls=true" >> $GITHUB_OUTPUT
+            echo "$URLS" > /tmp/urls.txt
+            echo "Found $(wc -l < /tmp/urls.txt) URLs to scan"
+          fi
+
+      - name: Scan URLs via Clarvia API
+        if: steps.urls.outputs.has_urls == 'true'
+        id: scan
+        run: |
+          RESULTS=""
+          PASS=0
+          FAIL=0
+
+          while IFS= read -r url; do
+            [ -z "$url" ] && continue
+            echo "Scanning: $url"
+
+            RESP=$(curl -sf -X POST "https://clarvia-api.onrender.com/api/scan" \
+              -H "Content-Type: application/json" \
+              -d "{\"url\": \"$url\"}" \
+              --max-time 30 2>/dev/null || echo '{"error": "scan failed"}')
+
+            SCORE=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('clarvia_score','N/A'))" 2>/dev/null || echo "N/A")
+            RATING=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('rating','N/A'))" 2>/dev/null || echo "N/A")
+            GRADE=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('agent_grade','N/A'))" 2>/dev/null || echo "N/A")
+
+            if [ "$SCORE" != "N/A" ] && [ "$SCORE" -ge 60 ] 2>/dev/null; then
+              EMOJI="✅"
+              PASS=$((PASS + 1))
+            else
+              EMOJI="⚠️"
+              FAIL=$((FAIL + 1))
+            fi
+
+            RESULTS="${RESULTS}| ${EMOJI} ${url} | ${SCORE} | ${RATING} | ${GRADE} |\n"
+          done < /tmp/urls.txt
+
+          echo "results<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$RESULTS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "pass=$PASS" >> $GITHUB_OUTPUT
+          echo "fail=$FAIL" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with Clarvia scores
+        if: steps.urls.outputs.has_urls == 'true' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const results = `${{ steps.scan.outputs.results }}`;
+            const pass = `${{ steps.scan.outputs.pass }}`;
+            const fail = `${{ steps.scan.outputs.fail }}`;
+
+            const body = `## 🦉 Clarvia AEO Score Report
+
+            | Service | Score | Rating | Agent Grade |
+            |---------|-------|--------|-------------|
+            ${results}
+
+            **Summary:** ${pass} passed, ${fail} need improvement
+
+            > Services scoring below 60 may have issues with AI agent compatibility.
+            > [Improve your score →](https://clarvia.art/guide) | [View leaderboard →](https://clarvia.art/leaderboard)
+
+            ---
+            _Powered by [Clarvia AEO Scanner](https://clarvia.art) — the trust layer for AI agent tools_`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Print results (non-PR)
+        if: steps.urls.outputs.has_urls == 'true' && github.event_name != 'pull_request'
+        run: |
+          echo "## Clarvia AEO Scores"
+          echo "${{ steps.scan.outputs.results }}" | column -t -s '|'
+
+      - name: No URLs found
+        if: steps.urls.outputs.has_urls != 'true'
+        run: echo "No service URLs detected in this change. Skipping scan."
