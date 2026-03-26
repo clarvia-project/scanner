@@ -1,0 +1,53 @@
+{
+  "name": "clarvia-aeo-scanner",
+  "displayName": "Clarvia AEO Scanner",
+  "description": "Scan any URL for AI Engine Optimization readiness. Returns AEO scores, dimension breakdowns (API accessibility, data structuring, agent compatibility, trust signals), and actionable fix recommendations.",
+  "version": "1.2.0",
+  "publisher": "Clarvia",
+  "homepage": "https://clarvia.art",
+  "repository": "https://github.com/clarvia/clarvia-scanner",
+  "license": "MIT",
+  "icon": "https://clarvia.art/favicon.ico",
+  "categories": ["developer-tools", "ai", "testing"],
+  "keywords": ["aeo", "ai-agents", "api-quality", "scanning", "mcp-server"],
+  "mcpServer": {
+    "transport": "streamable-http",
+    "url": "https://clarvia-api.onrender.com/mcp",
+    "capabilities": {
+      "tools": true,
+      "resources": false,
+      "prompts": false
+    }
+  },
+  "configuration": {
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "description": "Optional Clarvia API key for higher rate limits. Get one at https://clarvia.art",
+        "required": false
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "scan_url",
+      "description": "Full AEO scan with detailed dimension scores and recommendations"
+    },
+    {
+      "name": "get_score",
+      "description": "Quick score lookup (cached first, live fallback)"
+    },
+    {
+      "name": "compare_services",
+      "description": "Side-by-side comparison of 2-3 services"
+    },
+    {
+      "name": "get_leaderboard",
+      "description": "Top-scored services by category"
+    },
+    {
+      "name": "search_services",
+      "description": "Search the service index"
+    }
+  ]
+}

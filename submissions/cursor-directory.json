@@ -1,0 +1,46 @@
+{
+  "name": "clarvia-aeo-scanner",
+  "display_name": "Clarvia AEO Scanner",
+  "description": "Scan any URL for AI Engine Optimization (AEO) readiness. Returns scores, dimension breakdowns, and actionable recommendations for making APIs and services more agent-friendly.",
+  "icon": "https://clarvia.art/favicon.ico",
+  "category": "developer-tools",
+  "tags": ["aeo", "ai-agents", "api-quality", "scanning", "mcp"],
+  "author": {
+    "name": "Clarvia",
+    "url": "https://clarvia.art"
+  },
+  "repository": "https://github.com/clarvia/clarvia-scanner",
+  "transport": {
+    "type": "streamable-http",
+    "url": "https://clarvia-api.onrender.com/mcp"
+  },
+  "tools": [
+    {
+      "name": "scan_url",
+      "description": "Run a full AEO scan on a URL. Returns clarvia_score (0-100), rating (A+ to F), and dimension scores."
+    },
+    {
+      "name": "get_score",
+      "description": "Quick score lookup for a URL. Uses cached results when available."
+    },
+    {
+      "name": "compare_services",
+      "description": "Compare 2-3 services side by side with score breakdowns."
+    },
+    {
+      "name": "get_leaderboard",
+      "description": "Get top-scored services, optionally filtered by category."
+    },
+    {
+      "name": "search_services",
+      "description": "Search the Clarvia index by name, category, or keyword."
+    }
+  ],
+  "openapi_spec": "https://clarvia-api.onrender.com/openapi.json",
+  "pricing": "free",
+  "rate_limits": {
+    "free": "10 scans/hour",
+    "pro": "100 scans/hour",
+    "enterprise": "unlimited"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://chat-plugins.lobehub.com/schema/plugin.json",
+  "identifier": "clarvia-aeo-scanner",
+  "version": "1.2.0",
+  "type": "mcp",
+  "title": "Clarvia AEO Scanner",
+  "description": {
+    "en": "Scan any URL for AI Engine Optimization readiness. Get AEO scores (0-100), ratings (A+ to F), and actionable recommendations for making APIs agent-friendly."
+  },
+  "author": "Clarvia",
+  "homepage": "https://clarvia.art",
+  "meta": {
+    "avatar": "https://clarvia.art/favicon.ico",
+    "tags": ["aeo", "ai-agents", "api-quality", "developer-tools", "mcp"],
+    "category": "tools"
+  },
+  "server": {
+    "transport": "streamable-http",
+    "url": "https://clarvia-api.onrender.com/mcp"
+  },
+  "openapi": "https://clarvia-api.onrender.com/openapi.json",
+  "tools": [
+    {
+      "name": "scan_url",
+      "description": "Run a full AEO scan. Returns score, rating, dimensions, and recommendations.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to scan (e.g. https://api.example.com)"
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "get_score",
+      "description": "Quick score lookup. Uses cache when available, falls back to live scan.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL to check"
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "search_services",
+      "description": "Search the Clarvia service index by keyword or category.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query"
+          },
+          "category": {
+            "type": "string",
+            "description": "Optional category filter"
+          }
+        },
+        "required": ["query"]
+      }
+    }
+  ]
+}
