@@ -14,3 +14,8 @@ os.environ.setdefault("SCANNER_PORT", "8099")
 os.environ.setdefault("SCANNER_SUPABASE_URL", "")
 os.environ.setdefault("SCANNER_SUPABASE_ANON_KEY", "")
 os.environ.setdefault("SCANNER_STRIPE_SECRET_KEY", "")
+
+# Store admin API key for tests that need authenticated write access
+# pydantic-settings reads from .env file, not just os.environ
+from app.config import settings as _settings
+TEST_ADMIN_API_KEY = _settings.admin_api_key

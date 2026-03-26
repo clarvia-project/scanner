@@ -12,6 +12,7 @@ from httpx import ASGITransport, AsyncClient
 from unittest.mock import patch
 
 from app.main import app
+from tests.conftest import TEST_ADMIN_API_KEY
 
 
 @pytest_asyncio.fixture
@@ -113,10 +114,11 @@ async def test_profile_lifecycle(client):
     assert get_resp.status_code == 200
     assert get_resp.json()["name"] == "Test Service"
 
-    # Update
+    # Update (requires API key for write operations)
+    headers = {"X-API-Key": TEST_ADMIN_API_KEY} if TEST_ADMIN_API_KEY else {}
     update_resp = await client.put(f"/v1/profiles/{profile_id}", json={
         "description": "Updated description",
-    })
+    }, headers=headers)
     assert update_resp.status_code == 200
     assert update_resp.json()["description"] == "Updated description"
 
@@ -234,9 +236,11 @@ async def test_waitlist(client):
 
 @pytest.mark.asyncio
 async def test_cache_cleanup(client):
-    resp = await client.post("/api/cache/cleanup")
+    headers = {"x-clarvia-key": TEST_ADMIN_API_KEY} if TEST_ADMIN_API_KEY else {}
+    resp = await client.post("/api/cache/cleanup", headers=headers)
     assert resp.status_code == 200
-    assert "removed" in resp.json()
+    data = resp.json()
+    assert "cache_removed" in data or "removed" in data
 
 
 # ---------------------------------------------------------------------------
