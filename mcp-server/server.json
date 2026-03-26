@@ -1,9 +1,9 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.digitamaz/clarvia",
-  "description": "Search, scan, and benchmark AI services for agent-discoverability (AEO scoring)",
+  "description": "Search and score 15,400+ AI agent tools. Gate-check, find alternatives, probe health.",
   "repository": {
-    "url": "https://github.com/clarvia-project/scanner",
+    "url": "https://github.com/clarvia-project/scanner.git",
     "source": "github"
   },
   "version": "1.1.0",
@@ -11,7 +11,8 @@
     {
       "registryType": "npm",
       "identifier": "clarvia-mcp-server",
-      "version": "1.0.2",
+      "version": "1.1.0",
+      "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
       }

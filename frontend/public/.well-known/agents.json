@@ -1,48 +1,68 @@
 {
   "schema_version": "1.0",
   "name": "Clarvia",
-  "description": "AI Agent Tool Directory — Search 15,400+ tools (MCP servers, APIs, CLIs, Skills) scored for agent readiness",
+  "description": "AI agent tool discovery and AEO scoring platform. Search, evaluate, and gate-check 15,400+ AI agent tools (MCP servers, APIs, CLIs, Skills) scored for agent readiness.",
   "url": "https://clarvia.art",
+  "logo": "https://clarvia.art/logos/clarvia-logo.png",
   "api": {
     "type": "rest",
     "base_url": "https://clarvia-api.onrender.com",
-    "documentation": "https://clarvia.art/docs",
-    "endpoints": [
-      {
-        "path": "/v1/services",
-        "method": "GET",
-        "description": "Search and filter 12,800+ agent tools",
-        "parameters": ["q", "category", "service_type", "min_score", "sort", "source", "limit", "offset"]
-      },
-      {
-        "path": "/v1/recommend",
-        "method": "POST",
-        "description": "Intent-based tool recommendation. Send natural language intent, get ranked tool suggestions.",
-        "parameters": ["intent", "filters", "limit"]
-      },
-      {
-        "path": "/v1/compare",
-        "method": "GET",
-        "description": "Compare up to 4 tools side by side",
-        "parameters": ["ids"]
-      },
-      {
-        "path": "/v1/similar/{scan_id}",
-        "method": "GET",
-        "description": "Get similar tools based on category and type"
-      },
-      {
-        "path": "/api/scan",
-        "method": "POST",
-        "description": "Run AEO scan on any URL"
-      }
-    ]
+    "openapi": "https://clarvia-api.onrender.com/openapi.json",
+    "docs": "https://clarvia-api.onrender.com/docs",
+    "authentication": {
+      "type": "api_key",
+      "header": "X-API-Key",
+      "required": false,
+      "note": "Most read endpoints are public. API key increases rate limits."
+    }
+  },
+  "mcp": {
+    "npm_package": "clarvia-mcp-server",
+    "install": "npx -y clarvia-mcp-server",
+    "remote_endpoint": "https://clarvia-api.onrender.com/mcp/",
+    "tools_count": 16,
+    "python_tools_count": 24,
+    "transport": ["stdio", "streamable-http"],
+    "registry_id": "io.github.digitamaz/clarvia"
   },
   "capabilities": [
     "tool_discovery",
-    "tool_recommendation",
+    "tool_scoring",
+    "agent_gate_check",
+    "batch_tool_check",
+    "find_alternatives",
+    "live_probe",
+    "dependency_audit",
     "tool_comparison",
-    "aeo_scoring"
+    "trend_analysis",
+    "intent_recommendation",
+    "feedback_submission",
+    "category_browsing",
+    "leaderboard",
+    "vulnerability_check",
+    "compliance_checklist"
   ],
-  "contact": "https://clarvia.art/about"
+  "use_cases": [
+    "Before calling any external API, verify it is agent-ready",
+    "Search for the best tool in a category by AEO score",
+    "Find alternatives when a tool fails quality checks",
+    "Audit your agent's dependency stack for security issues",
+    "Track trending tools in the AI agent ecosystem"
+  ],
+  "pricing": {
+    "model": "freemium",
+    "free_tier": "10 scans/hour, unlimited search",
+    "pro_tier": "100 scans/hour with API key"
+  },
+  "rate_limits": {
+    "free": { "scans_per_hour": 10, "search_per_minute": 100 },
+    "pro": { "scans_per_hour": 100, "search_per_minute": 1000 }
+  },
+  "discovery": {
+    "llms_txt": "https://clarvia.art/llms.txt",
+    "llms_full_txt": "https://clarvia.art/llms-full.txt",
+    "sitemap": "https://clarvia.art/sitemap.xml",
+    "robots_txt": "https://clarvia.art/robots.txt",
+    "github": "https://github.com/clarvia-project/scanner"
+  }
 }

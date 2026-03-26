@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "clarvia": {
+      "command": "npx",
+      "args": ["-y", "clarvia-mcp-server"]
+    }
+  }
+}

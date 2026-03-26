@@ -167,8 +167,8 @@ app = FastAPI(
         "an API key via `X-API-Key` header."
     ),
     version="1.2.0",
-    docs_url=None if _is_production else "/api/docs",
-    redoc_url=None if _is_production else "/api/redoc",
+    docs_url="/docs",
+    redoc_url="/redoc",
     # Always expose OpenAPI spec — required for AEO discoverability
     openapi_url="/openapi.json",
     lifespan=lifespan,
@@ -314,6 +314,85 @@ except ImportError:
         logger.info("Stripe payment routes loaded (fallback)")
     except ImportError:
         logger.info("No payment routes available")
+
+
+# ---------------------------------------------------------------------------
+# Agent discovery endpoints (robots.txt, sitemap, llms.txt)
+# ---------------------------------------------------------------------------
+
+from fastapi.responses import PlainTextResponse
+
+@app.get("/robots.txt", response_class=PlainTextResponse, include_in_schema=False)
+async def api_robots_txt():
+    """Robots.txt for the API domain — allow all AI agent crawlers."""
+    return """User-agent: *
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://clarvia-api.onrender.com/sitemap.xml
+"""
+
+
+@app.get("/sitemap.xml", response_class=Response, include_in_schema=False)
+async def api_sitemap():
+    """Minimal sitemap for the API domain pointing to key discovery endpoints."""
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://clarvia-api.onrender.com/openapi.json</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://clarvia-api.onrender.com/docs</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://clarvia-api.onrender.com/redoc</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://clarvia-api.onrender.com/v1/services</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://clarvia-api.onrender.com/v1/categories</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://clarvia-api.onrender.com/v1/stats</loc><changefreq>daily</changefreq><priority>0.6</priority></url>
+  <url><loc>https://clarvia-api.onrender.com/v1/trending</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://clarvia-api.onrender.com/health</loc><changefreq>always</changefreq><priority>0.3</priority></url>
+</urlset>"""
+    return Response(content=xml, media_type="application/xml")
+
+
+@app.get("/llms.txt", response_class=PlainTextResponse, include_in_schema=False)
+async def api_llms_txt():
+    """LLMs.txt for the API domain — help LLMs understand Clarvia API."""
+    return """# Clarvia API
+
+> Clarvia is an AEO (Agent Engine Optimization) scanner and tool directory for AI agents.
+> It indexes 15,400+ tools (MCP servers, APIs, CLIs, Skills) and scores each for agent readiness (0-100).
+
+## API Base URL
+https://clarvia-api.onrender.com
+
+## OpenAPI Spec
+https://clarvia-api.onrender.com/openapi.json
+
+## MCP Server
+npx -y clarvia-mcp-server
+
+## Key Endpoints
+- GET /v1/services?q=keyword — Search tools
+- GET /v1/score?url=example.com — Quick score
+- GET /v1/recommend — Intent-based recommendations
+- GET /v1/categories — Browse categories
+- GET /v1/trending — Trending tools
+- GET /v1/leaderboard — Top-scored tools
+- GET /v1/stats — Platform statistics
+"""
 
 
 # ---------------------------------------------------------------------------
