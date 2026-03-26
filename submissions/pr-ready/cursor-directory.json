@@ -1,0 +1,99 @@
+{
+  "name": "clarvia-mcp-server",
+  "display_name": "Clarvia",
+  "description": "AEO scoring and tool discovery platform for AI agents. Search 12,800+ indexed MCP servers, APIs, and CLIs with agent-readiness scores. Gate-check tools before use, compare alternatives, benchmark your toolchain, and submit quality feedback.",
+  "icon": "https://clarvia.art/favicon.ico",
+  "category": "developer-tools",
+  "tags": [
+    "aeo",
+    "ai-agents",
+    "tool-discovery",
+    "quality-scoring",
+    "mcp"
+  ],
+  "author": {
+    "name": "Clarvia",
+    "url": "https://clarvia.art"
+  },
+  "repository": "https://github.com/clarvia-project/scanner",
+  "homepage": "https://clarvia.art",
+  "license": "MIT",
+  "install": {
+    "command": "npx",
+    "args": ["clarvia-mcp-server"]
+  },
+  "config": {
+    "mcpServers": {
+      "clarvia": {
+        "command": "npx",
+        "args": ["clarvia-mcp-server"]
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "search_services",
+      "description": "Search 12,800+ AI agent tools (MCP servers, APIs, CLIs) by keyword, category, or minimum score. Returns Clarvia AEO scores (0-100) indicating agent-readiness."
+    },
+    {
+      "name": "scan_service",
+      "description": "Run a full AEO audit on any URL. Evaluates agent discoverability, API quality, documentation, and MCP readiness. Returns a score (0-100) with detailed breakdown."
+    },
+    {
+      "name": "get_service_details",
+      "description": "Get the full AEO evaluation report for a previously scanned service. Shows detailed scoring breakdown across documentation, API design, error handling, auth, and MCP support."
+    },
+    {
+      "name": "list_categories",
+      "description": "List all tool categories in the Clarvia directory with service counts per category."
+    },
+    {
+      "name": "get_stats",
+      "description": "Get aggregate statistics for the Clarvia directory — total indexed services, average AEO score, score distribution, and category breakdown."
+    },
+    {
+      "name": "register_service",
+      "description": "Submit a new AI tool, MCP server, API, or CLI for Clarvia indexing and AEO scoring. The service will be queued for automated scanning."
+    },
+    {
+      "name": "clarvia_gate_check",
+      "description": "Quick pass/fail safety check before calling any external tool. Returns an agent grade (AGENT_NATIVE / AGENT_FRIENDLY / AGENT_POSSIBLE / AGENT_HOSTILE)."
+    },
+    {
+      "name": "clarvia_batch_check",
+      "description": "Batch-check up to 10 service URLs in a single call. Returns pass/fail and agent grade for each URL."
+    },
+    {
+      "name": "clarvia_find_alternatives",
+      "description": "Find higher-rated alternative tools in a given category, ranked by agent-readiness score."
+    },
+    {
+      "name": "clarvia_probe",
+      "description": "Run a live accessibility probe — checks HTTP reachability, response latency, OpenAPI spec, MCP server-card, and agents.json endpoint."
+    },
+    {
+      "name": "clarvia_submit_feedback",
+      "description": "Report the outcome after using a tool (success/failure/partial) to contribute to Clarvia's community-driven reliability dataset."
+    },
+    {
+      "name": "register_my_setup",
+      "description": "Register your agent's current tool setup to get AEO scores and category rankings for each tool in your toolchain."
+    },
+    {
+      "name": "compare_my_setup",
+      "description": "Compare your registered tool setup against higher-scored alternatives in each category."
+    },
+    {
+      "name": "recommend_upgrades",
+      "description": "Get personalized tool recommendations based on your registered setup. Suggests high-scoring tools you don't have yet."
+    },
+    {
+      "name": "clarvia_report_issue",
+      "description": "Report a bug, request a feature, ask a question, or flag a security issue with Clarvia or any indexed tool."
+    },
+    {
+      "name": "clarvia_list_issues",
+      "description": "List existing CS tickets — check status of previously reported issues or track your submitted tickets."
+    }
+  ]
+}

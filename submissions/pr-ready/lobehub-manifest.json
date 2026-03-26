@@ -1,0 +1,345 @@
+{
+  "$schema": "https://chat-plugins.lobehub.com/schema/plugin.json",
+  "identifier": "clarvia",
+  "version": "1.0.2",
+  "type": "mcp",
+  "title": "Clarvia",
+  "description": {
+    "en": "AEO scoring and tool discovery platform for AI agents. Search 12,800+ indexed MCP servers, APIs, and CLIs with agent-readiness scores. Gate-check tools before use, compare alternatives, and submit quality feedback."
+  },
+  "author": "Clarvia",
+  "homepage": "https://clarvia.art",
+  "repository": "https://github.com/clarvia-project/scanner",
+  "meta": {
+    "avatar": "https://clarvia.art/favicon.ico",
+    "tags": [
+      "aeo",
+      "ai-agents",
+      "tool-discovery",
+      "quality-scoring",
+      "mcp-server"
+    ],
+    "category": "tools"
+  },
+  "server": {
+    "command": "npx",
+    "args": ["clarvia-mcp-server"]
+  },
+  "tools": [
+    {
+      "name": "search_services",
+      "description": "Search 12,800+ AI agent tools by keyword, category, or minimum score.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search keyword"
+          },
+          "category": {
+            "type": "string",
+            "description": "Filter by category"
+          },
+          "service_type": {
+            "type": "string",
+            "enum": ["mcp_server", "skill", "cli_tool", "api", "general"],
+            "description": "Filter by service type"
+          },
+          "min_score": {
+            "type": "number",
+            "description": "Minimum Clarvia score (0-100)"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Max results to return"
+          }
+        }
+      }
+    },
+    {
+      "name": "scan_service",
+      "description": "Run a full AEO audit on any URL with detailed scoring breakdown.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL to scan"
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "get_service_details",
+      "description": "Get full AEO evaluation report for a previously scanned service.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "scan_id": {
+            "type": "string",
+            "description": "Scan ID from a previous scan or search result"
+          }
+        },
+        "required": ["scan_id"]
+      }
+    },
+    {
+      "name": "list_categories",
+      "description": "List all tool categories in the Clarvia directory with counts.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_stats",
+      "description": "Get aggregate directory statistics including score distribution.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "register_service",
+      "description": "Submit a new tool for Clarvia indexing and AEO scoring.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Service name"
+          },
+          "url": {
+            "type": "string",
+            "description": "Service URL"
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief description"
+          },
+          "category": {
+            "type": "string",
+            "description": "Service category"
+          },
+          "github_url": {
+            "type": "string",
+            "description": "GitHub repository URL"
+          }
+        },
+        "required": ["name", "url", "description", "category"]
+      }
+    },
+    {
+      "name": "clarvia_gate_check",
+      "description": "Quick pass/fail safety check before calling any external tool.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Service URL to check"
+          },
+          "min_rating": {
+            "type": "string",
+            "enum": ["AGENT_NATIVE", "AGENT_FRIENDLY", "AGENT_POSSIBLE", "AGENT_HOSTILE"],
+            "description": "Minimum acceptable grade"
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "clarvia_batch_check",
+      "description": "Batch-check up to 10 service URLs in a single call.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "urls": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of service URLs (max 10)"
+          }
+        },
+        "required": ["urls"]
+      }
+    },
+    {
+      "name": "clarvia_find_alternatives",
+      "description": "Find higher-rated alternative tools in a given category.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Service category"
+          },
+          "min_score": {
+            "type": "number",
+            "description": "Minimum score (default: 70)"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Max results (default: 10)"
+          }
+        },
+        "required": ["category"]
+      }
+    },
+    {
+      "name": "clarvia_probe",
+      "description": "Live accessibility probe: HTTP reachability, latency, OpenAPI, MCP, agents.json.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Service URL to probe"
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "clarvia_submit_feedback",
+      "description": "Report tool usage outcome (success/failure/partial) to improve community data.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "description": "Profile ID of the service used"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": ["success", "failure", "partial"],
+            "description": "Usage outcome"
+          },
+          "agent_id": {
+            "type": "string",
+            "description": "Your agent identifier"
+          },
+          "error_message": {
+            "type": "string",
+            "description": "Error details if failed"
+          },
+          "latency_ms": {
+            "type": "number",
+            "description": "Response latency in ms"
+          }
+        },
+        "required": ["profile_id", "outcome"]
+      }
+    },
+    {
+      "name": "register_my_setup",
+      "description": "Register your agent's current tool setup for benchmarking.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "tools": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of tool names you currently use"
+          },
+          "setup_id": {
+            "type": "string",
+            "description": "Custom setup ID"
+          }
+        },
+        "required": ["tools"]
+      }
+    },
+    {
+      "name": "compare_my_setup",
+      "description": "Compare your registered setup against higher-scored alternatives.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "setup_id": {
+            "type": "string",
+            "description": "Setup ID from register_my_setup"
+          }
+        },
+        "required": ["setup_id"]
+      }
+    },
+    {
+      "name": "recommend_upgrades",
+      "description": "Get personalized tool recommendations based on your setup.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "setup_id": {
+            "type": "string",
+            "description": "Setup ID from register_my_setup"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Max recommendations (default: 10)"
+          }
+        },
+        "required": ["setup_id"]
+      }
+    },
+    {
+      "name": "clarvia_report_issue",
+      "description": "Report bugs, feature requests, or security issues.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["bug", "feature", "question", "security"],
+            "description": "Issue type"
+          },
+          "title": {
+            "type": "string",
+            "description": "Short summary"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description"
+          },
+          "agent_id": {
+            "type": "string",
+            "description": "Your agent identifier"
+          },
+          "service_url": {
+            "type": "string",
+            "description": "Related service URL"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"],
+            "description": "Severity level"
+          }
+        },
+        "required": ["type", "title", "description"]
+      }
+    },
+    {
+      "name": "clarvia_list_issues",
+      "description": "List existing CS tickets and track submitted issues.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["bug", "feature", "question", "security"],
+            "description": "Filter by type"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["open", "in_progress", "resolved", "closed"],
+            "description": "Filter by status"
+          },
+          "agent_id": {
+            "type": "string",
+            "description": "Filter by your agent ID"
+          }
+        }
+      }
+    }
+  ]
+}
