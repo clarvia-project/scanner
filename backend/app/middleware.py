@@ -140,6 +140,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+_SAFE_PATHS = ("/health", "/v1/feed/", "/v1/categories", "/v1/search", "/v1/leaderboard", "/v1/score", "/v1/services", "/v1/cs/tickets")
+
+
 class SecurityMiddleware(BaseHTTPMiddleware):
     """Block banned IPs, detect suspicious requests, enforce URL safety."""
 
@@ -148,12 +151,19 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         user_agent = request.headers.get("user-agent", "")
 
-        # Check IP ban
-        if abuse_detector.is_banned(client_ip):
+        # Never block health checks and read-only endpoints
+        is_safe = any(path.startswith(p) for p in _SAFE_PATHS)
+
+        # Check IP ban (skip for safe paths)
+        if not is_safe and abuse_detector.is_banned(client_ip):
             abuse_detector.total_blocked += 1
             return JSONResponse(
                 status_code=403,
-                content={"error": "Access temporarily blocked due to abuse detection."},
+                content={
+                    "error": "Access temporarily blocked due to abuse detection.",
+                    "retry_after": 600,
+                },
+                headers={"Retry-After": "600"},
             )
 
         # Check suspicious patterns
@@ -161,12 +171,11 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         if suspicious:
             abuse_detector.record_error(client_ip)
             logger.warning("Suspicious request from %s: %s (path=%s)", client_ip, reason, path)
-            # Don't block — just track. Block after threshold.
 
         response = await call_next(request)
 
-        # Track errors for abuse detection
-        if response.status_code >= 400:
+        # Track errors for abuse detection (only for non-safe, non-404 paths)
+        if response.status_code >= 400 and response.status_code != 404 and not is_safe:
             abuse_detector.record_error(client_ip)
 
         # Track scan bursts

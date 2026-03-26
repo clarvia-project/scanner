@@ -404,6 +404,85 @@ async def list_services(
     }
 
 
+# Aliases for discoverability — agents try /search, /score, /leaderboard
+@router.get("/search")
+async def search_alias(
+    response: Response,
+    q: str | None = Query(None),
+    category: str | None = Query(None),
+    service_type: str | None = Query(None),
+    min_score: int = Query(0, ge=0, le=100),
+    sort: SortOrder = Query(SortOrder.score_desc),
+    source: str | None = Query(None),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+):
+    """Alias for /v1/services — agents naturally look for /search."""
+    return await list_services(
+        response=response, category=category, service_type=service_type,
+        q=q, min_score=min_score, max_score=None, sort=sort,
+        source=source, limit=limit, offset=offset,
+    )
+
+
+@router.get("/score")
+async def score_quick(
+    response: Response,
+    url: str = Query(..., description="Service URL to get score for"),
+):
+    """Quick score lookup by URL — returns cached score or 'not_found'."""
+    _ensure_loaded()
+    _add_headers(response)
+    url_lower = url.lower().rstrip("/")
+    for s in _services:
+        if s.get("url", "").lower().rstrip("/") == url_lower:
+            return {
+                "url": url,
+                "score": s["clarvia_score"],
+                "rating": s["rating"],
+                "category": s.get("category", "other"),
+                "scan_id": s["scan_id"],
+                "found": True,
+            }
+    return {
+        "url": url,
+        "score": None,
+        "rating": None,
+        "found": False,
+        "message": "Not yet scanned. Use POST /api/scan to get a score.",
+    }
+
+
+@router.get("/leaderboard")
+async def leaderboard(
+    response: Response,
+    category: str | None = Query(None),
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Top-scoring services leaderboard."""
+    _ensure_loaded()
+    _add_headers(response)
+    filtered = _services
+    if category:
+        filtered = [s for s in filtered if s.get("category") == category]
+    filtered = sorted(filtered, key=lambda s: s["clarvia_score"], reverse=True)[:limit]
+    return {
+        "leaderboard": [
+            {
+                "rank": i + 1,
+                "name": s["service_name"],
+                "url": s["url"],
+                "score": s["clarvia_score"],
+                "rating": s["rating"],
+                "category": s.get("category", "other"),
+                "scan_id": s["scan_id"],
+            }
+            for i, s in enumerate(filtered)
+        ],
+        "total": len(_services),
+    }
+
+
 @router.get("/services/{scan_id}")
 async def get_service(scan_id: str, response: Response):
     """Get full details for a specific service by scan_id."""

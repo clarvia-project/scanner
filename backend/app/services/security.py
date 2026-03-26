@@ -110,11 +110,11 @@ class AbuseDetector:
         self._ip_scans: dict[str, list[float]] = defaultdict(list)   # ip -> [scan timestamps]
         self._banned_ips: dict[str, float] = {}  # ip -> ban_expiry_timestamp
 
-        # Thresholds
-        self.error_threshold = 20        # errors in window → ban
-        self.scan_burst_threshold = 30   # scans in window → ban
+        # Thresholds (tuned for agent traffic — agents call fast)
+        self.error_threshold = 50        # errors in window → ban
+        self.scan_burst_threshold = 60   # scans in window → ban
         self.window_seconds = 300        # 5 minutes
-        self.ban_duration = 3600         # 1 hour ban
+        self.ban_duration = 600          # 10 minute ban (was 1 hour — too harsh for agents)
 
         # Stats
         self.total_blocked = 0

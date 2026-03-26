@@ -72,13 +72,15 @@ async def feed_scores(
     services = sorted(services, key=lambda s: s.get("clarvia_score", 0), reverse=True)
     page = services[offset:offset + limit]
 
+    from .index_routes import _classify
+
     results = [
         {
             "name": s.get("service_name", ""),
             "url": s.get("url", ""),
             "score": s.get("clarvia_score", 0),
             "rating": s.get("rating", ""),
-            "category": s.get("category", "other"),
+            "category": _classify(s.get("service_name", "")) if s.get("category", "other") == "other" else s.get("category", "other"),
             "service_type": s.get("service_type", "general"),
             "scan_id": s.get("scan_id", ""),
             "scanned_at": s.get("scanned_at", ""),

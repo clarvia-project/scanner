@@ -28,16 +28,58 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["cs"])
 
 # ---------------------------------------------------------------------------
-# In-memory storage (Supabase upgrade later)
+# File-based storage (works across multiple workers, Supabase upgrade later)
 # ---------------------------------------------------------------------------
-_tickets: dict[str, dict[str, Any]] = {}
-_ticket_counter = 0
+import json as _json
+from pathlib import Path as _Path
+import fcntl
+
+_TICKETS_DIR = _Path("/app/data/cs-tickets")
+_COUNTER_FILE = _TICKETS_DIR / "_counter.json"
+
+
+def _ensure_dir() -> None:
+    _TICKETS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _gen_ticket_id() -> str:
-    global _ticket_counter
-    _ticket_counter += 1
-    return f"CS-{_ticket_counter:04d}"
+    _ensure_dir()
+    counter = 0
+    if _COUNTER_FILE.exists():
+        try:
+            counter = _json.loads(_COUNTER_FILE.read_text()).get("counter", 0)
+        except Exception:
+            pass
+    counter += 1
+    _COUNTER_FILE.write_text(_json.dumps({"counter": counter}))
+    return f"CS-{counter:04d}"
+
+
+def _save_ticket(ticket_id: str, ticket: dict[str, Any]) -> None:
+    _ensure_dir()
+    path = _TICKETS_DIR / f"{ticket_id}.json"
+    path.write_text(_json.dumps(ticket, indent=2, default=str))
+
+
+def _load_ticket(ticket_id: str) -> dict[str, Any] | None:
+    path = _TICKETS_DIR / f"{ticket_id}.json"
+    if not path.exists():
+        return None
+    try:
+        return _json.loads(path.read_text())
+    except Exception:
+        return None
+
+
+def _load_all_tickets() -> list[dict[str, Any]]:
+    _ensure_dir()
+    tickets = []
+    for path in _TICKETS_DIR.glob("CS-*.json"):
+        try:
+            tickets.append(_json.loads(path.read_text()))
+        except Exception:
+            continue
+    return tickets
 
 
 # ---------------------------------------------------------------------------
@@ -99,14 +141,13 @@ async def create_ticket(req: CreateTicketRequest):
         "updated_at": now,
     }
 
-    _tickets[ticket_id] = ticket
-
     # Auto-escalate security issues
     if req.type == "security":
         ticket["tags"].append("auto-escalated")
         ticket["priority"] = "critical"
         logger.warning("Security ticket created: %s — %s", ticket_id, req.title)
 
+    _save_ticket(ticket_id, ticket)
     logger.info("CS ticket created: %s [%s] %s", ticket_id, req.type, req.title)
 
     return {
@@ -127,7 +168,7 @@ async def list_tickets(
     offset: int = Query(0, ge=0),
 ):
     """List CS tickets with optional filters."""
-    tickets = list(_tickets.values())
+    tickets = _load_all_tickets()
 
     if type:
         tickets = [t for t in tickets if t["type"] == type]
@@ -165,7 +206,7 @@ async def list_tickets(
 @router.get("/v1/cs/tickets/{ticket_id}")
 async def get_ticket(ticket_id: str):
     """Get full ticket details including replies."""
-    ticket = _tickets.get(ticket_id)
+    ticket = _load_ticket(ticket_id)
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
     return ticket
@@ -174,7 +215,7 @@ async def get_ticket(ticket_id: str):
 @router.post("/v1/cs/tickets/{ticket_id}/reply")
 async def reply_to_ticket(ticket_id: str, req: ReplyRequest):
     """Add a reply to a ticket. Both agents and admins can reply."""
-    ticket = _tickets.get(ticket_id)
+    ticket = _load_ticket(ticket_id)
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
 
@@ -191,6 +232,7 @@ async def reply_to_ticket(ticket_id: str, req: ReplyRequest):
         ticket["status"] = "open"
         ticket["tags"].append("reopened")
 
+    _save_ticket(ticket_id, ticket)
     return {"status": "reply_added", "replies_count": len(ticket["replies"])}
 
 
@@ -201,7 +243,7 @@ async def reply_to_ticket(ticket_id: str, req: ReplyRequest):
 @router.patch("/admin/cs/tickets/{ticket_id}")
 async def update_ticket(ticket_id: str, req: UpdateTicketRequest, _key: ApiKeyDep):
     """Update ticket status, priority, assignee, or tags (admin only)."""
-    ticket = _tickets.get(ticket_id)
+    ticket = _load_ticket(ticket_id)
     if not ticket:
         raise HTTPException(404, f"Ticket {ticket_id} not found")
 
@@ -217,13 +259,14 @@ async def update_ticket(ticket_id: str, req: UpdateTicketRequest, _key: ApiKeyDe
         ticket["tags"] = req.tags
 
     ticket["updated_at"] = datetime.now(timezone.utc).isoformat()
+    _save_ticket(ticket_id, ticket)
     return {"status": "updated", "ticket": ticket}
 
 
 @router.get("/admin/cs/overview")
 async def admin_cs_overview(_key: ApiKeyDep):
     """CS dashboard overview for admin."""
-    tickets = list(_tickets.values())
+    tickets = _load_all_tickets()
 
     by_status: dict[str, int] = {}
     by_type: dict[str, int] = {}
