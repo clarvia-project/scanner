@@ -166,8 +166,8 @@ async def main():
 
     # Save
     for path in [
-        "/Users/sangho/클로드 코드/scanner/data/prebuilt-scans.json",
-        "/Users/sangho/클로드 코드/scanner/backend/data/prebuilt-scans.json",
+        "./data/prebuilt-scans.json",
+        "./backend/data/prebuilt-scans.json",
     ]:
         with open(path, "w") as f:
             json.dump(results, f, indent=2, default=str)
