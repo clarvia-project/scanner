@@ -348,6 +348,17 @@ async def scan_url(req: ScanRequest):
     try:
         result = await run_scan(req.url, auth_headers=req.auth_headers)
 
+        # Add to in-memory index for immediate discoverability (compare, badge-data, score)
+        try:
+            from .routes.index_routes import _services, _by_scan_id, _classify
+            entry = result.model_dump(mode="json") if hasattr(result, "model_dump") else {}
+            if entry.get("scan_id") and entry["scan_id"] not in _by_scan_id:
+                entry["category"] = _classify(entry.get("service_name", ""))
+                _services.append(entry)
+                _by_scan_id[entry["scan_id"]] = entry
+        except Exception:
+            pass  # Non-critical — index will catch up on next reload
+
         # Persist to Supabase if available
         if _supabase_client:
             try:
