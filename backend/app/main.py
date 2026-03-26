@@ -317,6 +317,54 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
+# Custom OpenAPI schema — enhanced for agent discoverability
+# ---------------------------------------------------------------------------
+
+from fastapi.openapi.utils import get_openapi
+
+def _custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+        tags=app.openapi_tags,
+    )
+    schema["info"]["x-logo"] = {
+        "url": "https://clarvia.art/logo.png",
+        "altText": "Clarvia",
+    }
+    schema["info"]["contact"] = {
+        "name": "Clarvia API Support",
+        "url": "https://clarvia.art",
+        "email": "api@clarvia.art",
+    }
+    schema["info"]["license"] = {
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT",
+    }
+    schema["info"]["x-agent-instructions"] = (
+        "Use /v1/score to check AEO score for any URL. "
+        "Use /v1/search to find tools by keyword. "
+        "Use /v1/compare to compare two tools head-to-head. "
+        "Use /v1/leaderboard to get top-rated tools by category. "
+        "No authentication required for read endpoints."
+    )
+    schema["servers"] = [
+        {
+            "url": "https://clarvia-api.onrender.com",
+            "description": "Production API",
+        }
+    ]
+    app.openapi_schema = schema
+    return app.openapi_schema
+
+app.openapi = _custom_openapi  # type: ignore[method-assign]
+
+
+# ---------------------------------------------------------------------------
 # Agent discovery endpoints (robots.txt, sitemap, llms.txt)
 # ---------------------------------------------------------------------------
 

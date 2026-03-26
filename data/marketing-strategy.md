@@ -1,0 +1,946 @@
+# Clarvia Growth Engineering Strategy
+
+> Date: 2026-03-26
+> Goal: 0 → 1M daily agent visits
+> Budget: $0
+> Target: AI agents only (no human marketing)
+> Current state: ~0 agent visits, 232 npm weekly downloads, 15,400+ indexed tools, 24 MCP tools, 48+ API endpoints
+
+---
+
+## Table of Contents
+
+1. [Activity Classification](#1-activity-classification)
+2. [Channel Strategy](#2-channel-strategy)
+3. [Short-term Tactics (7 days)](#3-short-term-tactics-this-week)
+4. [Medium-term Strategy (30 days)](#4-medium-term-strategy-this-month)
+5. [Long-term Moat (3 months)](#5-long-term-moat-3-months)
+6. [Measurement Framework](#6-measurement-framework)
+7. [Feedback Loop Design](#7-feedback-loop-design)
+8. [Risk Assessment](#8-risk-assessment)
+
+---
+
+## 1. Activity Classification
+
+### 1A. Ongoing/Recurring Activities
+
+#### R1. MCP Tool Description Optimization
+- **What**: Review and improve all 24 MCP tool names, descriptions, and parameter docs. Optimize for BM25/regex matching used by Claude Code's Tool Search. Include "when to use / when not to use" patterns.
+- **Frequency**: Monthly full review; immediate update when tool behavior changes
+- **KPI**: Tool selection rate (how often agents pick Clarvia tools when relevant task arises). Proxy: npm installs/week, MCP server connection count.
+- **Impact timeline**: 1-2 weeks for agents already connected; ongoing for new discoveries
+
+#### R2. Registry Presence Maintenance
+- **What**: Ensure Clarvia is listed, up-to-date, and ranking on all MCP registries (Official Registry, Smithery, PulseMCP, Glama, mcp.so, MCPHub). Update server.json, version numbers, tool counts, descriptions on each release.
+- **Frequency**: On every release + monthly audit
+- **KPI**: Position in registry search results for key queries ("aeo", "tool quality", "mcp scanner", "agent optimization")
+- **Impact timeline**: 1-4 weeks per registry update
+
+#### R3. npm/PyPI Package Freshness
+- **What**: Publish npm updates with changelog, updated keywords, improved README. Keep weekly download count growing. Respond to issues within 48h.
+- **Frequency**: Publish at least biweekly; keyword audit monthly
+- **KPI**: npm weekly downloads (current: 232, target: 1K/week in 30 days, 10K/week in 90 days)
+- **Impact timeline**: Compound — each publish triggers re-indexing by registries and crawlers
+
+#### R4. Programmatic Page Freshness
+- **What**: Re-scan indexed tools, update AEO scores, regenerate profile pages. AI search engines (Perplexity, ChatGPT Search) penalize stale content (>12 months). Keep all 15,400+ tool pages current.
+- **Frequency**: Weekly score recalculation; monthly full re-scan
+- **KPI**: Pages with updated_at < 30 days / total pages (target: >90%)
+- **Impact timeline**: 2-4 weeks for AI search indexing
+
+#### R5. Awesome-List & Directory PR Maintenance
+- **What**: Submit PRs to new awesome-mcp-servers lists, Cursor directory, LobeHub, and emerging directories. Follow up on pending PRs. Update existing entries when features change.
+- **Frequency**: Weekly scan for new directories; follow up on PRs biweekly
+- **KPI**: Number of directories listing Clarvia (current: 2 PRs submitted; target: 10+ listings)
+- **Impact timeline**: 1-2 weeks per accepted PR
+
+#### R6. .well-known Endpoint Maintenance
+- **What**: Keep agents.json, mcp/server-card.json, ai-plugin.json, llms.txt, llms-full.txt current with latest tool inventory, endpoints, and capabilities.
+- **Frequency**: On every feature change + monthly audit
+- **KPI**: Successful automated discovery tests (curl + validate schema)
+- **Impact timeline**: Immediate for agents that check these endpoints
+
+#### R7. Competitive Intelligence Monitoring
+- **What**: Track competing AEO/MCP quality tools. Monitor new entrants, feature launches, registry rankings.
+- **Frequency**: Weekly
+- **KPI**: Relative position vs competitors in registry searches
+- **Impact timeline**: Informs strategy adjustments within 1 week
+
+#### R8. Agent Traffic Analytics
+- **What**: Monitor API call patterns, MCP tool usage, referral sources. Identify which agents are calling which endpoints, peak times, popular tools.
+- **Frequency**: Daily check, weekly report
+- **KPI**: Daily unique agent sessions, API calls/day, tool diversity index
+- **Impact timeline**: Continuous — drives all optimization decisions
+
+### 1B. One-Time Setup Activities
+
+#### S1. Official MCP Registry Registration
+- **Priority**: P0
+- **What**: Complete registration on registry.modelcontextprotocol.io with proper namespace (reverse DNS format). Requires server.json validation and namespace verification.
+- **Effort**: 2-4 hours
+- **Impact**: Official registry propagates to all downstream registries. This is THE canonical source. Being listed here means every compliant MCP client can discover Clarvia.
+- **Status**: Not started (mcp-publisher auth failed — needs manual browser auth)
+
+#### S2. Smithery.ai Registration
+- **Priority**: P0
+- **What**: Submit Clarvia MCP server to Smithery. Optimize listing with screenshots, detailed description, use cases. Only 8 servers have 50K+ installs — early entry has outsized returns.
+- **Effort**: 1-2 hours
+- **Impact**: Smithery has 2,500+ servers. Top-tier placement drives installations directly.
+- **Status**: Not started
+
+#### S3. PulseMCP Registration
+- **Priority**: P0
+- **What**: Submit to PulseMCP (14,274+ servers, largest directory). Optimize for popularity-based sorting algorithm.
+- **Effort**: 1 hour
+- **Impact**: Largest single directory. Popularity sort means early installs compound.
+- **Status**: Not started
+
+#### S4. Schema.org JSON-LD Implementation
+- **Priority**: P0
+- **What**: Add SoftwareApplication + FAQPage + Organization JSON-LD to all pages. Each of the 15,400+ tool profile pages gets structured data. AI search engines cite pages with structured data 2-3x more.
+- **Effort**: 1-2 days (template-based, one implementation covers all pages)
+- **Impact**: 15,400 indexed pages each become an AI-citable entry point. This is the single highest-leverage SEO action.
+- **Status**: Not started
+
+#### S5. SSR Verification & Optimization
+- **Priority**: P0
+- **What**: Ensure all pages render fully server-side. ChatGPT Search and AI crawlers penalize JavaScript-only rendering. Test with `curl` — if content is missing, it is invisible to AI.
+- **Effort**: 1-2 days
+- **Impact**: Prerequisite for ALL AI search visibility. Without SSR, no AI search engine will cite Clarvia.
+- **Status**: Needs verification
+
+#### S6. robots.txt AI Crawler Whitelist
+- **Priority**: P0
+- **What**: Explicitly allow OAI-SearchBot, PerplexityBot, ClaudeBot, GPTBot, Applebot-Extended, CCBot in robots.txt. Add sitemap reference.
+- **Effort**: 30 minutes
+- **Impact**: Opens the door to all major AI search engines. Zero cost, permanent effect.
+- **Status**: Needs verification
+
+#### S7. MCP Registry Publish (mcp-publisher)
+- **Priority**: P0
+- **What**: Complete GitHub device flow authentication for mcp-publisher. Requires manual browser auth (automated auth was blocked by GitHub anti-automation).
+- **Effort**: 15 minutes manual
+- **Impact**: Unlocks official registry listing
+- **Status**: Blocked — needs manual auth
+
+#### S8. OpenAPI Specification Publishing
+- **Priority**: P1
+- **What**: Publish a complete OpenAPI 3.1 spec for all 48+ API endpoints. Host at `/openapi.json` and `/api/docs`. This is how autonomous agents (AutoGPT, BabyAGI, LangChain agents) discover and use APIs programmatically.
+- **Effort**: 1-2 days
+- **Impact**: Opens Clarvia to the entire autonomous agent ecosystem that relies on OpenAPI for tool discovery. FastAPI auto-generates this — verify it is publicly accessible and complete.
+- **Status**: Likely exists (FastAPI generates it) — needs public exposure and optimization
+
+#### S9. Category Landing Pages
+- **Priority**: P1
+- **What**: Generate 20+ category pages ("Best Database MCP Servers", "Top Authentication Tools", "AI Coding Assistant Comparison"). Each page ranks tools by AEO score with structured comparison data.
+- **Effort**: 3-5 days
+- **Impact**: Captures "best X for Y" queries from AI search. Each category page is a high-intent entry point.
+- **Status**: Not started
+
+#### S10. Comparison Pages Engine
+- **Priority**: P1
+- **What**: Auto-generate head-to-head comparison pages for top 500 tool pairs (e.g., "Supabase MCP vs Firebase MCP"). Include score breakdown, feature matrix, recommendation.
+- **Effort**: 1 week
+- **Impact**: Comparison queries are high-intent. AI assistants frequently need to recommend one tool over another — Clarvia becomes the citation source.
+- **Status**: Not started
+
+#### S11. Claude Code Slash Command / Skill Publishing
+- **Priority**: P1
+- **What**: Create and publish Claude Code skills (slash commands) that use Clarvia MCP tools. Example: `/aeo-check` scans current project's MCP server quality. Published as examples in the repo.
+- **Effort**: 1 day (examples already created, need promotion)
+- **Impact**: Every Claude Code user who installs the skill becomes a recurring Clarvia user. Skills are viral — they appear in slash command suggestions.
+- **Status**: Examples created, needs broader distribution
+
+#### S12. Cursor/Windsurf Config Examples
+- **Priority**: P1
+- **What**: Create ready-to-paste mcp.json config blocks for Cursor, Windsurf, Cline. Publish in README, npm page, and as a standalone gist. When developers search "how to add MCP server to Cursor," Clarvia config should appear.
+- **Effort**: 2 hours
+- **Impact**: Reduces friction to zero for the three most popular MCP-capable IDEs.
+- **Status**: Config examples added to npm README
+
+#### S13. A2A Agent Card
+- **Priority**: P2
+- **What**: Implement Google A2A (Agent-to-Agent) protocol agent card. Publish at `/.well-known/agent.json` following the A2A spec. This allows orchestrator agents to discover Clarvia as a specialist agent for tool quality assessment.
+- **Effort**: 1-2 days
+- **Impact**: Future-facing — A2A adoption is early but growing. Being discoverable via A2A positions Clarvia in multi-agent workflows.
+- **Status**: Not started
+
+#### S14. Badge/Widget System for Tool Developers
+- **Priority**: P2
+- **What**: Create embeddable AEO score badges (like npm version badges) that MCP server developers can add to their READMEs. Badge links back to Clarvia profile page. `![AEO Score](https://clarvia.art/api/badge/SERVER_NAME)`
+- **Effort**: 1-2 days
+- **Impact**: Each badge is a permanent backlink + awareness touchpoint. If even 1% of 15,400 tools add the badge, that is 154 permanent referral sources.
+- **Status**: Not started
+
+#### S15. GitHub Actions Integration
+- **Priority**: P2
+- **What**: Create a GitHub Action `clarvia/aeo-check` that runs AEO analysis on PRs. Developers add it to CI/CD. Every PR gets an AEO score comment.
+- **Effort**: 2-3 days
+- **Impact**: Embeds Clarvia into developer workflows. Each CI run = API call to Clarvia. Viral through GitHub Marketplace discovery.
+- **Status**: Not started
+
+---
+
+## 2. Channel Strategy
+
+### Channel 1: MCP Registries (PRIMARY — highest agent density)
+
+**How agents discover tools**: MCP clients (Claude Code, Claude Desktop, Cursor, Windsurf, Cline) query registries to find available MCP servers. The official MCP Registry propagates to downstream registries. When a user types `mcp add` or an agent needs a capability, the registry is searched.
+
+**What Clarvia needs to do**:
+1. Register on ALL registries with consistent, optimized metadata
+2. Maintain server.json per official spec (version, tools list, runtimeHint)
+3. Optimize tool descriptions for BM25/regex matching
+4. Keep version fresh (registries may sort by recency)
+
+**Registries to target**:
+| Registry | Size | Status | Priority |
+|----------|------|--------|----------|
+| Official MCP Registry | 87 servers (strict) | Blocked (auth) | P0 |
+| Smithery.ai | 2,500+ | Not started | P0 |
+| PulseMCP | 14,274+ | Not started | P0 |
+| Glama.ai | Large | Submitted | P0 |
+| mcp.so | Medium | Listed | Done |
+| MCPHub.tools | Medium | Not started | P1 |
+| awesome-mcp-servers (wong2) | Curated list | PR submitted | In progress |
+| awesome-mcp-servers (appcypher) | Curated list | PR submitted | In progress |
+| Cursor Directory | Curated | Not started | P1 |
+| LobeHub MCP list | Curated | Not started | P1 |
+
+**Measurement**: Registry search position for ["aeo", "quality", "scanner", "tool discovery", "mcp analysis"]
+
+### Channel 2: Package Managers (npm/PyPI)
+
+**How agents discover tools**: When developers add MCP servers, they often use `npx` commands. IDE agents suggest packages based on npm search. Package managers are the install mechanism — being findable here is critical.
+
+**What Clarvia needs to do**:
+1. Optimize npm keywords (14 keywords added — verify ranking for key searches)
+2. Maintain high-quality README with machine-readable config blocks
+3. Publish frequently to maintain "recently updated" signal
+4. Add `@modelcontextprotocol` peer dependency tag for auto-discovery ecosystems
+
+**Current status**: Published as `clarvia-mcp-server@1.1.0`, 232 weekly downloads
+**Priority**: P0 (ongoing)
+
+**Measurement**: npm weekly downloads, search position for "mcp aeo", "mcp quality", "mcp scanner"
+
+### Channel 3: .well-known Discovery Endpoints (CRITICAL for autonomous agents)
+
+**How agents discover tools**: Autonomous agents and MCP clients can check a domain's `.well-known/` directory for capability manifests. This is the machine equivalent of a homepage.
+
+**What Clarvia needs to do**:
+1. `.well-known/agents.json` — Done, verify JSON Agents standard compliance
+2. `.well-known/mcp/server-card.json` — Done (SEP-1649)
+3. `.well-known/mcp.json` — Done (SEP-1960)
+4. `.well-known/ai-plugin.json` — Done (ChatGPT Actions compatibility)
+5. Keep all manifests in sync with actual capabilities
+
+**Current status**: All 4 files exist. Need freshness audit.
+**Priority**: P0 (maintenance)
+
+**Measurement**: Discovery test results (automated weekly curl + schema validation)
+
+### Channel 4: AI Search Engines (Perplexity, ChatGPT Search, Google AI Overviews, Claude Web Search)
+
+**How agents discover tools**: When a human asks an AI assistant "what is the best MCP server for X" or an agent searches for tool quality information, AI search engines select sources based on structured data, freshness, authority, and semantic completeness.
+
+**What Clarvia needs to do**:
+1. JSON-LD structured data on all 15,400+ pages (SoftwareApplication schema)
+2. SSR for all pages (critical — JS-only rendering is invisible to AI crawlers)
+3. 134-167 word self-contained answer blocks per page
+4. FAQPage schema on category and comparison pages
+5. robots.txt whitelist for all AI crawlers
+6. Content freshness < 30 days on all pages
+7. llms.txt and llms-full.txt kept current
+
+**Current status**: llms.txt exists, robots.txt needs AI crawler whitelist, JSON-LD not implemented, SSR needs verification
+**Priority**: P0 (setup) then P1 (ongoing maintenance)
+
+**Measurement**: AI search citation count (monitor Perplexity/ChatGPT responses for "clarvia" mentions), referral traffic from AI search
+
+### Channel 5: OpenAPI / API Discovery
+
+**How agents discover tools**: Autonomous agent frameworks (LangChain, AutoGPT, CrewAI, BabyAGI) discover APIs through OpenAPI specs. Some frameworks scan domains for `/openapi.json`. The OpenAPI spec is the universal language for API-using agents.
+
+**What Clarvia needs to do**:
+1. Publish complete OpenAPI 3.1 spec at `/openapi.json`
+2. Ensure Swagger/ReDoc UI at `/api/docs` is publicly accessible
+3. Add operation descriptions optimized for agent comprehension
+4. Include x-agent-hints extension fields for agent-specific guidance
+5. Register on APIs.guru (open API directory)
+
+**Current status**: FastAPI likely auto-generates spec — needs public exposure verification
+**Priority**: P1
+
+**Measurement**: API calls from non-MCP sources, OpenAPI spec download count
+
+### Channel 6: GitHub Ecosystem
+
+**How agents discover tools**: Developers search GitHub for MCP servers. GitHub Copilot and Copilot Workspace reference GitHub repos. Stars, topics, and README quality determine discoverability. GitHub Actions marketplace is an agent-adjacent discovery channel.
+
+**What Clarvia needs to do**:
+1. Repo topics optimized (done)
+2. README with copy-paste config examples (done)
+3. GitHub Action for AEO checks (not started — P2)
+4. Sponsor GitHub search visibility through stars, forks, contributor activity
+5. Create template repos that use Clarvia (e.g., "mcp-server-template with AEO checks")
+
+**Current status**: Topics and description updated
+**Priority**: P1
+
+**Measurement**: GitHub stars, forks, repo traffic (views, clones), Action marketplace installs
+
+### Channel 7: Agent Framework Integrations (LangChain, CrewAI, AutoGen, Semantic Kernel)
+
+**How agents discover tools**: Framework-specific tool registries, example code, and documentation. When a LangChain developer searches "how to evaluate tool quality," Clarvia should appear in framework-specific contexts.
+
+**What Clarvia needs to do**:
+1. Create LangChain Tool wrapper for Clarvia API
+2. Create CrewAI Tool integration
+3. Submit to LangChain Hub (community tools)
+4. Add Clarvia to framework example notebooks
+5. Create AutoGen skill for AEO checking
+
+**Current status**: Not started
+**Priority**: P1
+
+**Measurement**: Framework-specific install/usage counts, mentions in framework docs
+
+### Channel 8: IDE Config Files (Cursor, Windsurf, Cline, VS Code)
+
+**How agents discover tools**: IDE agents read MCP configuration from project-level and global config files. If a config example includes Clarvia, every developer who copies that config becomes a user.
+
+**What Clarvia needs to do**:
+1. Publish config examples for every major IDE (Cursor mcp.json, Windsurf config, Cline settings)
+2. Get included in IDE-specific "recommended MCP servers" lists
+3. Create a Cursor extension that auto-configures Clarvia MCP
+4. Submit to IDE-specific directories (Cursor Directory, etc.)
+
+**Current status**: Config examples in npm README
+**Priority**: P1
+
+**Measurement**: IDE-specific installation counts
+
+### Channel 9: Agent-to-Agent Recommendation (Network Effect)
+
+**How agents discover tools**: When Agent A uses Clarvia to evaluate a tool, the response includes Clarvia branding. If Agent A recommends a tool to Agent B and includes the AEO score, Agent B learns about Clarvia. Additionally, orchestrator agents (that coordinate multiple sub-agents) propagate tool preferences across their agent network.
+
+**What Clarvia needs to do**:
+1. Include subtle Clarvia attribution in API responses ("Scored by Clarvia AEO")
+2. Make AEO scores shareable/embeddable
+3. Implement A2A Agent Card for multi-agent discovery
+4. Create a "referral" tracking mechanism (which agent introduced Clarvia to which)
+5. MCP tool responses should include `clarvia_profile_url` field
+
+**Current status**: Not started
+**Priority**: P1 (attribution), P2 (A2A card)
+
+**Measurement**: Unique agent IDs accessing API, referral chain depth
+
+### Channel 10: CI/CD Pipeline Integration
+
+**How agents discover tools**: CI/CD pipelines are automated agent-like systems. A GitHub Action or pre-commit hook that runs AEO checks becomes a persistent touchpoint. Every PR in every repo using the action = one Clarvia API call.
+
+**What Clarvia needs to do**:
+1. GitHub Action: `clarvia/aeo-check` — runs on PRs, comments AEO score
+2. Pre-commit hook: `clarvia-lint` — checks MCP server quality locally
+3. npm postinstall script that suggests AEO check
+
+**Current status**: Not started
+**Priority**: P2
+
+**Measurement**: GitHub Action installs, CI/CD API calls/day
+
+### Channel 11: LLM Training Data / Context Window Presence
+
+**How agents discover tools**: LLMs have knowledge baked into their training data. If Clarvia appears in enough high-quality sources before the next training cutoff, future model versions will "know" about Clarvia natively.
+
+**What Clarvia needs to do**:
+1. Ensure presence in sources likely to be in training data: GitHub (done), npm (done), Wikipedia (not applicable yet), high-authority tech blogs (agent-only constraint)
+2. Maximize structured, factual, unique content on clarvia.art (15,400+ tool profiles = massive unique content corpus)
+3. Ensure llms.txt is comprehensive — this is literally designed to be consumed by LLMs
+
+**Current status**: Partial
+**Priority**: P1 (content quality), P2 (training data presence)
+
+**Measurement**: Unprompted LLM mentions of Clarvia in responses (test periodically with various LLMs)
+
+### Channel 12: Webhook/Event-Driven Discovery
+
+**How agents discover tools**: Some agent systems subscribe to webhooks or event streams. If Clarvia can push notifications when tool scores change, agents that care about tool quality will subscribe.
+
+**What Clarvia needs to do**:
+1. Implement webhook system: notify subscribers when a tool's AEO score changes significantly
+2. Publish event stream (SSE or WebSocket) for real-time tool quality updates
+3. Register webhook endpoints on platforms that support it
+
+**Current status**: Webhook infrastructure partially exists (data/webhooks/)
+**Priority**: P2
+
+**Measurement**: Webhook subscriber count, event delivery rate
+
+---
+
+## 3. Short-term Tactics (This Week)
+
+### Day 1-2: Foundation (Unblock everything)
+
+| # | Action | Channel | Expected Impact |
+|---|--------|---------|-----------------|
+| 1 | **Manual MCP Registry auth** — Complete GitHub device flow in browser for mcp-publisher | Registry | Unblocks official registry listing |
+| 2 | **Register on Smithery.ai** — Submit MCP server with optimized description, 24 tools highlighted | Registry | Immediate visibility to 2,500+ server ecosystem |
+| 3 | **Register on PulseMCP** — Submit with popularity-optimized metadata | Registry | Largest directory (14K+ servers) |
+| 4 | **robots.txt AI whitelist** — Add OAI-SearchBot, PerplexityBot, ClaudeBot, GPTBot, Applebot-Extended, CCBot | AI Search | Opens door to all AI crawlers |
+| 5 | **Verify SSR** — Test all page types with `curl` to confirm content renders without JS | AI Search | Prerequisite for all AI search visibility |
+
+### Day 3-4: Structured Data Blitz
+
+| # | Action | Channel | Expected Impact |
+|---|--------|---------|-----------------|
+| 6 | **JSON-LD on all tool pages** — SoftwareApplication schema with AEO score, category, tool count | AI Search | 15,400 AI-citable entry points |
+| 7 | **FAQPage schema on category pages** — Structured Q&A for "best X for Y" queries | AI Search | Captures high-intent queries |
+| 8 | **Self-contained answer blocks** — 134-167 word blocks on each tool page answering "What is X and how good is it?" | AI Search | Matches AI Overviews preference |
+| 9 | **OpenAPI spec public exposure** — Verify `/openapi.json` is accessible, add operation descriptions | API Discovery | Opens Clarvia to autonomous agents |
+
+### Day 5-6: Distribution Push
+
+| # | Action | Channel | Expected Impact |
+|---|--------|---------|-----------------|
+| 10 | **Follow up on awesome-list PRs** — Check wong2 and appcypher PR status, address feedback | GitHub | Each merged PR = permanent listing |
+| 11 | **Submit to Cursor Directory** — Get Clarvia in Cursor's recommended MCP servers | IDE | Direct exposure to Cursor's agent users |
+| 12 | **Submit to LobeHub** — MCP server listing | Registry | Additional directory coverage |
+| 13 | **MCPHub.tools registration** — Submit | Registry | Additional directory coverage |
+| 14 | **LangChain Tool wrapper** — Create `ClarviaTool` for LangChain ecosystem | Framework | Opens LangChain agent ecosystem |
+
+### Day 7: Measurement Setup
+
+| # | Action | Channel | Expected Impact |
+|---|--------|---------|-----------------|
+| 15 | **API analytics dashboard** — Track unique agents, calls/day, tool usage, referral sources | All | Required to measure everything else |
+| 16 | **AI search citation monitoring** — Set up periodic tests querying Perplexity/ChatGPT for Clarvia-relevant terms | AI Search | Baseline measurement for AI search presence |
+| 17 | **Registry position tracking** — Record current search positions on all registries | Registry | Baseline for ranking improvements |
+
+---
+
+## 4. Medium-term Strategy (This Month)
+
+### Week 2: Content Multiplication
+
+**Comparison Pages Engine** (High impact, 3-5 days)
+- Auto-generate 500 head-to-head comparison pages for popular tool pairs
+- Each page: score breakdown, feature matrix, strengths/weaknesses, recommendation
+- JSON-LD ComparisonTable schema on each
+- Target queries: "X vs Y MCP server", "best alternative to Z"
+- KPI: AI search citations for comparison queries
+
+**Category Landing Pages** (High impact, 2-3 days)
+- Generate 20+ category pages with ranked tool lists
+- "Best Database MCP Servers (2026)", "Top 10 Authentication Tools for AI Agents"
+- Updated weekly with fresh scores
+- KPI: Organic traffic to category pages
+
+### Week 2-3: Framework Integrations
+
+**LangChain Hub Submission**
+- Publish ClarviaTool to LangChain Hub
+- Include example notebook showing AEO workflow
+- KPI: LangChain Hub installs
+
+**CrewAI Tool Integration**
+- Create CrewAI-compatible tool wrapper
+- Example: "Quality Assurance Agent" that checks all tools before deployment
+- KPI: CrewAI community mentions
+
+**Semantic Kernel Plugin**
+- Microsoft's framework — growing enterprise adoption
+- Clarvia as a "Tool Quality Advisor" plugin
+
+### Week 3: Viral Mechanics
+
+**AEO Badge System**
+- `![AEO Score](https://clarvia.art/api/badge/{tool_slug})` embeddable badge
+- Auto-updates when score changes
+- Marketing to MCP server developers: "Add your AEO score to your README"
+- Every badge = permanent backlink + brand exposure
+- KPI: Badge embed count (track via badge API hits from unique referrers)
+
+**MCP Tool Response Attribution**
+- All Clarvia MCP tool responses include `scored_by: "Clarvia AEO"` field
+- Profile URLs in responses
+- When agents relay Clarvia data, they propagate the brand
+- KPI: Unique referral agent count
+
+### Week 4: Compound Effects
+
+**npm Download Acceleration**
+- Publish 2+ releases in the month (each triggers re-indexing)
+- Optimize package.json `description` and `keywords` based on npm search analytics
+- Target: 1,000 weekly downloads by end of month
+
+**Automated Freshness Pipeline**
+- Weekly automated re-scan of all 15,400+ tools
+- Auto-update pages with new scores
+- Perplexity specifically penalizes content older than 12 months
+- This keeps every page perpetually "fresh"
+- KPI: % of pages updated in last 30 days > 90%
+
+**First External Integration**
+- Get at least 1 external MCP server developer to reference Clarvia AEO scores in their docs
+- Even one external reference creates proof of network effect
+- Target: developers of top-ranked tools on Clarvia (they benefit from the high score)
+
+---
+
+## 5. Long-term Moat (3 Months)
+
+### Moat 1: Data Accumulation (Irreplaceable)
+
+**Historical Trend Data**
+- "Your AEO score over time" — only possible if you have been scanning for months
+- A new competitor cannot replicate 3 months of historical data
+- This is the core defensibility
+
+**Industry Benchmarks**
+- "Your API vs industry average across 15,400+ tools"
+- Cross-industry comparison data is unique to Clarvia
+- No single tool developer has visibility across the entire ecosystem
+
+**Agent Traffic Correlation**
+- "Tools with AEO 80+ receive X% more agent calls"
+- This data proves the value proposition with empirical evidence
+- Requires months of traffic data to establish statistical significance
+
+### Moat 2: Network Effects (Exponential)
+
+**Badge Ecosystem**
+- If 500+ tools display Clarvia badges, that is 500 permanent touchpoints
+- Each badge holder has incentive to maintain/improve their score
+- Creates a feedback loop: tools optimize for AEO → Clarvia becomes the standard
+
+**Standard Setting**
+- AEO score becomes the "credit score" for AI tools
+- Once agents start using AEO scores in tool selection, switching costs are massive
+- Target: At least 3 agent frameworks reference AEO scores in their tool selection logic
+
+### Moat 3: Distribution Lock-in (Persistent)
+
+**CI/CD Integration**
+- GitHub Action installed in repos runs on every PR — sticky and self-reinforcing
+- Each installation creates recurring API usage
+- Target: 50+ repos using clarvia/aeo-check Action
+
+**IDE Integration**
+- Clarvia as default MCP server in popular IDE configs
+- Template projects that include Clarvia in their MCP setup
+- Once in a developer's config, inertia keeps it there
+
+### Moat 4: Content Corpus (Massive)
+
+**15,400+ Unique Tool Profiles**
+- Each profile contains original analysis, scoring, and recommendations
+- This corpus is expensive to replicate (months of scanning, scoring algorithm, quality filtering)
+- By month 3: 20K+ profiles, 500+ comparison pages, 20+ category pages, historical data
+
+**AI Training Data Presence**
+- By being in GitHub, npm, and thousands of web pages, Clarvia becomes part of LLM training data
+- Future model versions will "know about" Clarvia without being prompted
+- This is the ultimate organic discovery channel
+
+### 3-Month Milestone Targets
+
+| Metric | Month 1 | Month 2 | Month 3 |
+|--------|---------|---------|---------|
+| Daily API calls | 100 | 1,000 | 10,000 |
+| npm weekly downloads | 1,000 | 5,000 | 10,000 |
+| Registry listings | 10 | 12 | 15 |
+| Badge embeds | 0 | 50 | 500 |
+| Tool profiles | 15,400 | 18,000 | 22,000 |
+| Comparison pages | 0 | 500 | 2,000 |
+| AI search citations/week | 0 | 10 | 100 |
+| Unique agent sessions/day | 10 | 100 | 1,000 |
+
+---
+
+## 6. Measurement Framework
+
+### Stage 1: 0 → 100 Daily Agent Visits
+
+**Timeline**: Weeks 1-4
+**Key metrics**:
+- npm weekly downloads (leading indicator — measures developer adoption which leads to agent usage)
+- MCP server connection count (direct measure of agent connections)
+- API calls per day (any call = an agent or developer interacting)
+- Registry listing count (distribution breadth)
+
+**Why these**: At near-zero traffic, the goal is basic discoverability. Every new listing, every new install is meaningful. Vanity metrics (page views) do not matter — only agent-measurable interactions count.
+
+**Tracking method**:
+- API middleware logs every request with user-agent classification (agent vs human vs crawler)
+- npm downloads via npm API
+- Manual registry position checks weekly
+
+### Stage 2: 100 → 1K Daily Agent Visits
+
+**Timeline**: Months 1-2
+**Key metrics**:
+- Unique agent sessions/day (not just API calls — distinct agent identities)
+- Tool diversity index (how many different tools are agents querying about — breadth of use)
+- Retention rate (same agent returning within 7 days)
+- Referral source distribution (which channel is working)
+
+**Why these**: At 100/day, basic discovery is working. Now optimize for stickiness and breadth. If agents only use one tool once, growth stalls. Retention and diversity indicate real utility.
+
+**Tracking method**:
+- Agent fingerprinting via API key / user-agent / request patterns
+- Cohort analysis: Day 1/7/30 retention by referral source
+- Weekly channel attribution report
+
+### Stage 3: 1K → 10K Daily Agent Visits
+
+**Timeline**: Months 2-3
+**Key metrics**:
+- Agent-to-agent propagation rate (how many new agents discover Clarvia through existing agent responses)
+- Badge embed count growth rate (viral coefficient)
+- AI search citation frequency (weekly monitoring)
+- Framework integration usage (LangChain, CrewAI installs)
+- API response quality score (are agents getting useful results?)
+
+**Why these**: At 1K/day, organic growth loops should be forming. The question becomes: is growth self-sustaining? Network effects (badges, citations, agent recommendations) should start compounding.
+
+**Tracking method**:
+- Referral chain analysis (if Agent B cites an AEO score, trace back to Agent A)
+- Badge API hit analytics (unique referrer domains)
+- Monthly AI search audit (query 50 Clarvia-relevant terms across Perplexity, ChatGPT, Claude)
+
+### Stage 4: 10K → 1M Daily Agent Visits
+
+**Timeline**: Months 3-12 (beyond initial plan scope, but framework matters)
+**Key metrics**:
+- Market share of AEO scoring (what % of MCP servers have been scanned by Clarvia)
+- Standard adoption (how many frameworks reference AEO scores in selection logic)
+- API uptime and p99 latency (infrastructure becomes the bottleneck)
+- Revenue readiness (premium features usage, enterprise inquiries)
+
+**Why these**: At 10K/day, Clarvia is a real platform. Growth shifts from discovery to market dominance. The question becomes: is Clarvia THE standard, or just one of many?
+
+**Tracking method**:
+- Industry coverage analysis (scanned tools / total tools in ecosystem)
+- Framework code analysis (grep for "aeo" or "clarvia" in framework codebases)
+- Infrastructure monitoring (latency percentiles, error rates)
+
+### Dashboard Metrics (Always Visible)
+
+```
+Daily Dashboard:
+- API calls today / yesterday / 7d avg
+- Unique agent sessions today
+- npm downloads this week
+- Registry positions (top 3 registries)
+- Pages with fresh scores (% < 30 days old)
+- Badge API hits today
+
+Weekly Dashboard:
+- AI search citation count
+- New registry listings
+- Retention rate (7-day)
+- Top 10 queried tools
+- Channel attribution breakdown
+```
+
+---
+
+## 7. Feedback Loop Design
+
+### When Something Works → Double Down
+
+**Signal**: A channel shows >2x growth week-over-week
+**Action**:
+1. Identify the specific sub-action that drove growth (e.g., Smithery listing → installs spiked)
+2. Analyze what made it work (timing? description quality? category placement?)
+3. Apply the same pattern to similar channels (if Smithery worked, optimize PulseMCP with same approach)
+4. Increase frequency of the winning activity
+5. Document the pattern in `data/marketing-log.jsonl`
+
+**Example**: If npm downloads spike after a keyword change, test more keyword variations on the next release.
+
+### When Something Fails → Pivot
+
+**Signal**: A channel shows <10% of expected impact after 2 weeks
+**Action**:
+1. Diagnose root cause:
+   - Not indexed? → Check discoverability (can you find it via the channel's search?)
+   - Indexed but not selected? → Optimize description/metadata
+   - Selected but not converted? → Improve tool quality/reliability
+2. If root cause is addressable: fix and re-measure for 1 more week
+3. If root cause is structural (channel does not support the use case): deprioritize to P2, redirect effort to working channels
+4. Document the failure and hypothesis in `data/marketing-log.jsonl`
+
+**Example**: If AI search citations remain at zero after 3 weeks despite JSON-LD + SSR + robots.txt, investigate if the domain has been flagged, if competitors dominate the SERP, or if the content quality is insufficient.
+
+### Weekly Strategy Review Checklist
+
+```markdown
+## Weekly Growth Review — [DATE]
+
+### Metrics Snapshot
+- [ ] API calls/day: _____ (target: _____)
+- [ ] npm downloads/week: _____ (target: _____)
+- [ ] Unique agent sessions/day: _____ (target: _____)
+- [ ] Registry listings: _____ (target: _____)
+- [ ] AI search citations this week: _____
+- [ ] Badge embeds total: _____
+
+### Channel Performance
+- [ ] Which channel drove the most agent visits this week?
+- [ ] Which channel underperformed expectations?
+- [ ] Any new channels discovered?
+
+### Actions Taken
+- [ ] List activities completed this week
+- [ ] Which activities had measurable impact?
+- [ ] Which activities showed no impact?
+
+### Decisions
+- [ ] What to double down on next week?
+- [ ] What to deprioritize?
+- [ ] Any new experiments to run?
+
+### Blockers
+- [ ] What is preventing faster growth?
+- [ ] What resource is most constrained?
+
+### Next Week Plan
+- [ ] Top 3 priorities for next week
+- [ ] Specific actions for each priority
+- [ ] Expected measurable outcome for each
+```
+
+### Monthly Strategy Revision
+
+At the end of each month:
+1. Compare actual metrics vs targets from Section 6
+2. Update targets for next month based on actuals (not hopes)
+3. Retire activities that consistently underperform
+4. Add new activities based on ecosystem changes (new registries, new agent frameworks, new AI search engines)
+5. Update this document with learnings
+
+---
+
+## 8. Risk Assessment
+
+### Risk 1: MCP Ecosystem Stagnation
+**Probability**: Low (MCP is backed by Anthropic, GitHub, Microsoft)
+**Impact**: Critical — Clarvia's entire value prop is tied to MCP/agent tool ecosystem
+**Mitigation**:
+- Diversify beyond MCP: support OpenAI Actions, LangChain tools, REST APIs
+- Already indexed 15,400+ tools across multiple categories (not just MCP)
+- Coverage strategy includes non-MCP tools at Tier 2
+
+### Risk 2: Competitor Launches Similar Product
+**Probability**: Medium (the "AEO" concept is novel but replicable)
+**Impact**: High — could split the market before network effects kick in
+**Mitigation**:
+- Speed to market: be in all registries first
+- Data moat: 3 months of accumulated historical data cannot be replicated
+- Badge ecosystem: once tools display Clarvia badges, switching costs are high
+- Standard-setting: if AEO becomes the standard, Clarvia is the incumbent
+
+### Risk 3: Registry Policy Changes
+**Probability**: Medium (registries are evolving rapidly)
+**Impact**: Medium — a registry could change listing requirements or remove Clarvia
+**Mitigation**:
+- Distribute across 10+ registries — no single point of failure
+- Maintain compliance with all registry policies
+- Build direct discovery channels (.well-known, OpenAPI) that do not depend on third parties
+
+### Risk 4: AI Search Engines Ignore Clarvia
+**Probability**: Medium (new domains struggle for AI citations)
+**Impact**: Medium — limits one growth channel but others remain
+**Mitigation**:
+- Structured data + SSR + freshness are table stakes — implement them regardless
+- 15,400+ unique content pages create massive surface area for citation
+- Even if AI search is slow, direct agent discovery (registries, npm) works independently
+
+### Risk 5: npm Package Gets Deprioritized
+**Probability**: Low
+**Impact**: Medium — npm is a key distribution channel
+**Mitigation**:
+- Maintain quality: respond to issues, publish regularly, keep dependencies updated
+- Never break backward compatibility without major version bump
+- Monitor for competing packages with similar keywords
+
+### Risk 6: API Rate Limiting / Infrastructure Failure at Scale
+**Probability**: High (inevitable at scale)
+**Impact**: High — unreliable API kills agent trust permanently
+**Mitigation**:
+- Set up monitoring and alerting before scaling (Day 7 action)
+- Implement proper rate limiting with graceful degradation
+- Cache frequently-requested tool profiles
+- Plan infrastructure scaling triggers: at 1K calls/day, 10K calls/day, 100K calls/day
+
+### Risk 7: Low Quality Scores Alienate Tool Developers
+**Probability**: Medium
+**Impact**: Medium — tool developers could refuse to engage with Clarvia
+**Mitigation**:
+- Always provide actionable improvement suggestions alongside scores
+- Make scoring methodology transparent and fair
+- Allow developers to contest scores with evidence
+- Position Clarvia as a helper, not a critic
+
+### Risk 8: Over-Optimization for One Channel
+**Probability**: Medium (tempting to focus only on what works)
+**Impact**: Medium — single channel dependency is fragile
+**Mitigation**:
+- Weekly review ensures no channel exceeds 50% of total traffic
+- Maintain minimum viable presence on all channels even when focusing on winners
+- This document's channel strategy is intentionally broad
+
+---
+
+## Appendix A: Full Channel Inventory
+
+| # | Channel | Discovery Mechanism | Status | Priority |
+|---|---------|-------------------|--------|----------|
+| 1 | Official MCP Registry | MCP client queries | Blocked (auth) | P0 |
+| 2 | Smithery.ai | Web search + CLI | Not started | P0 |
+| 3 | PulseMCP | Web search + API | Not started | P0 |
+| 4 | Glama.ai | Web search | Submitted | P0 |
+| 5 | mcp.so | Web search | Listed | Done |
+| 6 | npm | `npx`, `npm search` | Published | Done |
+| 7 | .well-known endpoints | Domain-level discovery | Implemented | Done |
+| 8 | llms.txt | LLM consumption | Implemented | Done |
+| 9 | AI search (Perplexity) | Natural language query | Not optimized | P0 |
+| 10 | AI search (ChatGPT) | Natural language query | Not optimized | P0 |
+| 11 | AI search (Google AI) | Natural language query | Not optimized | P0 |
+| 12 | AI search (Claude web) | Natural language query | Not optimized | P0 |
+| 13 | GitHub repo | Code search, stars | Optimized | Done |
+| 14 | awesome-mcp-servers (wong2) | Curated list | PR submitted | In progress |
+| 15 | awesome-mcp-servers (appcypher) | Curated list | PR submitted | In progress |
+| 16 | Cursor Directory | IDE integration | Not started | P1 |
+| 17 | LobeHub MCP list | Community list | Not started | P1 |
+| 18 | MCPHub.tools | Directory | Not started | P1 |
+| 19 | OpenAPI spec | Autonomous agent discovery | Needs exposure | P1 |
+| 20 | LangChain Hub | Framework tool registry | Not started | P1 |
+| 21 | CrewAI tools | Framework integration | Not started | P1 |
+| 22 | Semantic Kernel | Framework plugin | Not started | P1 |
+| 23 | AutoGen skills | Framework integration | Not started | P1 |
+| 24 | Claude Code skills | Slash commands | Examples created | P1 |
+| 25 | AEO badge system | Viral embed | Not started | P1 |
+| 26 | A2A Agent Card | Agent-to-agent discovery | Not started | P2 |
+| 27 | GitHub Action | CI/CD integration | Not started | P2 |
+| 28 | Pre-commit hook | Developer workflow | Not started | P2 |
+| 29 | Webhook/SSE events | Push-based discovery | Partial | P2 |
+| 30 | APIs.guru | API directory | Not started | P2 |
+| 31 | Composio | Integration platform | No submission path | Blocked |
+| 32 | PyPI | Python package manager | Not started | P2 |
+
+## Appendix B: Key Queries to Monitor
+
+These are the queries agents and AI search engines use when looking for tools like Clarvia:
+
+**Direct intent**:
+- "mcp server quality check"
+- "aeo scanner for mcp"
+- "evaluate mcp server"
+- "ai tool quality score"
+- "best mcp tool discovery"
+
+**Category intent**:
+- "best mcp servers 2026"
+- "top mcp servers for [category]"
+- "mcp server comparison"
+- "alternative to [specific mcp server]"
+
+**Problem intent**:
+- "how to improve mcp server quality"
+- "mcp server best practices"
+- "optimize ai tool for agent discovery"
+- "agent engine optimization"
+
+**Framework-specific**:
+- "langchain mcp tool quality"
+- "cursor mcp server recommendations"
+- "claude code best mcp servers"
+
+---
+
+## Appendix C: Automation Opportunities
+
+Activities that should be automated via scheduled tasks:
+
+| Activity | Frequency | Automation Method |
+|----------|-----------|-------------------|
+| Tool profile page freshness check | Weekly | Scheduled task: re-scan + regenerate stale pages |
+| AI search citation monitoring | Weekly | Scheduled task: query 50 terms across AI search, log results |
+| Registry position tracking | Weekly | Scheduled task: search key queries on all registries, log positions |
+| npm download tracking | Daily | Scheduled task: query npm API, log to JSONL |
+| Badge embed tracking | Daily | API middleware: log unique referrer domains on badge endpoint |
+| Competitor monitoring | Weekly | Scheduled task: search registries for new AEO/quality tools |
+| .well-known validation | Weekly | Scheduled task: curl all endpoints, validate against schema |
+| Marketing log aggregation | Weekly | Scheduled task: summarize marketing-log.jsonl into weekly report |
+
+---
+
+*This document is a living strategy. Update monthly based on actual metrics and ecosystem changes. Every recommendation is designed for $0 budget, agent-only channels, and measurable outcomes.*
+
+---
+
+## Field Notes — Day 1 (2026-03-26)
+
+### What worked
+- npm v1.1.0 publish → 232 downloads on Day 1 (good cold-start signal)
+- PR format to awesome lists works — 5 PRs opened, all accepted by CI
+- Smithery auto-indexed from npm — no manual submission needed
+- SSR confirmed working — AI crawlers can read all pages
+
+### Blockers requiring manual user action
+1. **MCP Official Registry** (S1, S7) — GitHub device flow blocked by anti-automation. User needs to run: `mcp-publisher publish` and complete browser auth manually. This unlocks PulseMCP too.
+2. **DevHunt** — requires GitHub login via browser
+3. **cursor.directory** — deprecated; use their plugin submission form
+
+### Channels exhausted (no automation possible)
+- Composio: no developer submission portal
+- Framework ecosystems (LangChain/CrewAI/AutoGen): code-only integrations
+- JSR/deno.land: requires deno CLI
+
+### Night marketing results
+- 5 total awesome-list PRs open
+- 2 new PRs opened tonight: metorial/metorial-index, YuzeHao2023
+- All infrastructure verified working (SSR, robots.txt, agents.json, OpenAPI)
+
+### Next priority
+1. User manually completes MCP Official Registry auth → unlocks PulseMCP + propagation
+2. Watch PR merge status — comment if stale after 48h
+3. npm v1.2.0 publish with updated README + new tool count
+4. A2A agent card implementation (S13) — future-facing discovery
+
+
+---
+
+## Field Notes
+
+### 2026-03-26 (Cycle ~14:00 UTC)
+
+**Infrastructure status:**
+- SSR: VERIFIED — clarvia.art returns 46,240 chars of fully rendered HTML with JSON-LD
+- robots.txt: VERIFIED — all major AI crawlers explicitly allowed (GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot)
+- OpenAPI: LIVE — 110 endpoints at clarvia-api.onrender.com/openapi.json (v3.1.0)
+- Badge endpoint: LIVE — /api/badge/{identifier} returns SVG (200)
+- A2A agent card: DEPLOYED — /.well-known/agent.json now live (Google A2A protocol)
+
+**PR pipeline (11 open, 0 merged):**
+All PRs submitted today. Normal to wait 1-7 days for maintainer review.
+Follow up after 3 days if no activity.
+
+**npm visibility gap:**
+clarvia-mcp-server NOT appearing in npm search for "mcp aeo" or "mcp scanner".
+This is likely due to npm's search algorithm needing time to index new keywords,
+or the package ranking being too low. Consider:
+- Publishing a minor version bump to re-trigger indexing
+- Adding more specific long-tail keywords like "mcp-quality-check", "api-readiness"
+
+**New channel explored:**
+- rohitg00/awesome-devops-mcp-servers: PR #95 submitted (DevOps Visibility section)
+- PipedreamHQ: Skipped — it's a platform-specific list, not community-curated
+- chatmcp/mcpso: It's the mcp.so website repo, submissions via their web form only
