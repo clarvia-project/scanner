@@ -3,14 +3,14 @@
 > Clarvia is the AEO (AI Engine Optimization) standard for AI agent tool quality. It scores how easily AI agents can discover and use any API, MCP server, CLI tool, or skill.
 
 Website: https://clarvia.art
-API Base URL: https://api.clarvia.art
+API Base URL: https://clarvia-api.onrender.com
 MCP Server: npx clarvia-mcp-server
 
 ---
 
 ## 1. What is Clarvia?
 
-Clarvia indexes 12,800+ tools across the AI agent ecosystem and scores each one on a 0-100 scale (the "Clarvia Score") for agent readiness. Think of it as "Lighthouse for AI agents" — instead of measuring web performance, it measures how well a service can be found and used by autonomous AI agents.
+Clarvia indexes 15,400+ tools across the AI agent ecosystem and scores each one on a 0-100 scale (the "Clarvia Score") for agent readiness. Think of it as "Lighthouse for AI agents" — instead of measuring web performance, it measures how well a service can be found and used by autonomous AI agents.
 
 ### What is AEO?
 
@@ -113,7 +113,7 @@ pip install clarvia-mcp-server
 
 #### 3.1 search_services
 
-Search 12,800+ AI agent tools by keyword, category, or score.
+Search 15,400+ AI agent tools by keyword, category, or score.
 
 **Parameters:**
 | Name | Type | Required | Description |
@@ -370,7 +370,7 @@ Report the outcome after using a tool (success/failure/partial) to contribute to
 
 ## 4. REST API Reference
 
-Base URL: `https://api.clarvia.art`
+Base URL: `https://clarvia-api.onrender.com`
 
 No authentication required for public endpoints. API key required for endpoints marked with [AUTH].
 
@@ -409,7 +409,7 @@ Search and filter services. Supports compound filters.
 | min_score | int (0-100) | 0 | Minimum Clarvia Score |
 | max_score | int (0-100) | - | Maximum Clarvia Score |
 | sort | enum | score_desc | Sort: score_desc, score_asc, name_asc, name_desc, recent |
-| source | string | - | "all" for 12,800+ tools, "collected" for registry tools only |
+| source | string | - | "all" for 15,400+ tools, "collected" for registry tools only |
 | limit | int (1-100) | 20 | Page size |
 | offset | int | 0 | Pagination offset |
 
@@ -687,4 +687,4 @@ All responses include:
 - Methodology: https://clarvia.art/methodology
 - Improvement Guide: https://clarvia.art/guide
 - llms.txt: https://clarvia.art/llms.txt
-- agents.json: https://api.clarvia.art/.well-known/agents.json
+- agents.json: https://clarvia-api.onrender.com/.well-known/agents.json
