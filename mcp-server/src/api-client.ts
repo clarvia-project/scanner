@@ -304,6 +304,52 @@ export async function compareSetup(setupId: string): Promise<CompareResult> {
   return request<CompareResult>(`/v1/setup/${encodeURIComponent(setupId)}/compare`);
 }
 
+// --- CS (Customer Support) API ---
+
+export interface CreateTicketResult {
+  ticket_id: string;
+  status: string;
+  message: string;
+  track_url: string;
+}
+
+export async function createCSTicket(params: {
+  type: "bug" | "feature" | "question" | "security";
+  title: string;
+  description: string;
+  agent_id?: string;
+  service_url?: string;
+  severity?: string;
+  metadata?: Record<string, unknown>;
+}): Promise<CreateTicketResult> {
+  return request<CreateTicketResult>("/v1/cs/tickets", {
+    method: "POST",
+    body: params,
+  });
+}
+
+export interface TicketListResult {
+  total: number;
+  tickets: Array<{
+    ticket_id: string;
+    type: string;
+    title: string;
+    status: string;
+    severity: string;
+    created_at: string;
+  }>;
+}
+
+export async function listCSTickets(params?: {
+  type?: string;
+  status?: string;
+  agent_id?: string;
+}): Promise<TicketListResult> {
+  return request<TicketListResult>("/v1/cs/tickets", {
+    params: params as Record<string, string | undefined>,
+  });
+}
+
 export async function recommendForSetup(
   setupId: string,
   limit: number = 10,

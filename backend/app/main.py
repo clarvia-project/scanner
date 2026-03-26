@@ -64,7 +64,7 @@ class BodySizeLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 from .config import settings
-from .middleware import RateLimitMiddleware, SecurityHeadersMiddleware
+from .middleware import AnalyticsMiddleware, RateLimitMiddleware, SecurityHeadersMiddleware, SecurityMiddleware
 from .models import ErrorResponse, ScanRequest, ScanResponse, WaitlistRequest
 from .routes.admin_routes import router as admin_router
 from .routes.badge_routes import router as badge_router
@@ -74,6 +74,8 @@ from .routes.profile_routes import router as profile_router
 from .routes.recommend_routes import router as recommend_router
 from .routes.marketing_routes import router as marketing_router
 from .routes.setup_routes import router as setup_router
+from .routes.cs_routes import router as cs_router
+from .routes.feed_routes import router as feed_router
 from .routes.trending_routes import router as trending_router
 from .scanner import cleanup_cache, get_cached_scan, run_scan
 
@@ -179,6 +181,12 @@ app.add_middleware(
     allow_headers=["Content-Type", "X-API-Key", "X-Clarvia-Key", "Authorization"],
 )
 
+# Analytics (outermost — sees all requests)
+app.add_middleware(AnalyticsMiddleware)
+
+# Security (abuse detection, suspicious request blocking)
+app.add_middleware(SecurityMiddleware)
+
 # Rate limiting
 app.add_middleware(RateLimitMiddleware)
 
@@ -243,6 +251,8 @@ app.include_router(badge_router)
 app.include_router(trending_router)
 app.include_router(marketing_router)
 app.include_router(setup_router)
+app.include_router(cs_router)
+app.include_router(feed_router)
 
 # MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
 try:

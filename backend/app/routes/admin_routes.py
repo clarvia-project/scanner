@@ -375,6 +375,24 @@ async def _background_rescan(urls: list[str], max_concurrent: int = 3) -> None:
     )
 
 
+@router.get("/kpi")
+async def admin_kpi(_key: ApiKeyDep):
+    """Real-time KPI dashboard data.
+
+    Returns traffic, agent breakdown, scan metrics, MCP usage,
+    performance stats, and time-series data (hourly/daily).
+    """
+    from ..services.analytics import analytics
+    return analytics.get_kpi()
+
+
+@router.get("/security")
+async def admin_security(_key: ApiKeyDep):
+    """Security dashboard — abuse detection stats, banned IPs, threat overview."""
+    from ..services.security import abuse_detector
+    return abuse_detector.get_stats()
+
+
 @router.get("/dimension-breakdown")
 async def admin_dimension_breakdown(_key: ApiKeyDep):
     """Detailed dimension-level breakdown across all services.

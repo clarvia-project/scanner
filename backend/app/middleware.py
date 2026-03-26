@@ -1,4 +1,4 @@
-"""Rate limiting middleware for the scanner API."""
+"""Rate limiting and analytics middleware for the scanner API."""
 
 import logging
 import time
@@ -7,6 +7,9 @@ from collections import defaultdict
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
+
+from .services.analytics import analytics
+from .services.security import abuse_detector, is_suspicious_request
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +137,76 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Prevent caching of API responses
         if request.url.path.startswith("/api/"):
             response.headers["Cache-Control"] = "no-store"
+        return response
+
+
+class SecurityMiddleware(BaseHTTPMiddleware):
+    """Block banned IPs, detect suspicious requests, enforce URL safety."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        client_ip = _get_client_ip(request)
+        path = request.url.path
+        user_agent = request.headers.get("user-agent", "")
+
+        # Check IP ban
+        if abuse_detector.is_banned(client_ip):
+            abuse_detector.total_blocked += 1
+            return JSONResponse(
+                status_code=403,
+                content={"error": "Access temporarily blocked due to abuse detection."},
+            )
+
+        # Check suspicious patterns
+        suspicious, reason = is_suspicious_request(user_agent, path)
+        if suspicious:
+            abuse_detector.record_error(client_ip)
+            logger.warning("Suspicious request from %s: %s (path=%s)", client_ip, reason, path)
+            # Don't block — just track. Block after threshold.
+
+        response = await call_next(request)
+
+        # Track errors for abuse detection
+        if response.status_code >= 400:
+            abuse_detector.record_error(client_ip)
+
+        # Track scan bursts
+        if path == "/api/scan" and request.method == "POST":
+            abuse_detector.record_scan(client_ip)
+
+        return response
+
+
+class AnalyticsMiddleware(BaseHTTPMiddleware):
+    """Track all requests for KPI dashboard. Lightweight, non-blocking."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        start = time.monotonic()
+        response = await call_next(request)
+        elapsed_ms = (time.monotonic() - start) * 1000
+
+        client_ip = _get_client_ip(request)
+        user_agent = request.headers.get("user-agent", "")
+        path = request.url.path
+        method = request.method
+
+        analytics.record_request(
+            path=path,
+            method=method,
+            status_code=response.status_code,
+            client_ip=client_ip,
+            user_agent=user_agent,
+            response_time_ms=elapsed_ms,
+        )
+
+        # Track scans specifically
+        if path == "/api/scan" and method == "POST" and response.status_code == 200:
+            # URL is in request body, but we track count only here
+            analytics.record_scan("unknown")
+
+        # Track MCP calls
+        if path.startswith("/mcp"):
+            analytics.record_mcp_call(path)
+
         return response
 
 
