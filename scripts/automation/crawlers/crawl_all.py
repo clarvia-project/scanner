@@ -5,14 +5,16 @@ Runs each crawler sequentially, deduplicates across sources, and outputs
 new discoveries to data/new-tools-queue.jsonl.
 
 Sources (Tier 1 — 100% coverage):
-  pulsemcp     — PulseMCP directory (12,500+ servers)
-  smithery     — Smithery.ai registry (4,100+ servers)
-  anthropic    — Official MCP registry + GitHub org
-  mcpservers   — mcpservers.org curated list
-  mcpso        — mcp.so marketplace (19,000+ servers)
-  awesome      — Awesome MCP GitHub lists
-  npm          — Comprehensive npm package search
-  pypi         — Comprehensive PyPI package search
+  pulsemcp              — PulseMCP directory (12,500+ servers)
+  smithery              — Smithery.ai registry (4,100+ servers)
+  anthropic             — Official MCP registry + GitHub org
+  mcpservers            — mcpservers.org curated list
+  mcpso                 — mcp.so marketplace (19,000+ servers)
+  awesome               — Awesome MCP GitHub lists
+  npm                   — Comprehensive npm package search
+  pypi                  — Comprehensive PyPI package search
+  skills                — GitHub SKILL.md files + official skill repos
+  github_comprehensive  — GitHub mega-crawler: topics + deps + files + awesome lists
 
 Sources (Tier 2 — trending/popular):
   langchain    — LangChain tools from GitHub
@@ -96,6 +98,16 @@ CRAWLERS = {
         "module": "pypi_comprehensive_crawler",
         "tier": 1,
         "description": "Comprehensive PyPI MCP packages",
+    },
+    "skills": {
+        "module": "skills_crawler",
+        "tier": 1,
+        "description": "GitHub SKILL.md files + official skill repos",
+    },
+    "github_comprehensive": {
+        "module": "github_comprehensive_crawler",
+        "tier": 1,
+        "description": "GitHub mega-crawler: topics + deps + files + awesome lists",
     },
     # Tier 2 — Trending/popular
     "langchain": {
@@ -253,7 +265,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Sources:
-  Tier 1: pulsemcp, smithery, anthropic, mcpservers, mcpso, awesome, npm, pypi
+  Tier 1: pulsemcp, smithery, anthropic, mcpservers, mcpso, awesome, npm, pypi, skills, github_comprehensive
   Tier 2: langchain, huggingface, composio
 
 Examples:
