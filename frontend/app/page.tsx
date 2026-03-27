@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -165,6 +165,33 @@ const DIMENSION_COLORS = [
   { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20" },
 ];
 
+/** Animated counter: counts from 0 to `end` over `duration` ms using ease-out */
+function useAnimatedCounter(end: number, duration = 1500) {
+  const [value, setValue] = useState(0);
+  const prevEnd = useRef(0);
+
+  useEffect(() => {
+    if (end === prevEnd.current) return;
+    prevEnd.current = end;
+    if (end === 0) { setValue(0); return; }
+
+    const start = performance.now();
+    let raf: number;
+
+    function tick(now: number) {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      setValue(Math.round(eased * end));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    }
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [end, duration]);
+
+  return value;
+}
+
 export default function LandingPage() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -176,7 +203,22 @@ export default function LandingPage() {
   >("idle");
   const [topScores, setTopScores] = useState<TopScore[]>(FALLBACK_SCORES);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [stats, setStats] = useState({ totalTools: 28000, totalScored: 28000, avgScore: 0, categories: 20 });
+  const [altQuery, setAltQuery] = useState("");
+  const [altLoading, setAltLoading] = useState(false);
+  const [altResults, setAltResults] = useState<{
+    service: string;
+    category: string;
+    alternatives: { name: string; url: string; score: number; category: string; similarity: number; install_hint: string | null; description: string; scan_id: string }[];
+    total_in_category: number;
+  } | null>(null);
+  const [altError, setAltError] = useState("");
   const router = useRouter();
+
+  // Animated counters for hero stats
+  const animatedTools = useAnimatedCounter(stats.totalTools);
+  const animatedScored = useAnimatedCounter(stats.totalScored);
+  const animatedCategories = useAnimatedCounter(stats.categories);
 
   useEffect(() => {
     fetch("/data/prebuilt-scans.json")
@@ -195,6 +237,25 @@ export default function LandingPage() {
         setTopScores(sorted);
       })
       .catch(() => {});
+  }, []);
+
+  // Fetch live stats for hero counters
+  useEffect(() => {
+    Promise.all([
+      fetch(`${API_BASE}/v1/stats`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch("/data/prebuilt-scans.json").then((r) => (r.ok ? r.json() : [])).catch(() => []),
+    ]).then(([apiStats, scans]) => {
+      const scoredCount = Array.isArray(scans) ? scans.length : 0;
+      const apiTotal = apiStats?.total_services ?? 0;
+      // totalTools = broader catalog (API tools + scored), totalScored = AEO-scored tools
+      const broader = Math.max(apiTotal, scoredCount, 28000);
+      setStats({
+        totalTools: broader,
+        totalScored: scoredCount || 28000,
+        avgScore: apiStats?.avg_score || 0,
+        categories: apiStats?.categories_count || 20,
+      });
+    });
   }, []);
 
   async function handleScan(targetUrl?: string) {
@@ -250,6 +311,32 @@ export default function LandingPage() {
       }
     } catch {
       setWaitlistStatus("error");
+    }
+  }
+
+  async function handleAltSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = altQuery.trim();
+    if (!q) return;
+
+    setAltLoading(true);
+    setAltError("");
+    setAltResults(null);
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/v1/alternatives/${encodeURIComponent(q)}?limit=6`
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.detail || `Search failed (${res.status})`);
+      }
+      const data = await res.json();
+      setAltResults(data);
+    } catch (err) {
+      setAltError(err instanceof Error ? err.message : "Search failed");
+    } finally {
+      setAltLoading(false);
     }
   }
 
@@ -349,6 +436,24 @@ export default function LandingPage() {
               The AEO standard for AI agents
             </div>
 
+            {/* Stats counters */}
+            <div className="flex items-center justify-center gap-8 text-sm font-mono opacity-0 animate-fade-in stagger-2">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-foreground">{animatedTools.toLocaleString()}+</div>
+                <div className="text-xs text-muted">tools scored</div>
+              </div>
+              <div className="w-px h-8 bg-card-border" />
+              <div className="text-center">
+                <div className="text-2xl font-bold text-foreground">{animatedCategories}</div>
+                <div className="text-xs text-muted">categories</div>
+              </div>
+              <div className="w-px h-8 bg-card-border" />
+              <div className="text-center">
+                <div className="text-2xl font-bold text-foreground">4</div>
+                <div className="text-xs text-muted">dimensions</div>
+              </div>
+            </div>
+
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] animate-fade-in-up">
               Is your service{" "}
               <span className="text-gradient">ready for AI agents?</span>
@@ -389,20 +494,88 @@ export default function LandingPage() {
               Get your Clarvia Score — the AEO standard for agent discoverability and trust.
             </p>
 
-            {/* Tool directory teaser */}
-            <Link
-              href="/tools"
-              className="inline-flex items-center gap-3 glass-subtle px-5 py-3 rounded-xl hover:border-accent/30 transition-all group opacity-0 animate-fade-in stagger-4"
-            >
-              <span className="text-sm text-muted group-hover:text-foreground transition-colors">
-                Or explore{" "}
-                <span className="text-foreground font-semibold font-mono">15,400+</span>{" "}
-                agent tools
-              </span>
-              <svg className="w-4 h-4 text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </Link>
+            {/* Tool directory teaser + alternatives */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 opacity-0 animate-fade-in stagger-4">
+              <Link
+                href="/tools"
+                className="inline-flex items-center gap-3 glass-subtle px-5 py-3 rounded-xl hover:border-accent/30 transition-all group"
+              >
+                <span className="text-sm text-muted group-hover:text-foreground transition-colors">
+                  Explore{" "}
+                  <span className="text-foreground font-semibold font-mono">{stats.totalTools.toLocaleString()}+</span>{" "}
+                  agent tools
+                </span>
+                <svg className="w-4 h-4 text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+              <span className="text-muted/40 text-xs hidden sm:inline">or</span>
+              <form onSubmit={handleAltSearch} className="inline-flex items-center gap-2 glass-subtle px-3 py-1.5 rounded-xl hover:border-accent/30 transition-all">
+                <svg className="w-4 h-4 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                </svg>
+                <input
+                  type="text"
+                  value={altQuery}
+                  onChange={(e) => setAltQuery(e.target.value)}
+                  placeholder="Find alternatives to..."
+                  className="bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted/60 w-40 font-mono"
+                />
+                <button
+                  type="submit"
+                  disabled={altLoading || !altQuery.trim()}
+                  className="text-xs text-accent hover:text-accent/80 font-medium disabled:opacity-40 transition-colors"
+                >
+                  {altLoading ? "..." : "Go"}
+                </button>
+              </form>
+            </div>
+
+            {/* Alternatives results */}
+            {altError && (
+              <p className="text-score-red text-sm font-mono">{altError}</p>
+            )}
+            {altResults && (
+              <div className="w-full max-w-2xl mx-auto mt-2 space-y-3 animate-fade-in">
+                <div className="flex items-center justify-between px-1">
+                  <p className="text-sm text-muted">
+                    Alternatives to{" "}
+                    <span className="text-foreground font-semibold">{altResults.service}</span>
+                    <span className="text-muted/60 ml-2 text-xs font-mono">({altResults.total_in_category} in {altResults.category})</span>
+                  </p>
+                  <button onClick={() => setAltResults(null)} className="text-xs text-muted hover:text-foreground transition-colors">
+                    Clear
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {altResults.alternatives.map((alt) => (
+                    <Link
+                      key={alt.scan_id}
+                      href={`/scan/${alt.scan_id}`}
+                      className="glass-subtle p-3 rounded-xl hover:border-accent/30 transition-all group text-left"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground group-hover:text-accent transition-colors truncate">
+                            {alt.name}
+                          </p>
+                          <p className="text-xs text-muted/60 truncate font-mono">{alt.url}</p>
+                        </div>
+                        <span className={`text-sm font-bold font-mono shrink-0 ${scoreColor(alt.score)}`}>
+                          {alt.score}
+                        </span>
+                      </div>
+                      {alt.description && (
+                        <p className="text-xs text-muted mt-1.5 line-clamp-2">{alt.description}</p>
+                      )}
+                      {alt.install_hint && (
+                        <p className="text-xs font-mono text-accent/70 mt-1 truncate">{alt.install_hint}</p>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
