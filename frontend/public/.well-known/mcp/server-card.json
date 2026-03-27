@@ -1,7 +1,7 @@
 {
   "name": "clarvia",
-  "version": "1.0.0",
-  "description": "AI Agent Tool Directory & AEO Scanner — Search 15,400+ tools scored for agent readiness",
+  "version": "1.1.1",
+  "description": "AI Agent Tool Directory & AEO Scanner — Search 15,400+ tools scored for agent readiness. 16 tools for searching, scanning, gate-checking, comparing, trending, and AEO optimization.",
   "homepage": "https://clarvia.art",
   "logo": "https://clarvia.art/logos/clarvia-icon.svg",
   "publisher": {
@@ -63,6 +63,26 @@
     {
       "name": "clarvia_submit_feedback",
       "description": "Report tool usage outcome to build community reliability data"
+    },
+    {
+      "name": "register_my_setup",
+      "description": "Register your current tool setup to get AEO scores and category rankings. Returns a setup_id for benchmarking and upgrade recommendations."
+    },
+    {
+      "name": "compare_my_setup",
+      "description": "Compare your registered tool setup against higher-scored alternatives in each category. Identify weak spots and find better-rated replacements."
+    },
+    {
+      "name": "recommend_upgrades",
+      "description": "Get personalized tool recommendations based on your registered setup — high-scoring tools you don't have yet, in existing and adjacent categories."
+    },
+    {
+      "name": "clarvia_report_issue",
+      "description": "Report a bug, feature request, question, or security issue with Clarvia or any indexed tool. Creates a tracked ticket."
+    },
+    {
+      "name": "clarvia_list_issues",
+      "description": "List existing CS tickets — check status of reported issues, see known bugs, or find feature requests to upvote."
     }
   ],
   "categories": ["developer-tools", "ai", "search", "quality-assurance"],
