@@ -69,11 +69,13 @@ def score_connector(tool: dict[str, Any]) -> dict[str, Any]:
 
     total = iv + ar + doc + trust
 
-    if total >= 70:
+    if total >= 80:
+        rating = "Excellent"
+    elif total >= 60:
         rating = "Strong"
-    elif total >= 45:
+    elif total >= 35:
         rating = "Moderate"
-    elif total >= 25:
+    elif total >= 20:
         rating = "Basic"
     else:
         rating = "Low"

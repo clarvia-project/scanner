@@ -212,12 +212,14 @@ def score_tool(tool: dict[str, Any]) -> dict[str, Any]:
 
     total = desc_score + doc_score + eco_score + agent_score + trust_score
 
-    # Rating (recalibrated thresholds)
-    if total >= 70:
+    # Rating thresholds (calibrated to actual score distribution)
+    if total >= 80:
+        rating = "Excellent"
+    elif total >= 60:
         rating = "Strong"
-    elif total >= 45:
+    elif total >= 35:
         rating = "Moderate"
-    elif total >= 25:
+    elif total >= 20:
         rating = "Basic"
     else:
         rating = "Low"

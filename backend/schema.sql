@@ -111,6 +111,36 @@ CREATE INDEX IF NOT EXISTS idx_probes_url ON accessibility_probes (url);
 CREATE INDEX IF NOT EXISTS idx_probes_probed_at ON accessibility_probes (probed_at DESC);
 
 -- ---------------------------------------------------------------------------
+-- analytics_events: persistent API traffic log (survives Render restarts)
+-- Replaces ephemeral JSONL files as the durable analytics store.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS analytics_events (
+    id              BIGSERIAL PRIMARY KEY,
+    ts              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    date            DATE NOT NULL DEFAULT CURRENT_DATE,
+    hour            TEXT NOT NULL DEFAULT '00',
+    endpoint        TEXT NOT NULL,
+    method          TEXT NOT NULL DEFAULT 'GET',
+    status          INTEGER NOT NULL DEFAULT 200,
+    response_ms     REAL NOT NULL DEFAULT 0,
+    ip_hash         TEXT NOT NULL DEFAULT '',
+    ua              TEXT NOT NULL DEFAULT '',
+    agent           TEXT,           -- AI agent name if identified (Claude, GPT, etc.)
+    tool_activity   TEXT            -- search, scan, feed, leaderboard, etc.
+);
+
+CREATE INDEX IF NOT EXISTS idx_analytics_ts ON analytics_events (ts DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_date ON analytics_events (date DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_agent ON analytics_events (agent) WHERE agent IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_analytics_endpoint ON analytics_events (endpoint);
+
+ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
+
+-- Service role (backend) can insert and read
+CREATE POLICY "Service role full access on analytics_events"
+    ON analytics_events FOR ALL USING (true) WITH CHECK (true);
+
+-- ---------------------------------------------------------------------------
 -- Row Level Security (RLS) policies
 -- ---------------------------------------------------------------------------
 -- Enable RLS on all tables

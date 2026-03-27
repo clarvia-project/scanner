@@ -1,11 +1,14 @@
-"""Persistent JSONL analytics writer for Clarvia API traffic monitoring.
+"""Persistent analytics writer for Clarvia API traffic monitoring.
 
-Writes each API request as a JSON line to daily files:
-  backend/data/analytics/analytics-YYYY-MM-DD.jsonl
+Primary storage: Supabase analytics_events table (survives Render restarts).
+Secondary storage: Daily JSONL files in backend/data/analytics/ (local cache).
+
+Both stores are written on every flush. JSONL is used for fast local reads;
+Supabase is the durable source of truth that persists across deploys.
 
 Designed to be:
 - Async-safe: writes happen in a background task, never blocking request handling
-- Lightweight: no external DB, just append-only JSONL files
+- Dual-store: Supabase (persistent) + JSONL (local cache)
 - Query-friendly: each line is a self-contained JSON object with all fields
 """
 
@@ -139,24 +142,63 @@ class AnalyticsWriter:
             await self._flush_unlocked()
 
     async def _flush_unlocked(self) -> None:
-        """Write buffered entries to the appropriate daily JSONL file."""
+        """Write buffered entries to JSONL files and Supabase."""
         if not self._buffer:
             return
 
-        # Group by date for multi-day buffer edge case
+        # Snapshot and clear buffer
+        entries = list(self._buffer)
+        self._buffer.clear()
+
+        # Group by date for JSONL file writes
         by_date: dict[str, list[str]] = defaultdict(list)
-        for entry in self._buffer:
+        for entry in entries:
             day = entry.get("date", date.today().isoformat())
             by_date[day].append(json.dumps(entry, separators=(",", ":"), ensure_ascii=False))
 
-        self._buffer.clear()
-
-        # Write to files (run in executor to avoid blocking event loop)
+        # Write to local JSONL files (fast local reads)
         loop = asyncio.get_running_loop()
         for day, lines in by_date.items():
             filepath = _ANALYTICS_DIR / f"analytics-{day}.jsonl"
             content = "\n".join(lines) + "\n"
             await loop.run_in_executor(None, self._append_file, filepath, content)
+
+        # Write to Supabase (persistent across restarts)
+        await self._flush_to_supabase(entries)
+
+    async def _flush_to_supabase(self, entries: list[dict[str, Any]]) -> None:
+        """Batch insert analytics entries into Supabase analytics_events table."""
+        try:
+            from .supabase_client import get_supabase
+            client = get_supabase()
+            if not client:
+                return  # Supabase not configured — JSONL only
+
+            rows = [
+                {
+                    "ts": entry["ts"],
+                    "date": entry["date"],
+                    "hour": entry.get("hour", "00"),
+                    "endpoint": entry.get("endpoint", ""),
+                    "method": entry.get("method", "GET"),
+                    "status": entry.get("status", 200),
+                    "response_ms": entry.get("response_ms", 0),
+                    "ip_hash": entry.get("ip_hash", ""),
+                    "ua": entry.get("ua", "")[:200],
+                    "agent": entry.get("agent"),
+                    "tool_activity": entry.get("tool_activity"),
+                }
+                for entry in entries
+            ]
+
+            # Batch insert (Supabase handles up to 1000 rows per call)
+            for i in range(0, len(rows), 500):
+                batch = rows[i : i + 500]
+                client.table("analytics_events").insert(batch).execute()
+
+        except Exception as e:
+            # Never let Supabase errors kill the analytics pipeline
+            logger.warning("Supabase analytics flush failed (JSONL still written): %s", e)
 
     @staticmethod
     def _append_file(filepath: Path, content: str) -> None:

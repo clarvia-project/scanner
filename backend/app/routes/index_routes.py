@@ -1722,10 +1722,10 @@ async def get_stats(
         "total_services": total,
         "avg_score": round(avg, 1),
         "score_distribution": {
-            "excellent": len([s for s in pool if s["clarvia_score"] >= 90]),
-            "strong": len([s for s in pool if 70 <= s["clarvia_score"] < 90]),
-            "moderate": len([s for s in pool if 45 <= s["clarvia_score"] < 70]),
-            "weak": len([s for s in pool if s["clarvia_score"] < 45]),
+            "excellent": len([s for s in pool if s["clarvia_score"] >= 80]),
+            "strong": len([s for s in pool if 60 <= s["clarvia_score"] < 80]),
+            "moderate": len([s for s in pool if 35 <= s["clarvia_score"] < 60]),
+            "weak": len([s for s in pool if s["clarvia_score"] < 35]),
         },
         "by_category": {
             cat: {
@@ -1760,16 +1760,17 @@ async def scoring_methodology():
             "metadata_quality": {"max": 15, "description": "Indicators of reliability and trustworthiness", "factors": ["github_repo", "https", "version_stability", "official_registry", "well_known_org", "license", "declared_dependencies", "security_docs", "version_maturity"]}
         },
         "ratings": {
-            "Strong": "70-100 — Recommended for production agent use",
-            "Moderate": "45-69 — Usable with some limitations",
-            "Basic": "25-44 — Limited agent compatibility",
-            "Low": "0-24 — Not recommended for agent use"
+            "Excellent": "80-100 — Best-in-class, fully agent-native",
+            "Strong": "60-79 — Recommended for production agent use",
+            "Moderate": "35-59 — Usable with some limitations",
+            "Basic": "20-34 — Limited agent compatibility",
+            "Low": "0-19 — Not recommended for agent use"
         },
         "agent_grades": {
-            "AGENT_NATIVE": "90-100 — Fully optimized for AI agents",
-            "AGENT_FRIENDLY": "70-89 — Good agent support",
-            "AGENT_POSSIBLE": "50-69 — Partial agent compatibility",
-            "AGENT_HOSTILE": "0-49 — Not designed for agents"
+            "AGENT_NATIVE": "80-100 — Fully optimized for AI agents",
+            "AGENT_FRIENDLY": "60-79 — Good agent support",
+            "AGENT_POSSIBLE": "35-59 — Partial agent compatibility",
+            "AGENT_HOSTILE": "0-34 — Not designed for agents"
         },
         "data_license": "CC-BY-4.0 — Free to use with attribution",
         "citation": "Clarvia AEO Score v2.0 (2026). https://clarvia.art",
