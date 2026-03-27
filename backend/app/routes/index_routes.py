@@ -21,7 +21,7 @@ router = APIRouter(prefix="/v1", tags=["index"])
 # ---------------------------------------------------------------------------
 _search_log: list[dict] = []  # Recent searches
 _search_counter: Counter = Counter()  # Query frequency
-_MAX_SEARCH_LOG = 10000
+_MAX_SEARCH_LOG = 2000  # Reduced from 10k to save memory on 512MB instance
 
 # ---------------------------------------------------------------------------
 # Category mapping

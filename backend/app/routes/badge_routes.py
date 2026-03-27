@@ -39,30 +39,11 @@ _SITE_URL = "https://clarvia.art"
 # Data helpers
 # ---------------------------------------------------------------------------
 
-_prebuilt_cache: list[dict] | None = None
-
-
 def _load_prebuilt() -> list[dict]:
-    """Load prebuilt scans from disk (cached after first call)."""
-    global _prebuilt_cache
-    if _prebuilt_cache is not None:
-        return _prebuilt_cache
-
-    candidates = [
-        Path("/app/data/prebuilt-scans.json"),
-        Path(__file__).resolve().parents[3] / "data" / "prebuilt-scans.json",
-        Path(__file__).resolve().parents[2] / "data" / "prebuilt-scans.json",
-    ]
-    for p in candidates:
-        if p.exists():
-            with open(p) as f:
-                _prebuilt_cache = json.load(f)
-            logger.info("Badge: loaded %d prebuilt scans from %s", len(_prebuilt_cache), p)
-            return _prebuilt_cache
-
-    logger.warning("Badge: prebuilt-scans.json not found")
-    _prebuilt_cache = []
-    return _prebuilt_cache
+    """Return prebuilt scans via index_routes (shared, no duplicate load)."""
+    from . import index_routes
+    index_routes._ensure_loaded()
+    return index_routes._services
 
 
 def _find_service(identifier: str) -> Optional[dict]:

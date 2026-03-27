@@ -47,10 +47,11 @@ class RateLimitEntry:
 
 
 # In-memory store: keyed by IP or API key
-# TTLCache bounds memory usage: max 50,000 entries, auto-evicted after 2h.
-# This prevents OOM on Render Starter (512MB) when handling high request volumes.
-# NOTE: Multi-instance deployments need Redis-backed store for consistency.
-_rate_store: TTLCache = TTLCache(maxsize=50_000, ttl=WINDOW_SECONDS * 2)
+# TTLCache bounds memory usage: max 5,000 entries, auto-evicted after 2h.
+# 50k was excessive for a single-worker 512MB instance — each entry holds a
+# RateLimitEntry object.  5k covers ~5k unique IPs/keys per 2h window, which is
+# far more than realistic traffic on Render Starter.
+_rate_store: TTLCache = TTLCache(maxsize=5_000, ttl=WINDOW_SECONDS * 2)
 
 
 # Render.com proxy IPs — only trust X-Forwarded-For from known proxies

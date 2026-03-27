@@ -10,8 +10,9 @@ import logging
 import re
 from typing import Any
 
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+# sklearn imports are deferred to build_index() / recommend() to avoid loading
+# ~80-150 MB of numpy+sklearn into RAM at startup.  On a 512 MB Render Starter
+# instance this is the difference between OOM and stable operation.
 
 from .synonym_dict import expand_intent
 
@@ -29,7 +30,7 @@ class RecommendationEngine:
     """TF-IDF based recommendation engine with synonym expansion."""
 
     def __init__(self) -> None:
-        self._vectorizer: TfidfVectorizer | None = None
+        self._vectorizer = None  # TfidfVectorizer, lazily imported
         self._tfidf_matrix = None
         self._tools: list[dict[str, Any]] = []
         self._name_lower: list[str] = []  # pre-computed lowercase names
@@ -78,11 +79,13 @@ class RecommendationEngine:
 
             documents.append(" ".join(filter(None, parts)).lower())
 
+        from sklearn.feature_extraction.text import TfidfVectorizer
+
         self._vectorizer = TfidfVectorizer(
-            max_features=15000,
+            max_features=5000,   # Reduced from 15k — saves ~20 MB sparse matrix RAM
             ngram_range=(1, 2),
             stop_words="english",
-            min_df=1,
+            min_df=2,            # Raised from 1 — skip unique terms, saves memory
             max_df=0.95,
             sublinear_tf=True,
         )
@@ -124,6 +127,8 @@ class RecommendationEngine:
         expanded_query = " ".join(expanded_terms)
 
         # Vectorize and compute similarity
+        from sklearn.metrics.pairwise import cosine_similarity
+
         query_vec = self._vectorizer.transform([expanded_query])
         similarities = cosine_similarity(query_vec, self._tfidf_matrix).flatten()
 

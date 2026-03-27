@@ -244,20 +244,10 @@ async def get_report_pdf(scan_id: str):
 
 
 def _load_benchmark_data() -> list[dict]:
-    """Load prebuilt scan data for competitive benchmarking."""
-    import json
-    from pathlib import Path
-
-    # Try multiple paths for the prebuilt scans data
-    candidates = [
-        Path(__file__).parent.parent.parent.parent / "frontend" / "public" / "data" / "prebuilt-scans.json",
-        Path(__file__).parent.parent / "data" / "prebuilt-scans.json",
-    ]
-    for p in candidates:
-        if p.exists():
-            with open(p) as f:
-                return json.load(f)
-    return []
+    """Return prebuilt services via index_routes (shared, no duplicate load)."""
+    from . import index_routes
+    index_routes._ensure_loaded()
+    return index_routes._services
 
 
 def _build_competitive_benchmark(scan, benchmark_data: list[dict]) -> dict:

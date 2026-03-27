@@ -685,15 +685,11 @@ async def api_v1_score(url: str):
         host_b = (_up(url_b).hostname or "").lower().removeprefix("www.")
         return host_a == host_b and host_a != ""
 
-    # Check prebuilt scans first (fast path)
-    # Primary: backend data directory (available on Render deployment)
-    prebuilt_path = Path(__file__).parent.parent / "data" / "prebuilt-scans.json"
-    # Fallback: frontend public data (local dev)
-    if not prebuilt_path.exists():
-        prebuilt_path = Path(__file__).parent.parent.parent / "frontend" / "public" / "data" / "prebuilt-scans.json"
-    if prebuilt_path.exists():
-        with open(prebuilt_path) as f:
-            scans = json.load(f)
+    # Check prebuilt scans first (fast path) — use shared in-memory data
+    from .routes import index_routes as _idx
+    _idx._ensure_loaded()
+    scans = _idx._services
+    if scans:
         for s in scans:
             if _domain_match(clean_url, s.get("url", "")):
                 return {
@@ -741,19 +737,11 @@ async def api_v1_leaderboard(category: str | None = None, limit: int = 50, offse
 
     Usage: GET /api/v1/leaderboard?category=ai_llm&limit=10
     """
-    import json
-    from pathlib import Path
-
-    # Primary: backend data directory (available on Render deployment)
-    prebuilt_path = Path(__file__).parent.parent / "data" / "prebuilt-scans.json"
-    # Fallback: frontend public data (local dev where both dirs exist)
-    if not prebuilt_path.exists():
-        prebuilt_path = Path(__file__).parent.parent.parent / "frontend" / "public" / "data" / "prebuilt-scans.json"
-    if not prebuilt_path.exists():
+    from .routes import index_routes as _idx
+    _idx._ensure_loaded()
+    scans = list(_idx._services)  # Copy to avoid mutating shared data
+    if not scans:
         return {"services": [], "total": 0}
-
-    with open(prebuilt_path) as f:
-        scans = json.load(f)
 
     # Sort by score descending
     scans.sort(key=lambda s: s.get("clarvia_score", 0), reverse=True)
@@ -794,15 +782,10 @@ async def api_v1_compare(urls: str):
     if len(url_list) > 5:
         raise HTTPException(status_code=400, detail="Maximum 5 URLs for comparison")
 
-    # Primary: backend data directory (available on Render deployment)
-    prebuilt_path = Path(__file__).parent.parent / "data" / "prebuilt-scans.json"
-    # Fallback: frontend public data (local dev)
-    if not prebuilt_path.exists():
-        prebuilt_path = Path(__file__).parent.parent.parent / "frontend" / "public" / "data" / "prebuilt-scans.json"
-    prebuilt = []
-    if prebuilt_path.exists():
-        with open(prebuilt_path) as f:
-            prebuilt = json.load(f)
+    # Use shared in-memory data instead of re-reading 16MB JSON from disk
+    from .routes import index_routes as _idx2
+    _idx2._ensure_loaded()
+    prebuilt = _idx2._services
 
     def _domain_match_compare(url_a: str, url_b: str) -> bool:
         """Compare URLs by domain (hostname) instead of substring."""

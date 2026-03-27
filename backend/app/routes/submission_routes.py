@@ -271,21 +271,18 @@ def _make_badge(label: str, value: str, color: str) -> str:
 
 def _find_service_by_id(identifier: str) -> dict | None:
     """Look up a service by scan_id, submission_id, or name."""
-    # Try prebuilt scans
-    path = _prebuilt_path()
-    if path:
-        try:
-            with open(path) as f:
-                services = json.load(f)
-            for svc in services:
-                if svc.get("scan_id") == identifier:
-                    return svc
-            # Name match fallback
-            for svc in services:
-                if svc.get("service_name", "").lower() == identifier.lower():
-                    return svc
-        except Exception:
-            pass
+    # Use shared index_routes data instead of re-reading 16MB JSON from disk
+    from . import index_routes
+    index_routes._ensure_loaded()
+    services = index_routes._services
+    for svc in services:
+        if svc.get("scan_id") == identifier:
+            return svc
+    # Name match fallback
+    lower_id = identifier.lower()
+    for svc in services:
+        if svc.get("service_name", "").lower() == lower_id:
+            return svc
 
     # Try in-memory cache
     try:

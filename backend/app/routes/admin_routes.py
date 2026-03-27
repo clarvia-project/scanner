@@ -89,19 +89,10 @@ def _format_uptime(seconds: int) -> str:
 
 
 def _load_prebuilt_services() -> list[dict[str, Any]]:
-    """Load prebuilt scan data."""
-    candidates = [Path("/app/data/prebuilt-scans.json")]
-    base = Path(__file__).resolve()
-    for i in range(2, 6):
-        try:
-            candidates.append(base.parents[i] / "data" / "prebuilt-scans.json")
-        except IndexError:
-            break
-    for p in candidates:
-        if p.exists():
-            with open(p, "r") as f:
-                return json.load(f)
-    return []
+    """Return prebuilt services via index_routes (shared, avoids 16MB re-parse)."""
+    from . import index_routes
+    index_routes._ensure_loaded()
+    return index_routes._services
 
 
 # ---------------------------------------------------------------------------

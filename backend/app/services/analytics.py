@@ -51,8 +51,9 @@ class AnalyticsCollector:
         self._requests_by_method: Counter = Counter()
         self._requests_by_status: Counter = Counter()
 
-        # Visitor tracking
-        self._unique_ips: set[str] = set()
+        # Visitor tracking — use counter instead of unbounded set to save memory
+        self._unique_ip_count: int = 0
+        self._recent_ips: set[str] = set()  # Capped at 10k, then roll over
         self._agent_requests = 0
         self._human_requests = 0
         self._bot_requests = 0
@@ -60,7 +61,8 @@ class AnalyticsCollector:
 
         # Scan tracking
         self._scans_total = 0
-        self._scans_unique_urls: set[str] = set()
+        self._scans_unique_url_count: int = 0
+        self._recent_scan_urls: set[str] = set()  # Capped at 5k
         self._scans_by_hour: dict[str, int] = defaultdict(int)
 
         # MCP tracking
@@ -136,15 +138,21 @@ class AnalyticsCollector:
         else:
             self._human_requests += 1
 
-        # Unique IPs
-        self._unique_ips.add(client_ip)
+        # Unique IPs — capped rolling set
+        if client_ip not in self._recent_ips:
+            self._unique_ip_count += 1
+            self._recent_ips.add(client_ip)
+            if len(self._recent_ips) > 10_000:
+                self._recent_ips.clear()  # Roll over to prevent unbounded growth
 
         # Time buckets
         hour = self._hour_key()
         day = self._day_key()
         self._hourly_requests[hour] += 1
         self._daily_requests[day] += 1
-        self._daily_unique_ips[day].add(client_ip)
+        daily_ips = self._daily_unique_ips[day]
+        if len(daily_ips) < 5_000:  # Cap per-day IP set to prevent memory bloat
+            daily_ips.add(client_ip)
 
         if visitor_type == "agent":
             self._hourly_agents[hour] += 1
@@ -177,7 +185,11 @@ class AnalyticsCollector:
     def record_scan(self, url: str) -> None:
         """Record a scan event."""
         self._scans_total += 1
-        self._scans_unique_urls.add(url)
+        if url not in self._recent_scan_urls:
+            self._scans_unique_url_count += 1
+            self._recent_scan_urls.add(url)
+            if len(self._recent_scan_urls) > 5_000:
+                self._recent_scan_urls.clear()
         hour = self._hour_key()
         day = self._day_key()
         self._hourly_scans[hour] += 1
@@ -237,7 +249,7 @@ class AnalyticsCollector:
             # Traffic overview
             "traffic": {
                 "total_requests": self._total_requests,
-                "unique_visitors": len(self._unique_ips),
+                "unique_visitors": self._unique_ip_count,
                 "agent_requests": self._agent_requests,
                 "human_requests": self._human_requests,
                 "bot_requests": self._bot_requests,
@@ -258,7 +270,7 @@ class AnalyticsCollector:
             # Scan metrics
             "scans": {
                 "total": self._scans_total,
-                "unique_urls": len(self._scans_unique_urls),
+                "unique_urls": self._scans_unique_url_count,
             },
 
             # MCP metrics

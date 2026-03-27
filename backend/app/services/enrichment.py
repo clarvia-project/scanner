@@ -34,7 +34,7 @@ def _get_cached(key: str) -> Any | None:
 def _set_cache(key: str, data: Any) -> None:
     _cache[key] = (time.time(), data)
     # Evict old entries if cache gets too large
-    if len(_cache) > 5000:
+    if len(_cache) > 1000:
         cutoff = time.time() - _CACHE_TTL
         stale = [k for k, (ts, _) in _cache.items() if ts < cutoff]
         for k in stale:

@@ -27,7 +27,8 @@ from .models import (
 
 # In-memory cache: scan_id -> (result, timestamp)
 # Bounded to CACHE_MAX_SIZE entries to prevent unbounded memory growth.
-CACHE_MAX_SIZE = 1000
+# Each ScanResponse is ~5-15 KB, so 200 entries ≈ 1-3 MB — safe for 512 MB.
+CACHE_MAX_SIZE = 200
 _scan_cache: dict[str, tuple[ScanResponse, float]] = {}
 
 # Limit concurrent scans to prevent resource exhaustion

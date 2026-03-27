@@ -34,10 +34,10 @@ from ..config import settings
 # Retry helper & in-memory cache for external registry lookups
 # ---------------------------------------------------------------------------
 
-# TTLCache: max 2000 entries, auto-evicted after 1 hour.
-# Prevents unbounded growth from repeated registry lookups.
+# TTLCache: max 500 entries, auto-evicted after 1 hour.
+# Reduced from 2000 to save memory on 512MB instance.
 CACHE_TTL = 3600  # 1 hour
-_registry_cache: TTLCache = TTLCache(maxsize=2000, ttl=CACHE_TTL)
+_registry_cache: TTLCache = TTLCache(maxsize=500, ttl=CACHE_TTL)
 
 
 def _get_cached(key: str) -> Any | None:
