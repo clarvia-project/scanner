@@ -9,7 +9,6 @@ Runs against the actual FastAPI app using httpx AsyncClient
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from unittest.mock import patch
 
 from app.main import app
 from tests.conftest import TEST_ADMIN_API_KEY

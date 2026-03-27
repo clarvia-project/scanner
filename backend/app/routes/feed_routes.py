@@ -125,7 +125,6 @@ async def feed_scores_csv(
     Returns RFC 4180-compliant CSV with Content-Disposition header for download.
     Ideal for data pipelines, spreadsheets, and bulk analysis.
     """
-    from .index_routes import _classify
 
     services = _load_all_services()
 

@@ -63,33 +63,33 @@ class BodySizeLimitMiddleware(BaseHTTPMiddleware):
             )
         return await call_next(request)
 
-from .config import settings
-from .middleware import AnalyticsMiddleware, RateLimitMiddleware, SecurityHeadersMiddleware, SecurityMiddleware
-from .models import ErrorResponse, ScanRequest, ScanResponse, WaitlistRequest
-from .routes.admin_routes import router as admin_router
-from .routes.badge_routes import router as badge_router
-from .routes.feedback_routes import router as feedback_router
-from .routes.index_routes import router as index_router
-from .routes.profile_routes import router as profile_router
-from .routes.recommend_routes import router as recommend_router
-from .routes.marketing_routes import router as marketing_router
-from .routes.setup_routes import router as setup_router
-from .routes.cs_routes import router as cs_router
-from .routes.feed_routes import router as feed_router
-from .routes.trending_routes import router as trending_router
-from .routes.webhook_routes import router as webhook_router
-from .routes.submission_routes import router as submission_router
-from .routes.collection_routes import router as collection_router
-from .routes.history_routes import router as history_router
-from .routes.team_routes import router as team_router
-from .routes.analytics_routes import router as analytics_router
-from .keepalive import keepalive_loop
-from .scanner import cleanup_cache, get_cached_scan, run_scan
+from .config import settings  # noqa: E402
+from .middleware import AnalyticsMiddleware, RateLimitMiddleware, SecurityHeadersMiddleware, SecurityMiddleware  # noqa: E402
+from .models import ScanRequest, ScanResponse, WaitlistRequest  # noqa: E402
+from .routes.admin_routes import router as admin_router  # noqa: E402
+from .routes.badge_routes import router as badge_router  # noqa: E402
+from .routes.feedback_routes import router as feedback_router  # noqa: E402
+from .routes.index_routes import router as index_router  # noqa: E402
+from .routes.profile_routes import router as profile_router  # noqa: E402
+from .routes.recommend_routes import router as recommend_router  # noqa: E402
+from .routes.marketing_routes import router as marketing_router  # noqa: E402
+from .routes.setup_routes import router as setup_router  # noqa: E402
+from .routes.cs_routes import router as cs_router  # noqa: E402
+from .routes.feed_routes import router as feed_router  # noqa: E402
+from .routes.trending_routes import router as trending_router  # noqa: E402
+from .routes.webhook_routes import router as webhook_router  # noqa: E402
+from .routes.submission_routes import router as submission_router  # noqa: E402
+from .routes.collection_routes import router as collection_router  # noqa: E402
+from .routes.history_routes import router as history_router  # noqa: E402
+from .routes.team_routes import router as team_router  # noqa: E402
+from .routes.analytics_routes import router as analytics_router  # noqa: E402
+from .keepalive import keepalive_loop  # noqa: E402
+from .scanner import cleanup_cache, get_cached_scan, run_scan  # noqa: E402
+
+import os  # noqa: E402
+from contextlib import asynccontextmanager  # noqa: E402
 
 logger = logging.getLogger(__name__)
-
-import os
-from contextlib import asynccontextmanager
 
 # Background task handle for periodic cache cleanup
 _cache_cleanup_task: asyncio.Task | None = None
@@ -329,7 +329,7 @@ except ImportError:
 # Custom OpenAPI schema — enhanced for agent discoverability
 # ---------------------------------------------------------------------------
 
-from fastapi.openapi.utils import get_openapi
+from fastapi.openapi.utils import get_openapi  # noqa: E402
 
 def _custom_openapi():
     if app.openapi_schema:
@@ -377,7 +377,7 @@ app.openapi = _custom_openapi  # type: ignore[method-assign]
 # Agent discovery endpoints (robots.txt, sitemap, llms.txt)
 # ---------------------------------------------------------------------------
 
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse  # noqa: E402
 
 @app.get("/robots.txt", response_class=PlainTextResponse, include_in_schema=False)
 async def api_robots_txt():
@@ -580,7 +580,7 @@ async def scan_url(req: ScanRequest):
         return result
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
-    except Exception as e:
+    except Exception:
         logger.exception("Scan failed for URL: %s", req.url)
         raise HTTPException(
             status_code=500,
@@ -686,7 +686,11 @@ async def api_v1_score(url: str):
         return host_a == host_b and host_a != ""
 
     # Check prebuilt scans first (fast path)
-    prebuilt_path = Path(__file__).parent.parent.parent / "frontend" / "public" / "data" / "prebuilt-scans.json"
+    # Primary: backend data directory (available on Render deployment)
+    prebuilt_path = Path(__file__).parent.parent / "data" / "prebuilt-scans.json"
+    # Fallback: frontend public data (local dev)
+    if not prebuilt_path.exists():
+        prebuilt_path = Path(__file__).parent.parent.parent / "frontend" / "public" / "data" / "prebuilt-scans.json"
     if prebuilt_path.exists():
         with open(prebuilt_path) as f:
             scans = json.load(f)
@@ -726,7 +730,7 @@ async def api_v1_score(url: str):
         }
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
-    except Exception as e:
+    except Exception:
         logger.exception("API v1 score scan failed for URL: %s", clean_url)
         raise HTTPException(status_code=500, detail="Scan failed due to an internal error. Please try again later.")
 
@@ -740,7 +744,11 @@ async def api_v1_leaderboard(category: str | None = None, limit: int = 50, offse
     import json
     from pathlib import Path
 
-    prebuilt_path = Path(__file__).parent.parent.parent / "frontend" / "public" / "data" / "prebuilt-scans.json"
+    # Primary: backend data directory (available on Render deployment)
+    prebuilt_path = Path(__file__).parent.parent / "data" / "prebuilt-scans.json"
+    # Fallback: frontend public data (local dev where both dirs exist)
+    if not prebuilt_path.exists():
+        prebuilt_path = Path(__file__).parent.parent.parent / "frontend" / "public" / "data" / "prebuilt-scans.json"
     if not prebuilt_path.exists():
         return {"services": [], "total": 0}
 
@@ -786,7 +794,11 @@ async def api_v1_compare(urls: str):
     if len(url_list) > 5:
         raise HTTPException(status_code=400, detail="Maximum 5 URLs for comparison")
 
-    prebuilt_path = Path(__file__).parent.parent.parent / "frontend" / "public" / "data" / "prebuilt-scans.json"
+    # Primary: backend data directory (available on Render deployment)
+    prebuilt_path = Path(__file__).parent.parent / "data" / "prebuilt-scans.json"
+    # Fallback: frontend public data (local dev)
+    if not prebuilt_path.exists():
+        prebuilt_path = Path(__file__).parent.parent.parent / "frontend" / "public" / "data" / "prebuilt-scans.json"
     prebuilt = []
     if prebuilt_path.exists():
         with open(prebuilt_path) as f:
@@ -1055,7 +1067,7 @@ async def authenticated_scan(request: Request):
             except (asyncio.TimeoutError, Exception):
                 pass  # Non-critical, we already have headers from request 1
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Authenticated scan failed due to an internal error. Please try again later.")
 
     return {
@@ -1239,7 +1251,7 @@ async def mcp_scan(identifier: str):
                 except Exception:
                     pass
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="MCP scan failed due to an internal error. Please try again later.")
 
     # --- Quality scoring ---
@@ -2331,7 +2343,7 @@ async def scan_history(url: str, limit: int = 20):
         from .services.supabase_client import get_scan_history
         scans = await get_scan_history(clean_url, limit=limit)
         return {"url": clean_url, "scans": scans, "total": len(scans)}
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to fetch scan history for %s", clean_url)
         raise HTTPException(status_code=500, detail="Failed to fetch history. Please try again later.")
 
@@ -2399,7 +2411,7 @@ async def get_trends(url: str, days: int = 90):
     try:
         from .services.supabase_client import get_scan_history
         scans = await get_scan_history(clean_url, limit=500)
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to fetch trend data for %s", clean_url)
         raise HTTPException(status_code=500, detail="Failed to fetch trend data. Please try again later.")
 
@@ -2939,11 +2951,10 @@ async def get_key_usage(key_id: str, request: Request):
 # Batch scan endpoint
 # ---------------------------------------------------------------------------
 
-import asyncio
-import time as _time
-from collections import defaultdict
-from pydantic import BaseModel, Field
-from typing import Any
+import asyncio  # noqa: E402
+import time as _time  # noqa: E402
+from collections import defaultdict  # noqa: E402
+from pydantic import BaseModel, Field  # noqa: E402
 
 class BatchScanRequest(BaseModel):
     urls: list[str] = Field(..., min_length=1, max_length=10)
@@ -3008,7 +3019,7 @@ async def batch_score(req: BatchScanRequest, request: Request):
                 },
                 status="success",
             )
-        except Exception as e:
+        except Exception:
             return BatchScanResultItem(
                 url=url,
                 status="error",
@@ -3087,7 +3098,7 @@ async def ci_check(req: CICheckRequest, request: Request):
         result = await run_scan(req.url)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
-    except Exception as e:
+    except Exception:
         logger.exception("CI check scan failed for URL: %s", req.url)
         raise HTTPException(status_code=500, detail="Scan failed due to an internal error. Please try again later.")
 

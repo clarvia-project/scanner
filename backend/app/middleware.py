@@ -1,5 +1,6 @@
 """Rate limiting and analytics middleware for the scanner API."""
 
+import asyncio
 import logging
 import time
 from collections import defaultdict
@@ -9,6 +10,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from .services.analytics import analytics
+from .services.analytics_writer import analytics_writer, build_analytics_entry
 from .services.security import abuse_detector, is_suspicious_request
 
 logger = logging.getLogger(__name__)
@@ -181,8 +183,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["X-XSS-Protection"] = "0"
-        # Prevent caching of API responses
-        if request.url.path.startswith("/api/"):
+        # Prevent caching of API responses (except badge SVGs which are cacheable)
+        if request.url.path.startswith("/api/") and not request.url.path.startswith("/api/badge/"):
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -233,7 +235,12 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
 
 class AnalyticsMiddleware(BaseHTTPMiddleware):
-    """Track all requests for KPI dashboard. Lightweight, non-blocking."""
+    """Track all requests for KPI dashboard. Lightweight, non-blocking.
+
+    Records to both in-memory analytics (real-time) and persistent JSONL
+    files (historical queries). JSONL writes are buffered and async so
+    they never block the request path.
+    """
 
     async def dispatch(self, request: Request, call_next) -> Response:
         start = time.monotonic()
@@ -245,6 +252,7 @@ class AnalyticsMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         method = request.method
 
+        # In-memory analytics (existing, real-time KPI)
         analytics.record_request(
             path=path,
             method=method,
@@ -256,12 +264,24 @@ class AnalyticsMiddleware(BaseHTTPMiddleware):
 
         # Track scans specifically
         if path == "/api/scan" and method == "POST" and response.status_code == 200:
-            # URL is in request body, but we track count only here
             analytics.record_scan("unknown")
 
         # Track MCP calls
         if path.startswith("/mcp"):
             analytics.record_mcp_call(path)
+
+        # Persistent JSONL analytics (skip health checks and static assets)
+        if path.startswith(("/api/", "/v1/", "/mcp")):
+            entry = build_analytics_entry(
+                path=path,
+                method=method,
+                status_code=response.status_code,
+                response_time_ms=elapsed_ms,
+                client_ip=client_ip,
+                user_agent=user_agent,
+            )
+            # Fire-and-forget: buffer the entry without awaiting disk I/O
+            asyncio.ensure_future(analytics_writer.record(entry))
 
         return response
 

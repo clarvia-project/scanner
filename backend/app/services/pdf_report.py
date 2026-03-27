@@ -14,7 +14,6 @@ import io
 import logging
 import math
 from datetime import datetime
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +53,6 @@ def _score_color_rl(score: int, max_score: int = 100):
 
 def _draw_gauge(canvas_obj, x, y, score, size=120):
     """Draw a score gauge arc on the canvas."""
-    from reportlab.lib.colors import Color
 
     center_x = x + size / 2
     center_y = y + size / 2
@@ -91,7 +89,6 @@ def _draw_gauge(canvas_obj, x, y, score, size=120):
 
 def _draw_radar_chart(canvas_obj, x, y, radar_data, size=200):
     """Draw a radar chart comparing your scores vs industry average."""
-    from reportlab.lib.colors import Color
 
     labels = radar_data.get("labels", [])
     your_scores = radar_data.get("your_scores", [])

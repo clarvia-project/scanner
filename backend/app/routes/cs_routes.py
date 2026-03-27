@@ -12,9 +12,7 @@ No auth required for creating tickets (agents need easy access).
 Admin endpoints require API key.
 """
 
-import hashlib
 import logging
-import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -30,9 +28,8 @@ router = APIRouter(tags=["cs"])
 # ---------------------------------------------------------------------------
 # File-based storage (works across multiple workers, Supabase upgrade later)
 # ---------------------------------------------------------------------------
-import json as _json
-from pathlib import Path as _Path
-import fcntl
+import json as _json  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
 
 _TICKETS_DIR = _Path("/app/data/cs-tickets")
 _COUNTER_FILE = _TICKETS_DIR / "_counter.json"

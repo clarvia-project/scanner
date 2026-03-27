@@ -11,13 +11,11 @@ Provides:
 Designed to work alongside the existing rate limiter and security headers.
 """
 
-import hashlib
 import ipaddress
 import logging
 import re
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 

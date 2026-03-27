@@ -3,8 +3,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, Query
 
 router = APIRouter(prefix="/v1", tags=["history"])
 logger = logging.getLogger(__name__)

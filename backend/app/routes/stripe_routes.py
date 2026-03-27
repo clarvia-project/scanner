@@ -92,7 +92,6 @@ async def create_checkout_session(request: Request):
         # Save report record (pending payment)
         try:
             from ..services.supabase_client import save_report
-            import asyncio
             await save_report({
                 "scan_id": scan_id,
                 "stripe_session_id": session.id,
@@ -161,7 +160,6 @@ async def stripe_webhook(request: Request):
             # Update report record
             try:
                 from ..services.supabase_client import update_report_payment
-                import asyncio
                 await update_report_payment(session_data.get("id"), {
                     "payment_status": "paid",
                     "stripe_payment_id": payment_intent,

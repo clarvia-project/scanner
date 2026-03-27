@@ -11,7 +11,7 @@ import logging
 import secrets
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Request, Security
+from fastapi import Depends, HTTPException, Security
 from fastapi.security import APIKeyHeader
 
 from .config import settings

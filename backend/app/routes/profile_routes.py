@@ -533,7 +533,7 @@ async def scan_profile(profile_id: str, _key: ApiKeyDep):
             "status": "scanned",
             "scan_id": result.scan_id,
         }
-    except Exception as e:
+    except Exception:
         logger.exception("Profile scan failed for %s", profile["url"])
         profile["status"] = "scan_failed"
         _save_profiles()
@@ -604,7 +604,7 @@ async def rescan_profile(profile_id: str):
             "status": "scanned",
             "scan_id": result.scan_id,
         }
-    except Exception as e:
+    except Exception:
         logger.exception("Rescan failed for %s", profile["url"])
         profile["status"] = "scan_failed"
         _save_profiles()

@@ -6,7 +6,6 @@ still works using in-memory cache.
 
 import logging
 from datetime import datetime, timezone
-from typing import Any
 
 from ..config import settings
 

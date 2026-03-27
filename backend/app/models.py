@@ -3,13 +3,24 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, field_validator
 
 
 # --- Request ---
 
 class ScanRequest(BaseModel):
-    url: str = Field(..., description="URL to scan (website, API base, or docs URL)")
+    url: str = Field(..., description="URL to scan (website, API base, or docs URL)", max_length=2048)
+
+    @field_validator("url")
+    @classmethod
+    def validate_url_format(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("URL cannot be empty")
+        # Reject obviously malicious input
+        if any(c in v for c in ("<", ">", "{", "}", "|", "\\", "^", "`")):
+            raise ValueError("URL contains invalid characters")
+        return v
     auth_headers: dict[str, str] | None = Field(
         default=None,
         description="Optional auth headers to forward when scanning the target API "
@@ -85,4 +96,9 @@ class ErrorResponse(BaseModel):
 
 
 class WaitlistRequest(BaseModel):
-    email: str = Field(..., description="Email address for waitlist signup")
+    email: str = Field(
+        ...,
+        description="Email address for waitlist signup",
+        max_length=320,
+        pattern=r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+    )

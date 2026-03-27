@@ -3,9 +3,8 @@ import secrets
 import string
 import logging
 from datetime import datetime, timezone
-from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/v1", tags=["teams"])

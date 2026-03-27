@@ -16,7 +16,7 @@ from typing import Any, Optional
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, HTTPException, Query, Response
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
