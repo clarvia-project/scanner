@@ -17,3 +17,15 @@ data/healthcheck.log
 data/automation.log
 data/error_monitor_state.json
 data/orchestrator_state.json
+
+# Tokens/secrets
+mcp-server/.mcpregistry_*
+
+# Runtime data
+data/ops-log.jsonl
+data/prebuilt-scans.backup-*.json
+data/self-healer/
+data/reports/
+data/feedback/
+data/watchdog/
+data/harvester/reclassification-log.json

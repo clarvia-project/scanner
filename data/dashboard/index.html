@@ -90,13 +90,13 @@
 </head>
 <body>
   <h1>Clarvia Automation Dashboard</h1>
-  <p class="subtitle">Generated: 2026-03-26 08:01 UTC</p>
+  <p class="subtitle">Generated: 2026-03-27 05:00 UTC</p>
 
   <!-- Summary cards -->
   <div class="grid">
     <div class="card">
       <h2>Total Tools Indexed</h2>
-      <div class="stat-number">13,137</div>
+      <div class="stat-number">40,977</div>
       <div class="stat-label">across 5 sources</div>
     </div>
     <div class="card">
@@ -106,13 +106,13 @@
     </div>
     <div class="card">
       <h2>Queue Size</h2>
-      <div class="stat-number">4,136</div>
+      <div class="stat-number">4,277</div>
       <div class="stat-label">tools pending classification</div>
     </div>
     <div class="card">
       <h2>Active Tasks</h2>
-      <div class="stat-number">17</div>
-      <div class="stat-label">of 17 configured</div>
+      <div class="stat-number">18</div>
+      <div class="stat-label">of 18 configured</div>
     </div>
   </div>
 
@@ -129,24 +129,24 @@
             <td><code>scripts/healthcheck.py</code></td>
             <td><code>*/5 * * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-unknown">unknown</span></td>
-            <td>Never</td>
+            <td><span class="status status-ok">ok</span></td>
+            <td>{"timestamp": "2026</td>
         </tr>
         <tr>
             <td><code>error_monitor</code></td>
             <td><code>scripts/error_monitor.py</code></td>
             <td><code>*/5 * * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-unknown">unknown</span></td>
-            <td>Never</td>
+            <td><span class="status status-ok">ok</span></td>
+            <td>{"timestamp": "2026</td>
         </tr>
         <tr>
             <td><code>backup</code></td>
             <td><code>scripts/backup.py</code></td>
             <td><code>0 3 * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-unknown">unknown</span></td>
-            <td>Never</td>
+            <td><span class="status status-ok">ok</span></td>
+            <td>{"timestamp": "2026</td>
         </tr>
         <tr>
             <td><code>harvester</code></td>
@@ -209,24 +209,24 @@
             <td><code>scripts/automation/onboarding.py</code></td>
             <td><code>*/30 * * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-unknown">unknown</span></td>
-            <td>Never</td>
+            <td><span class="status status-ok">ok</span></td>
+            <td>{"timestamp": "2026</td>
         </tr>
         <tr>
             <td><code>feedback_engine</code></td>
             <td><code>scripts/automation/feedback_engine.py</code></td>
             <td><code>0 2 * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-unknown">unknown</span></td>
-            <td>Never</td>
+            <td><span class="status status-ok">ok</span></td>
+            <td>{"timestamp": "2026</td>
         </tr>
         <tr>
             <td><code>dashboard</code></td>
             <td><code>scripts/automation/dashboard_generator.py</code></td>
             <td><code>0 * * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-unknown">unknown</span></td>
-            <td>Never</td>
+            <td><span class="status status-error">error</span></td>
+            <td>2026-03-27 14:00:23</td>
         </tr>
         <tr>
             <td><code>schema_watchdog</code></td>
@@ -256,6 +256,14 @@
             <td><code>self_healer</code></td>
             <td><code>scripts/automation/self_healer.py</code></td>
             <td><code>0 */6 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>auto_merge</code></td>
+            <td><code>scripts/automation/auto_merge_and_deploy.py</code></td>
+            <td><code>0 8 * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
             <td><span class="status status-unknown">unknown</span></td>
             <td>Never</td>
@@ -296,7 +304,7 @@
 
   <script>
     // Uptime chart
-    const uptimeData = [{"time": "2026-03-26T06:59:58.324319+00:00", "healthy": true}, {"time": "2026-03-26T06:59:58.572780+00:00", "healthy": true}, {"time": "2026-03-26T08:01:30.711763+00:00", "healthy": true}, {"time": "2026-03-26T08:01:30.788155+00:00", "healthy": true}];
+    const uptimeData = [{"time": "2026-03-27T03:00:16.622374+00:00", "healthy": true}, {"time": "2026-03-27T03:00:17.381350+00:00", "healthy": true}, {"time": "2026-03-27T03:05:21.314307+00:00", "healthy": true}, {"time": "2026-03-27T03:05:21.592549+00:00", "healthy": true}, {"time": "2026-03-27T03:10:24.175698+00:00", "healthy": true}, {"time": "2026-03-27T03:10:24.266783+00:00", "healthy": true}, {"time": "2026-03-27T03:15:26.123844+00:00", "healthy": true}, {"time": "2026-03-27T03:15:26.195366+00:00", "healthy": true}, {"time": "2026-03-27T03:20:28.857824+00:00", "healthy": true}, {"time": "2026-03-27T03:20:28.929799+00:00", "healthy": true}, {"time": "2026-03-27T03:25:00.958367+00:00", "healthy": true}, {"time": "2026-03-27T03:25:01.015946+00:00", "healthy": true}, {"time": "2026-03-27T03:30:02.864642+00:00", "healthy": true}, {"time": "2026-03-27T03:30:02.918585+00:00", "healthy": true}, {"time": "2026-03-27T03:35:06.041122+00:00", "healthy": true}, {"time": "2026-03-27T03:35:06.096995+00:00", "healthy": true}, {"time": "2026-03-27T03:40:08.940991+00:00", "healthy": true}, {"time": "2026-03-27T03:40:09.001765+00:00", "healthy": true}, {"time": "2026-03-27T03:45:11.944226+00:00", "healthy": true}, {"time": "2026-03-27T03:45:12.000371+00:00", "healthy": true}, {"time": "2026-03-27T03:50:14.798545+00:00", "healthy": true}, {"time": "2026-03-27T03:50:14.850851+00:00", "healthy": true}, {"time": "2026-03-27T03:55:17.974537+00:00", "healthy": true}, {"time": "2026-03-27T03:55:18.041604+00:00", "healthy": true}, {"time": "2026-03-27T04:00:21.103545+00:00", "healthy": true}, {"time": "2026-03-27T04:00:21.190670+00:00", "healthy": true}, {"time": "2026-03-27T04:05:24.369065+00:00", "healthy": true}, {"time": "2026-03-27T04:05:24.438697+00:00", "healthy": true}, {"time": "2026-03-27T04:10:27.311234+00:00", "healthy": true}, {"time": "2026-03-27T04:10:27.573115+00:00", "healthy": true}, {"time": "2026-03-27T04:15:28.390410+00:00", "healthy": true}, {"time": "2026-03-27T04:15:28.456524+00:00", "healthy": true}, {"time": "2026-03-27T04:20:01.211870+00:00", "healthy": true}, {"time": "2026-03-27T04:20:01.266565+00:00", "healthy": true}, {"time": "2026-03-27T04:25:03.873057+00:00", "healthy": true}, {"time": "2026-03-27T04:25:03.983103+00:00", "healthy": true}, {"time": "2026-03-27T04:30:05.629804+00:00", "healthy": true}, {"time": "2026-03-27T04:30:05.691344+00:00", "healthy": true}, {"time": "2026-03-27T04:35:07.854436+00:00", "healthy": true}, {"time": "2026-03-27T04:35:07.936565+00:00", "healthy": true}, {"time": "2026-03-27T04:40:09.814431+00:00", "healthy": true}, {"time": "2026-03-27T04:40:10.555788+00:00", "healthy": true}, {"time": "2026-03-27T04:45:13.117221+00:00", "healthy": true}, {"time": "2026-03-27T04:45:14.352735+00:00", "healthy": true}, {"time": "2026-03-27T04:50:15.979197+00:00", "healthy": true}, {"time": "2026-03-27T04:50:16.264769+00:00", "healthy": true}, {"time": "2026-03-27T04:55:18.169374+00:00", "healthy": true}, {"time": "2026-03-27T04:55:19.152792+00:00", "healthy": true}, {"time": "2026-03-27T05:00:23.059808+00:00", "healthy": true}, {"time": "2026-03-27T05:00:23.629999+00:00", "healthy": true}];
     const uptimeChart = document.getElementById('uptime-chart');
     uptimeData.forEach((d, i) => {
       const bar = document.createElement('div');
@@ -325,7 +333,7 @@
     }
 
     // Sources list
-    const sourcesData = {"mcp_registry": 1733, "github": 2592, "glama": 4599, "prebuilt": 175, "all_agent_tools": 4038};
+    const sourcesData = {"mcp_registry": 1733, "github": 2592, "glama": 4599, "prebuilt": 28015, "all_agent_tools": 4038};
     const sourcesList = document.getElementById('sources-list');
     const sortedSources = Object.entries(sourcesData).sort((a, b) => b[1] - a[1]);
     sortedSources.forEach(([name, count]) => {
