@@ -15,7 +15,11 @@ from typing import Any
 
 
 def score_tool(tool: dict[str, Any]) -> dict[str, Any]:
-    """Score a collected tool and return a service-compatible dict."""
+    """DEPRECATED: Legacy scorer. Use app.scoring.score_tool() instead.
+
+    Kept only for backwards compatibility. normalize_tool() now calls the new
+    type-specific scoring engine directly.
+    """
     source = tool.get("source", "")
     tool_type = tool.get("type", "general")
 
@@ -443,8 +447,9 @@ def normalize_tool(tool: dict[str, Any]) -> dict[str, Any]:
     if not url and repo_url:
         url = repo_url
 
-    # Score it
-    scored = score_tool(tool)
+    # Score it — use the new type-specific scoring engine
+    from .scoring import score_tool as _new_score_tool
+    scored = _new_score_tool(tool)
 
     # Map to service_type
     type_map = {

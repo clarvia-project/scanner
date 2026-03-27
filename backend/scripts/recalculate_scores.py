@@ -39,13 +39,8 @@ PROJECT_ROOT = BACKEND_DIR.parent
 sys.path.insert(0, str(BACKEND_DIR))
 
 from app.tool_scorer import normalize_tool, detect_pricing, detect_difficulty, estimate_popularity
-# Use the new type-specific scoring engine (replaces old monolithic score_tool)
-from app.scoring import score_tool as new_score_tool
-
-# Monkey-patch: replace the old score_tool in tool_scorer with the new one
-# so normalize_tool() calls the new scoring engine internally
-import app.tool_scorer
-app.tool_scorer.score_tool = new_score_tool
+# normalize_tool() now directly uses app.scoring.score_tool() internally,
+# no monkey-patching needed.
 
 logger = logging.getLogger("recalculate_scores")
 

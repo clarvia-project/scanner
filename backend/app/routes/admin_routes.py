@@ -342,7 +342,7 @@ async def _background_rescan(urls: list[str], max_concurrent: int = 3) -> None:
                 logger.warning("Rescan failed for %s: %s", url, e)
                 errors.append({"url": url, "error": str(e)})
 
-    await asyncio.gather(*[_scan_one(url) for url in urls])
+    await asyncio.gather(*[_scan_one(url) for url in urls], return_exceptions=True)
 
     # Save results to all prebuilt-scans.json locations
     output_paths = [
