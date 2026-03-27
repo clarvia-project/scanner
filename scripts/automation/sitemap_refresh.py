@@ -62,30 +62,33 @@ def fetch_all_tool_slugs() -> list[str]:
     """Fetch all tool slugs from the backend API."""
     slugs = []
     page = 0
-    limit = 500
+    limit = 100  # API max limit per request
 
     while True:
         try:
-            url = f"{API_BASE}/v1/services?limit={limit}&offset={page * limit}"
+            offset = page * limit
+            url = f"{API_BASE}/v1/services?limit={limit}&offset={offset}"
             resp = requests.get(url, timeout=30)
             if resp.status_code != 200:
-                logger.warning("API returned %d at page %d", resp.status_code, page)
+                logger.warning("API returned %d at page %d (offset=%d)", resp.status_code, page, offset)
                 break
 
             data = resp.json()
+            # API returns {"total": N, "services": [...]} or {"total": N, "items": [...]}
             items = data.get("services", data.get("items", []))
             if not items:
                 break
 
             for item in items:
-                slug = item.get("scan_id") or item.get("id") or item.get("name", "").lower().replace(" ", "-")
+                # Use scan_id (scn_xxx) or name as slug
+                scan_id = item.get("scan_id", "")
+                name = item.get("name", "").lower().replace(" ", "-")
+                slug = scan_id or name
                 if slug:
-                    # Remove tool_ prefix for URL cleanliness
-                    slug = slug.removeprefix("tool_")
                     slugs.append(slug)
 
             total = data.get("total", 0)
-            logger.info("Fetched page %d: %d slugs (total=%d)", page, len(items), total)
+            logger.info("Page %d (offset=%d): +%d slugs, total_collected=%d/%d", page, offset, len(items), len(slugs), total)
 
             if len(slugs) >= total or len(items) < limit:
                 break

@@ -2,26 +2,14 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://clarvia.art</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
   <url><loc>https://clarvia.art/tools</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://clarvia.art/scan</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://clarvia.art/leaderboard</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
-  <url><loc>https://clarvia.art/guide</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://clarvia.art/docs</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://clarvia.art/for-agents</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://clarvia.art/compare</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://clarvia.art/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://clarvia.art/pricing</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://clarvia.art/privacy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://clarvia.art/categories</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://clarvia.art/categories/developer_tools</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://clarvia.art/categories/mcp</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://clarvia.art/categories/ai</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://clarvia.art/categories/automation</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://clarvia.art/categories/database</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://clarvia.art/categories/cloud</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://clarvia.art/categories/blockchain</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://clarvia.art/categories/productivity</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://clarvia.art/categories/security</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://clarvia.art/categories/analytics</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://clarvia.art/categories/communication</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://clarvia.art/categories/payments</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://clarvia.art/methodology</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://clarvia.art/for-agents</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://clarvia.art/compare</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://clarvia.art/trending</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://clarvia.art/categories</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://clarvia.art/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://clarvia.art/pricing</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://clarvia.art/api</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
 </urlset>
