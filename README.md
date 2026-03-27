@@ -289,6 +289,26 @@ Access via remote endpoint: `https://clarvia-api.onrender.com/mcp/`
 
 ---
 
+## Claude Code Skills
+
+Pre-built skills for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that use Clarvia MCP tools:
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| **Scan** | `/clarvia-scan <url-or-name>` | Run a full AEO audit on any tool |
+| **Compare** | `/clarvia-compare <tool-A> vs <tool-B>` | Head-to-head dimension comparison |
+| **Recommend** | `/clarvia-recommend <use-case>` | Get top tool picks for a use case |
+
+**Quick setup:**
+```bash
+claude mcp add clarvia -- npx -y clarvia-mcp-server
+cp .claude/skills/clarvia-*.md /your/project/.claude/skills/
+```
+
+See [SKILLS.md](SKILLS.md) for full installation and usage details.
+
+---
+
 ## REST API (110+ endpoints)
 
 Full OpenAPI spec: [`/openapi.json`](https://clarvia-api.onrender.com/openapi.json)
