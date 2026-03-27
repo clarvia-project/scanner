@@ -1,0 +1,30 @@
+{
+  "name": "clarvia-aeo-check",
+  "version": "1.0.0",
+  "description": "GitHub Action to analyze MCP server configs for AEO readiness via Clarvia",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "ncc build src/index.js -o dist --source-map --license licenses.txt",
+    "lint": "eslint src/",
+    "test": "node --test tests/"
+  },
+  "keywords": [
+    "github-action",
+    "aeo",
+    "mcp",
+    "ai-agent",
+    "clarvia",
+    "model-context-protocol",
+    "api-quality",
+    "ci-cd"
+  ],
+  "author": "clarvia",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.10.1",
+    "@actions/github": "^6.0.0"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.3"
+  }
+}

@@ -1,6 +1,6 @@
-name: 'Clarvia AEO Score Check'
-description: 'Check AEO (AI Engine Optimization) score of your API/MCP server in CI/CD. Get scored on API accessibility, data structuring, agent compatibility, and trust signals.'
-author: 'digitamaz'
+name: 'Clarvia AEO Check'
+description: 'Analyze MCP server configs for AEO (AI Engine Optimization) readiness. Auto-detects configs in PRs, scores them via Clarvia API, and posts results as PR comments.'
+author: 'clarvia'
 
 branding:
   icon: 'check-circle'
@@ -8,44 +8,62 @@ branding:
 
 inputs:
   url:
-    description: 'URL to scan for AEO readiness'
-    required: true
+    description: 'URL to scan for AEO readiness. If omitted, the action auto-detects MCP server configs in the repository.'
+    required: false
+    default: ''
+  config-paths:
+    description: 'Comma-separated list of config file paths to scan (e.g., "server.json,mcp.json"). Overrides auto-detection.'
+    required: false
+    default: ''
   fail-under:
-    description: 'Minimum score threshold (exit 1 if score is below)'
+    description: 'Minimum overall AEO score (0-100). The check fails if the score is below this threshold.'
     required: false
     default: '0'
   api-url:
-    description: 'Clarvia API base URL'
+    description: 'Clarvia API base URL.'
     required: false
-    default: 'https://clarvia.art'
-  format:
-    description: 'Output format: text, json, or sarif'
+    default: 'https://clarvia-api.onrender.com'
+  api-key:
+    description: 'Clarvia API key for authenticated scans (optional). Enables higher rate limits.'
     required: false
-    default: 'text'
+    default: ''
+  post-comment:
+    description: 'Post scan results as a PR comment. Only works on pull_request events.'
+    required: false
+    default: 'true'
+  comment-header:
+    description: 'Header text used to identify and update existing comments instead of creating duplicates.'
+    required: false
+    default: '<!-- clarvia-aeo-check -->'
+  fail-on-error:
+    description: 'Fail the action if the Clarvia API is unreachable or returns an error.'
+    required: false
+    default: 'false'
+  github-token:
+    description: 'GitHub token for posting PR comments. Defaults to the built-in GITHUB_TOKEN.'
+    required: false
+    default: ${{ github.token }}
 
 outputs:
   score:
-    description: 'The Clarvia AEO score (0-100)'
-    value: ${{ steps.scan.outputs.score }}
+    description: 'Overall AEO score (0-100).'
   rating:
-    description: 'The rating (excellent, strong, moderate, weak)'
-    value: ${{ steps.scan.outputs.rating }}
+    description: 'Rating label: excellent, strong, moderate, or weak.'
+  agent-grade:
+    description: 'Agent compatibility grade: AGENT_NATIVE, AGENT_FRIENDLY, AGENT_POSSIBLE, or AGENT_HOSTILE.'
   scan-id:
-    description: 'The scan ID for referencing results'
-    value: ${{ steps.scan.outputs.scan_id }}
+    description: 'Unique scan identifier for referencing results.'
   badge-url:
-    description: 'URL to the AEO badge SVG'
-    value: ${{ steps.scan.outputs.badge_url }}
+    description: 'URL to the dynamic AEO badge SVG.'
+  details-url:
+    description: 'URL to the full scan report on Clarvia.'
+  passed:
+    description: 'Whether the score meets the fail-under threshold (true/false).'
+  configs-found:
+    description: 'Number of MCP config files detected.'
+  results-json:
+    description: 'Full scan results as a JSON string.'
 
 runs:
-  using: 'composite'
-  steps:
-    - name: Run Clarvia AEO Scan
-      id: scan
-      run: bash "${{ github.action_path }}/scan.sh"
-      shell: bash
-      env:
-        SCAN_URL: ${{ inputs.url }}
-        FAIL_UNDER: ${{ inputs.fail-under }}
-        API_URL: ${{ inputs.api-url }}
-        OUTPUT_FORMAT: ${{ inputs.format }}
+  using: 'node20'
+  main: 'dist/index.js'
