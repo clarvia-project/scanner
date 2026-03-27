@@ -212,14 +212,17 @@ def score_tool(tool: dict[str, Any]) -> dict[str, Any]:
 
     total = desc_score + doc_score + eco_score + agent_score + trust_score
 
-    # Rating thresholds (calibrated to actual score distribution)
-    if total >= 80:
+    # Rating thresholds — unified with scanner.py _get_rating() for consistency.
+    # Both systems must use the same labels and thresholds.
+    if total >= 90:
+        rating = "Exceptional"
+    elif total >= 80:
         rating = "Excellent"
-    elif total >= 60:
+    elif total >= 65:
         rating = "Strong"
-    elif total >= 35:
+    elif total >= 45:
         rating = "Moderate"
-    elif total >= 20:
+    elif total >= 25:
         rating = "Basic"
     else:
         rating = "Low"

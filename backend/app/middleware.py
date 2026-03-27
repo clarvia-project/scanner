@@ -5,6 +5,7 @@ import logging
 import time
 from collections import defaultdict
 
+from cachetools import TTLCache
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
@@ -46,11 +47,10 @@ class RateLimitEntry:
 
 
 # In-memory store: keyed by IP or API key
-# TODO: Replace with Redis-backed store for multi-instance deployments.
-#       In-memory rate limiting is ineffective when running behind a load
-#       balancer with multiple app instances, as each instance maintains
-#       its own counter. Use redis-py or valkey with atomic INCR + EXPIRE.
-_rate_store: dict[str, RateLimitEntry] = defaultdict(RateLimitEntry)
+# TTLCache bounds memory usage: max 50,000 entries, auto-evicted after 2h.
+# This prevents OOM on Render Starter (512MB) when handling high request volumes.
+# NOTE: Multi-instance deployments need Redis-backed store for consistency.
+_rate_store: TTLCache = TTLCache(maxsize=50_000, ttl=WINDOW_SECONDS * 2)
 
 
 # Render.com proxy IPs — only trust X-Forwarded-For from known proxies
@@ -136,6 +136,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if not store_key:
             store_key = f"ip:{client_ip}"
 
+        # TTLCache doesn't support default factory; get-or-create manually.
+        if store_key not in _rate_store:
+            _rate_store[store_key] = RateLimitEntry()
         entry = _rate_store[store_key]
 
         # Only count scan requests against the limit
@@ -234,12 +237,89 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# ---------------------------------------------------------------------------
+# Agent traffic identification — MOAT DATA COLLECTION
+# Every agent request is a data point. Over time this becomes the moat:
+# which agents use which tools, at what frequency, with what success rate.
+# No competitor can replicate 6+ months of accumulated agent usage data.
+# ---------------------------------------------------------------------------
+
+# Known agent/LLM user agent patterns (partial matches, case-insensitive)
+_AGENT_UA_PATTERNS = (
+    "claude",
+    "gpt",
+    "openai",
+    "cursor",
+    "continue",
+    "copilot",
+    "codeium",
+    "anthropic",
+    "langchain",
+    "langgraph",
+    "autogen",
+    "crewai",
+    "llamaindex",
+    "llama_index",
+    "smolagents",
+    "agentops",
+    "dify",
+    "flowise",
+    "n8n",
+    "make.com",
+    "zapier",
+    "python-httpx",
+    "python-requests",
+    # MCP clients
+    "mcp-client",
+    "mcpclient",
+    "clarvia-mcp",
+    "smithery",
+    # Generic agent indicators
+    "bot/",
+    "agent/",
+    "-agent",
+)
+
+
+def _identify_agent_traffic(user_agent: str) -> str | None:
+    """Classify user agent as a known agent type.
+
+    Returns agent class string or None if human/unknown.
+    This data accumulates into Clarvia's moat: tool usage patterns by agent type.
+    """
+    ua_lower = user_agent.lower()
+    for pattern in _AGENT_UA_PATTERNS:
+        if pattern in ua_lower:
+            # Classify into broad categories
+            if any(p in ua_lower for p in ("claude", "anthropic")):
+                return "claude"
+            if any(p in ua_lower for p in ("gpt", "openai")):
+                return "openai"
+            if "cursor" in ua_lower:
+                return "cursor"
+            if "continue" in ua_lower:
+                return "continue"
+            if any(p in ua_lower for p in ("langchain", "langgraph", "llamaindex", "llama_index")):
+                return "langchain_ecosystem"
+            if any(p in ua_lower for p in ("autogen", "crewai", "smolagents")):
+                return "agent_framework"
+            if any(p in ua_lower for p in ("n8n", "zapier", "make.com", "flowise", "dify")):
+                return "automation_platform"
+            if "mcp" in ua_lower or "smithery" in ua_lower:
+                return "mcp_client"
+            return "agent_other"
+    return None
+
+
 class AnalyticsMiddleware(BaseHTTPMiddleware):
     """Track all requests for KPI dashboard. Lightweight, non-blocking.
 
     Records to both in-memory analytics (real-time) and persistent JSONL
     files (historical queries). JSONL writes are buffered and async so
     they never block the request path.
+
+    Also identifies agent traffic — this is moat data. Every agent request
+    logged here is part of the dataset that competitors cannot replicate.
     """
 
     async def dispatch(self, request: Request, call_next) -> Response:
@@ -251,6 +331,11 @@ class AnalyticsMiddleware(BaseHTTPMiddleware):
         user_agent = request.headers.get("user-agent", "")
         path = request.url.path
         method = request.method
+
+        # Identify agent vs human traffic (moat data collection)
+        agent_type = _identify_agent_traffic(user_agent)
+        if agent_type:
+            response.headers["X-Clarvia-Agent-Detected"] = agent_type
 
         # In-memory analytics (existing, real-time KPI)
         analytics.record_request(
@@ -280,6 +365,9 @@ class AnalyticsMiddleware(BaseHTTPMiddleware):
                 client_ip=client_ip,
                 user_agent=user_agent,
             )
+            # Attach agent type to analytics entry for moat data accumulation
+            if agent_type:
+                entry["agent_type"] = agent_type
             # Fire-and-forget: buffer the entry without awaiting disk I/O
             asyncio.ensure_future(analytics_writer.record(entry))
 
@@ -287,11 +375,20 @@ class AnalyticsMiddleware(BaseHTTPMiddleware):
 
 
 def cleanup_rate_store() -> int:
-    """Remove expired rate limit entries. Returns count removed."""
+    """Expire stale rate limit entries. TTLCache handles eviction automatically.
+
+    This function is kept for API compatibility with the background cleanup task.
+    TTLCache auto-evicts entries after 2h TTL, so manual cleanup is rarely needed.
+    Returns the number of manually expired entries (typically 0 with TTLCache).
+    """
+    now = time.monotonic()
     expired = [
-        k for k, entry in _rate_store.items()
-        if time.monotonic() - entry.window_start >= WINDOW_SECONDS * 2
+        k for k, entry in list(_rate_store.items())
+        if now - entry.window_start >= WINDOW_SECONDS * 2
     ]
     for k in expired:
-        del _rate_store[k]
+        try:
+            del _rate_store[k]
+        except KeyError:
+            pass  # Already evicted by TTLCache
     return len(expired)

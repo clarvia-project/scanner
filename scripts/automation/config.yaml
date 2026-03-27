@@ -118,3 +118,33 @@ tasks:
     schedule: "0 8 * * *"  # 8am daily (after harvester 6am + classifier 6:30am + auditor 7am)
     enabled: true
     timeout: 300
+
+  # ---------------------------------------------------------------------------
+  # MARKETING AUTOMATION — Agent-only distribution, no human social media
+  # ---------------------------------------------------------------------------
+  marketing_automation:
+    script: scripts/automation/marketing_automation.py
+    schedule: "0 9 * * *"  # 9am daily — after auto_merge, reports on distribution health
+    enabled: true
+    timeout: 180
+    description: "Check MCP registry listings, npm version, awesome-list PR status, llms.txt, API health"
+
+  # ---------------------------------------------------------------------------
+  # SITEMAP REFRESH — Rebuild sitemap when catalog grows significantly
+  # ---------------------------------------------------------------------------
+  sitemap_refresh:
+    script: scripts/automation/sitemap_refresh.py
+    schedule: "0 10 * * 1"  # Monday 10am — weekly refresh
+    enabled: true
+    timeout: 300
+    description: "Rebuild XML sitemaps from current catalog and ping Google/Bing"
+
+  # ---------------------------------------------------------------------------
+  # SCORE CALIBRATION — Recalibrate scoring distribution periodically
+  # ---------------------------------------------------------------------------
+  score_calibration:
+    script: scripts/automation/score_calibration.py
+    schedule: "0 11 * * 0"  # Sunday 11am — weekly calibration
+    enabled: true
+    timeout: 600
+    description: "Analyze score distribution, flag calibration drift, rescore top 500 tools"

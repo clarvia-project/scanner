@@ -4,6 +4,9 @@ aiohttp~=3.13.3
 pydantic[email]~=2.12.5
 pydantic-settings~=2.13.1
 
+# Bounded in-memory caching — prevents OOM on Render Starter (512MB)
+cachetools~=6.2.6
+
 # MCP server (Streamable HTTP transport)
 mcp>=1.8.0
 

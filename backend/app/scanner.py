@@ -130,14 +130,20 @@ def _extract_service_name(url: str) -> str:
 
 
 def _get_rating(score: int) -> str:
-    """Map score to rating label."""
+    """Map score to rating label.
+
+    Unified thresholds — matches tool_scorer.py for consistency.
+    Full AEO scans (this function) use the same labels as proxy scores.
+    """
     if score >= 90:
         return "Exceptional"
-    elif score >= 75:
+    elif score >= 80:
+        return "Excellent"
+    elif score >= 65:
         return "Strong"
-    elif score >= 60:
+    elif score >= 45:
         return "Moderate"
-    elif score >= 40:
+    elif score >= 25:
         return "Basic"
     else:
         return "Low"

@@ -26,6 +26,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 import aiohttp
+from cachetools import TTLCache
 
 from ..config import settings
 
@@ -33,21 +34,18 @@ from ..config import settings
 # Retry helper & in-memory cache for external registry lookups
 # ---------------------------------------------------------------------------
 
-_registry_cache: dict[str, tuple[Any, float]] = {}
+# TTLCache: max 2000 entries, auto-evicted after 1 hour.
+# Prevents unbounded growth from repeated registry lookups.
 CACHE_TTL = 3600  # 1 hour
+_registry_cache: TTLCache = TTLCache(maxsize=2000, ttl=CACHE_TTL)
 
 
 def _get_cached(key: str) -> Any | None:
-    if key in _registry_cache:
-        val, ts = _registry_cache[key]
-        if time.time() - ts < CACHE_TTL:
-            return val
-        del _registry_cache[key]
-    return None
+    return _registry_cache.get(key)  # Returns None on miss or after TTL eviction
 
 
 def _set_cached(key: str, val: Any) -> None:
-    _registry_cache[key] = (val, time.time())
+    _registry_cache[key] = val  # TTLCache manages expiry automatically
 
 
 async def _fetch_with_retry(
