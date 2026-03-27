@@ -897,7 +897,7 @@ import requests
 @tool
 def check_api_aeo_score(url: str) -> dict:
     """Check if an API is agent-ready using Clarvia AEO Score"""
-    resp = requests.get(f"https://api.clarvia.art/api/v1/score?url={url}")
+    resp = requests.get(f"https://clarvia-api.onrender.com/api/v1/score?url={url}")
     data = resp.json()
     score = data["clarvia_score"]
     if score >= 70:
@@ -924,7 +924,7 @@ from crewai_tools import tool
 def scan_api(url: str) -> str:
     """Evaluate API agent-readiness score"""
     import requests
-    resp = requests.get(f"https://api.clarvia.art/api/v1/score?url={url}")
+    resp = requests.get(f"https://clarvia-api.onrender.com/api/v1/score?url={url}")
     return str(resp.json())
 
 api_evaluator = Agent(

@@ -5,8 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 // Public-facing API URL shown in documentation examples.
-// This is intentionally the production URL, not the env-based API_BASE.
-const API_DOCS_BASE = "https://api.clarvia.art";
+const API_DOCS_BASE = "https://clarvia-api.onrender.com";
 
 /* ────────── Types ────────── */
 
@@ -499,7 +498,7 @@ jobs:
       - name: Run AEO Scan
         id: scan
         run: |
-          RESULT=$(curl -s -X POST https://api.clarvia.art/api/scan \\
+          RESULT=$(curl -s -X POST https://clarvia-api.onrender.com/api/scan \\
             -H "Content-Type: application/json" \\
             -d '{"url":"\${{ vars.API_URL }}"}')
           echo "scan_id=$(echo $RESULT | jq -r '.scan_id')" >> $GITHUB_OUTPUT
@@ -511,7 +510,7 @@ jobs:
 
       - name: Download SARIF
         run: |
-          curl -s "https://api.clarvia.art/api/scan/\${{ steps.scan.outputs.scan_id }}/sarif" \\
+          curl -s "https://clarvia-api.onrender.com/api/scan/\${{ steps.scan.outputs.scan_id }}/sarif" \\
             -o results.sarif.json
 
       - name: Upload SARIF to GitHub
