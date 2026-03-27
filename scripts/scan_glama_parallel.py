@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -9,7 +10,7 @@ from pathlib import Path
 import httpx
 
 API = "https://clarvia-api.onrender.com/api/scan"
-ADMIN_KEY = "***REMOVED***"
+ADMIN_KEY = os.environ.get("SCANNER_ADMIN_API_KEY", "")
 BASE = Path(__file__).resolve().parent.parent
 
 URLS_FILE = BASE / "data" / "glama-scan-urls.json"

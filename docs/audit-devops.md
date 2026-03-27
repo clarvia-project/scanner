@@ -29,7 +29,7 @@
 **현재 상태**: `.env` 파일에 Supabase anon key(JWT 토큰)가 평문으로 포함되어 있습니다. `.gitignore`에 `.env`가 포함되어 있지만, 파일 자체가 이미 존재하며 git history에 남아있을 가능성이 높습니다.
 
 ```
-SCANNER_SUPABASE_ANON_KEY=***REMOVED***...  (실제 JWT)
+SCANNER_SUPABASE_ANON_KEY=<REDACTED>
 ```
 
 **필요 조치**:

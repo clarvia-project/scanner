@@ -12,6 +12,7 @@ Each run only fetches NEW items since last check.
 """
 
 import json
+import os
 import re
 import time
 import urllib.parse
@@ -26,7 +27,7 @@ NEW_TOOLS_FILE = DATA / "new-tools-queue.jsonl"  # append-only log of new discov
 
 API = "https://clarvia-api.onrender.com/api/scan"
 TRENDING_API = "https://clarvia-api.onrender.com/v1/trending"
-ADMIN_KEY = "***REMOVED***"
+ADMIN_KEY = os.environ.get("SCANNER_ADMIN_API_KEY", "")
 
 # Category classification keywords (mirrors tool_scorer.py)
 CAT_KEYWORDS = {

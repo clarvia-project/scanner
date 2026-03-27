@@ -10,6 +10,7 @@ Designed to run as a daily cron/scheduled task.
 
 import asyncio
 import json
+import os
 import re
 import time
 import urllib.parse
@@ -23,7 +24,7 @@ BASE = Path(__file__).resolve().parent.parent
 DATA = BASE / "data"
 
 API = "https://clarvia-api.onrender.com/api/scan"
-ADMIN_KEY = "***REMOVED***"
+ADMIN_KEY = os.environ.get("SCANNER_ADMIN_API_KEY", "")
 CONCURRENCY = 10
 SCAN_TIMEOUT = 120
 

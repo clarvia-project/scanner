@@ -8,6 +8,7 @@ Usage:
 """
 
 import json
+import os
 import sys
 import time
 import urllib.request
@@ -15,7 +16,7 @@ import urllib.error
 from pathlib import Path
 
 API = "https://clarvia-api.onrender.com/api/scan"
-ADMIN_KEY = "***REMOVED***"
+ADMIN_KEY = os.environ.get("SCANNER_ADMIN_API_KEY", "")
 BASE = Path(__file__).resolve().parent.parent
 
 URLS_FILE = BASE / "data" / "mcp-scan-urls.json"

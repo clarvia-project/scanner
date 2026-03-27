@@ -53,7 +53,7 @@ async def get_kpi(_key: ApiKeyDep):
 **파일**: `backend/.env:12`
 
 ```
-SCANNER_SUPABASE_ANON_KEY=***REMOVED***...
+SCANNER_SUPABASE_ANON_KEY=<REDACTED>
 ```
 
 **공격 시나리오**:
