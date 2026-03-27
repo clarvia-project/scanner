@@ -62,11 +62,20 @@ export async function generateMetadata({
       url: `https://clarvia.art/categories/${slug}`,
       siteName: "Clarvia",
       type: "website",
+      images: [
+        {
+          url: "/api/og",
+          width: 1200,
+          height: 630,
+          alt: `${label} — Clarvia AEO Tools`,
+        },
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
+      images: ["/api/og"],
     },
     alternates: {
       canonical: `https://clarvia.art/categories/${slug}`,

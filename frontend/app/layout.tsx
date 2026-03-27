@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/api/og",
         width: 1200,
         height: 630,
         alt: "Clarvia AEO Scanner",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     title: "Clarvia AEO Scanner",
     description:
       "Is your service ready for AI agents? Get your Clarvia Score.",
-    images: ["/og-image.png"],
+    images: ["/api/og"],
   },
   metadataBase: new URL("https://clarvia.art"),
   robots: {

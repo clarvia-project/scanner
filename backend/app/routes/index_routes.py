@@ -4,6 +4,7 @@ import json
 import logging
 from collections import Counter
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -207,6 +208,14 @@ _CATEGORY_MAP: dict[str, list[str]] = {
     "mcp": [
         "mcp", "smithery", "glama", "model context protocol",
         "mcp server", "mcp-server", "mcpserver",
+    ],
+    "skills": [
+        # Agent skills / Claude Code skills
+        "skill", "skills", "agent skill", "claude skill", "codex skill",
+        "skill.md", "claude code skill", "agent-skills", "claude-skills",
+        "codex-skills", "openai skills", "anthropic skills",
+        # Workflow automation skills
+        "workflow skill", "automation skill", "coding skill",
     ],
     "search": [
         "algolia", "elasticsearch", "elastic", "typesense", "meilisearch",
@@ -599,6 +608,12 @@ _DESCRIPTION_KEYWORDS: dict[str, list[str]] = {
         "model context protocol", "mcp server", "mcp tool",
         "mcp client", "mcp resource", "mcp prompt",
     ],
+    "skills": [
+        "skill.md", "agent skill", "coding skill",
+        "claude code skill", "codex skill", "openai codex",
+        "skill file", "skill runner", "slash command",
+        "reusable skill", "modular skill", "ai assistant skill",
+    ],
 }
 
 # Reverse lookup: lowercase service name -> category
@@ -898,6 +913,49 @@ def _generate_code_snippet(s: dict) -> str | None:
     return None
 
 
+def _generate_install_hint(tool: dict) -> str | None:
+    """Generate an install command hint based on tool type and source."""
+    name = (tool.get("service_name") or tool.get("name", "")).lower().strip()
+    url = tool.get("url", "")
+    source = tool.get("source", "")
+    category = tool.get("category", "")
+    tc = tool.get("type_config") or {}
+    service_type = tool.get("service_type", "general")
+
+    # npm packages
+    if source in ("npm", "npm_registry") or "npmjs.com" in url:
+        pkg = tc.get("npm_package") or name
+        return f"npx -y {pkg}"
+
+    # PyPI packages
+    if source in ("pypi", "pypi_registry") or "pypi.org" in url:
+        pkg = tc.get("pypi_package") or name
+        return f"pip install {pkg}"
+
+    # MCP servers (common pattern)
+    if service_type == "mcp_server" or category == "mcp" or "mcp" in name:
+        pkg = tc.get("npm_package")
+        if pkg:
+            return f"npx -y {pkg}"
+        if "github.com" in url:
+            return f"npx -y {name}"
+        return f"npx -y @modelcontextprotocol/{name}"
+
+    # Skills
+    if category == "skills" or service_type == "skill" or source == "github_skills":
+        if "github.com" in url:
+            slug = name.replace(" ", "-")
+            return f"git clone {url} .claude/skills/{slug}"
+
+    # CLI tools with explicit install command
+    if service_type == "cli_tool":
+        cmd = tc.get("install_command")
+        if cmd:
+            return cmd
+
+    return None
+
+
 def _compact_service(s: dict[str, Any]) -> dict[str, Any]:
     """Return a compact representation (no sub_factors)."""
     dims = s.get("dimensions", {})
@@ -916,6 +974,7 @@ def _compact_service(s: dict[str, Any]) -> dict[str, Any]:
         "difficulty": s.get("difficulty", "medium"),
         "capabilities": s.get("capabilities", []),
         "code_snippet": _generate_code_snippet(s),
+        "install_hint": _generate_install_hint(s),
         "popularity": s.get("popularity", 0),
         "cross_refs": s.get("cross_refs", {}),
         "added_at": s.get("added_at") or s.get("scanned_at"),
@@ -1146,6 +1205,148 @@ async def search_alias(
     )
 
 
+@router.get("/alternatives/{service_name}")
+async def get_alternatives(
+    service_name: str,
+    response: Response,
+    limit: int = Query(default=10, ge=1, le=50),
+):
+    """Find alternative tools to the given service.
+
+    Uses category matching + description keyword overlap to find the most similar tools.
+    """
+    _ensure_loaded()
+    _load_collected()
+    _add_headers(response)
+
+    service_name_lower = service_name.lower().strip()
+
+    # Build full pool: scanned + collected (deduplicated)
+    scanned_ids = {s["scan_id"] for s in _services}
+    pool = list(_services) + [
+        t for t in _collected_tools if t["scan_id"] not in scanned_ids
+    ]
+
+    # --- Step 1: Find the target service by fuzzy name match ---
+    target = None
+    best_ratio = 0.0
+    for s in pool:
+        name = s.get("service_name", "").lower().strip()
+        # Exact match
+        if name == service_name_lower:
+            target = s
+            best_ratio = 1.0
+            break
+        # Check if query is contained in name or vice versa
+        if service_name_lower in name or name in service_name_lower:
+            ratio = SequenceMatcher(None, service_name_lower, name).ratio()
+            if ratio > best_ratio:
+                best_ratio = ratio
+                target = s
+        # Also check URL
+        url_val = s.get("url", "").lower()
+        if service_name_lower in url_val:
+            ratio = SequenceMatcher(None, service_name_lower, name).ratio()
+            if ratio > best_ratio or (target is None):
+                best_ratio = max(ratio, 0.5)
+                target = s
+
+    # Fallback: fuzzy match across all names
+    if target is None:
+        for s in pool:
+            name = s.get("service_name", "").lower().strip()
+            ratio = SequenceMatcher(None, service_name_lower, name).ratio()
+            if ratio > best_ratio and ratio >= 0.5:
+                best_ratio = ratio
+                target = s
+
+    if target is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Service '{service_name}' not found in the catalog. Try a different name.",
+        )
+
+    target_name = target["service_name"]
+    target_category = target.get("category", "other")
+    target_desc = (target.get("description") or "").lower()
+    target_scan_id = target["scan_id"]
+
+    # --- Step 2: Find alternatives in the same category ---
+    same_category = [
+        s for s in pool
+        if s.get("category") == target_category and s["scan_id"] != target_scan_id
+    ]
+
+    # --- Step 3: Score by description keyword overlap ---
+    target_words = set(_tokenize_for_similarity(target_desc))
+
+    scored: list[tuple[float, dict]] = []
+    for s in same_category:
+        desc = (s.get("description") or "").lower()
+        candidate_words = set(_tokenize_for_similarity(desc))
+
+        # Jaccard similarity on keyword tokens
+        if target_words and candidate_words:
+            intersection = target_words & candidate_words
+            union = target_words | candidate_words
+            similarity = len(intersection) / len(union) if union else 0.0
+        else:
+            similarity = 0.0
+
+        # Boost for same service_type
+        if s.get("service_type") == target.get("service_type"):
+            similarity += 0.05
+
+        # Boost for tag overlap
+        target_tags = set(t.lower() for t in target.get("tags", []))
+        candidate_tags = set(t.lower() for t in s.get("tags", []))
+        if target_tags and candidate_tags:
+            tag_overlap = len(target_tags & candidate_tags) / len(target_tags | candidate_tags)
+            similarity += tag_overlap * 0.15
+
+        scored.append((similarity, s))
+
+    # Sort by similarity desc, then by clarvia_score desc
+    scored.sort(key=lambda x: (x[0], x[1]["clarvia_score"]), reverse=True)
+
+    alternatives = []
+    for sim, s in scored[:limit]:
+        alternatives.append({
+            "name": s["service_name"],
+            "url": s.get("url", ""),
+            "score": s["clarvia_score"],
+            "category": s.get("category", "other"),
+            "similarity": round(sim, 3),
+            "install_hint": _generate_install_hint(s),
+            "description": (s.get("description") or "")[:200],
+            "scan_id": s["scan_id"],
+        })
+
+    return {
+        "service": target_name,
+        "category": target_category,
+        "alternatives": alternatives,
+        "total_in_category": len(same_category),
+    }
+
+
+def _tokenize_for_similarity(text: str) -> list[str]:
+    """Extract meaningful tokens from text for similarity comparison."""
+    import re as _re
+    # Split into words, filter stop words and short tokens
+    _stop = {
+        "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
+        "of", "with", "by", "from", "is", "are", "was", "were", "be", "been",
+        "being", "have", "has", "had", "do", "does", "did", "will", "would",
+        "could", "should", "may", "might", "can", "shall", "it", "its",
+        "this", "that", "these", "those", "your", "you", "we", "they",
+        "our", "their", "not", "no", "more", "most", "also", "as", "than",
+        "very", "just", "about", "all", "any", "each", "every", "both",
+    }
+    tokens = _re.findall(r"[a-z0-9]+", text.lower())
+    return [t for t in tokens if len(t) >= 2 and t not in _stop]
+
+
 @router.get("/score")
 async def score_quick(
     response: Response,
@@ -1276,6 +1477,184 @@ async def list_categories(
             key=lambda x: x["count"],
             reverse=True,
         )
+    }
+
+
+# ---------------------------------------------------------------------------
+# Category detail labels & descriptions for landing pages
+# ---------------------------------------------------------------------------
+_CATEGORY_META: dict[str, dict[str, str]] = {
+    "database": {
+        "label": "Database",
+        "description": "Database management systems, ORMs, and data infrastructure tools for AI agents. Includes relational databases, NoSQL stores, graph databases, and database-as-a-service platforms.",
+    },
+    "security": {
+        "label": "Security & Compliance",
+        "description": "Security scanning, authentication, secrets management, and compliance tools for AI agents. Covers vulnerability detection, identity management, encryption, and audit solutions.",
+    },
+    "ai": {
+        "label": "AI & Machine Learning",
+        "description": "AI model providers, ML frameworks, vector databases, and intelligent automation tools. Includes LLM APIs, image generation, speech processing, and AI development platforms.",
+    },
+    "developer_tools": {
+        "label": "Developer Tools",
+        "description": "Version control, CI/CD, code quality, hosting, and API development tools for AI agents. Covers the complete software development lifecycle.",
+    },
+    "communication": {
+        "label": "Communication",
+        "description": "Messaging, email, video conferencing, and notification tools for AI agents. Includes chat platforms, customer support, SMS, and real-time communication services.",
+    },
+    "data": {
+        "label": "Data & Analytics Pipelines",
+        "description": "Data warehouses, ETL pipelines, orchestration, and business intelligence tools for AI agents. Covers data transformation, quality, and governance.",
+    },
+    "productivity": {
+        "label": "Productivity & Workflow",
+        "description": "Project management, automation, collaboration, and knowledge management tools for AI agents. Includes task trackers, note-taking apps, and low-code platforms.",
+    },
+    "blockchain": {
+        "label": "Blockchain & Web3",
+        "description": "Blockchain networks, smart contract tools, DeFi protocols, and Web3 infrastructure for AI agents. Covers wallets, indexers, and on-chain analytics.",
+    },
+    "payments": {
+        "label": "Payment & Finance",
+        "description": "Payment processing, billing, invoicing, and financial infrastructure tools for AI agents. Includes gateways, subscription management, and banking APIs.",
+    },
+    "mcp": {
+        "label": "MCP Servers",
+        "description": "Model Context Protocol servers and related tools that enable AI agents to interact with external services through a standardized protocol.",
+    },
+    "search": {
+        "label": "Search & Retrieval",
+        "description": "Full-text search engines, semantic search, web scraping, and information retrieval tools for AI agents. Includes search APIs and crawling services.",
+    },
+    "storage": {
+        "label": "File & Object Storage",
+        "description": "Cloud storage, CDN, file upload, and asset management tools for AI agents. Covers object stores, image optimization, and content delivery networks.",
+    },
+    "cms": {
+        "label": "CMS & Content",
+        "description": "Content management systems, headless CMS platforms, and publishing tools for AI agents. Includes blog engines, page builders, and content APIs.",
+    },
+    "testing": {
+        "label": "Testing & QA",
+        "description": "Test frameworks, browser automation, load testing, and quality assurance tools for AI agents. Covers unit, integration, and end-to-end testing.",
+    },
+    "monitoring": {
+        "label": "Monitoring & Observability",
+        "description": "Application monitoring, logging, tracing, and incident management tools for AI agents. Includes APM, error tracking, and uptime monitoring.",
+    },
+    "cloud": {
+        "label": "Cloud Infrastructure",
+        "description": "Cloud providers, serverless platforms, container orchestration, and infrastructure-as-code tools for AI agents. Covers AWS, GCP, Azure, and alternatives.",
+    },
+    "automation": {
+        "label": "Automation & Integration",
+        "description": "Workflow automation, iPaaS, event-driven architectures, and integration tools for AI agents. Includes no-code automation and job scheduling.",
+    },
+    "media": {
+        "label": "Media & Social",
+        "description": "Image processing, video streaming, social media APIs, and creative tools for AI agents. Covers content creation, media optimization, and platform integrations.",
+    },
+    "analytics": {
+        "label": "Analytics & BI",
+        "description": "Web analytics, product analytics, business intelligence, and SEO tools for AI agents. Includes dashboards, event tracking, and data visualization.",
+    },
+    "ecommerce": {
+        "label": "E-commerce",
+        "description": "E-commerce platforms, shipping, reviews, and marketplace tools for AI agents. Covers online stores, order management, and retail integrations.",
+    },
+    "education": {
+        "label": "Education & Learning",
+        "description": "Learning management systems, course platforms, and educational tools for AI agents. Includes LMS, coding education, and assessment platforms.",
+    },
+    "healthcare": {
+        "label": "Healthcare",
+        "description": "Electronic health records, FHIR/HL7 tools, telehealth, and health data platforms for AI agents. Covers clinical systems and health interoperability.",
+    },
+    "design": {
+        "label": "Design & UI",
+        "description": "Design tools, UI component libraries, prototyping, and creative software for AI agents. Includes Figma, CSS frameworks, and 3D tools.",
+    },
+    "documentation": {
+        "label": "Documentation",
+        "description": "Documentation generators, API docs, knowledge bases, and technical writing tools for AI agents. Covers static site generators and API specification tools.",
+    },
+    "skills": {
+        "label": "Agent Skills",
+        "description": "Modular SKILL.md capabilities for AI coding assistants like Claude Code and OpenAI Codex. Includes reusable slash commands, workflow skills, and agent-specific task modules.",
+        "icon": "puzzle",
+    },
+    "other": {
+        "label": "Other",
+        "description": "Miscellaneous tools and services for AI agents that span multiple categories or serve specialized use cases.",
+    },
+}
+
+
+@router.get("/categories/{slug}")
+async def get_category_detail(
+    slug: str,
+    response: Response,
+    service_type: str | None = Query(None, description="Filter by type"),
+    sort: str = Query("score_desc", description="Sort: score_desc|score_asc|name_asc"),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
+    """Get tools in a specific category, ranked by Clarvia Score."""
+    _ensure_loaded()
+    _load_collected()
+    _add_headers(response)
+
+    # Build pool: scanned + collected (deduplicated)
+    scanned_ids = {s["scan_id"] for s in _services}
+    pool = list(_services) + [
+        t for t in _collected_tools if t["scan_id"] not in scanned_ids
+    ]
+
+    # Filter by category
+    filtered = [s for s in pool if s.get("category") == slug]
+
+    if not filtered and slug not in _CATEGORY_MAP and slug not in _CATEGORY_META:
+        raise HTTPException(status_code=404, detail=f"Category '{slug}' not found")
+
+    # Optional service_type filter
+    if service_type:
+        filtered = [s for s in filtered if s.get("service_type", "general") == service_type]
+
+    total = len(filtered)
+
+    # Sort
+    if sort == "score_asc":
+        filtered.sort(key=lambda s: s["clarvia_score"])
+    elif sort == "name_asc":
+        filtered.sort(key=lambda s: s.get("service_name", "").lower())
+    else:
+        filtered.sort(key=lambda s: s["clarvia_score"], reverse=True)
+
+    # Paginate
+    page = filtered[offset : offset + limit]
+
+    # Compute stats
+    scores = [s["clarvia_score"] for s in filtered] if filtered else [0]
+    type_counts: dict[str, int] = {}
+    for s in filtered:
+        st = s.get("service_type", "general")
+        type_counts[st] = type_counts.get(st, 0) + 1
+
+    meta = _CATEGORY_META.get(slug, {"label": slug.replace("_", " ").title(), "description": ""})
+
+    return {
+        "slug": slug,
+        "label": meta["label"],
+        "description": meta["description"],
+        "total": total,
+        "avg_score": round(sum(scores) / len(scores), 1) if scores else 0,
+        "max_score": max(scores) if scores else 0,
+        "by_type": type_counts,
+        "tools": [_compact_service(s) for s in page],
+        "offset": offset,
+        "limit": limit,
     }
 
 

@@ -131,22 +131,22 @@ const SUB_FACTOR_FILTERS: SubFactorFilter[] = [
   {
     id: "mcp",
     label: "Has MCP Support",
-    test: (e) => (e.dimensions.agent_compatibility.sub_factors?.mcp_server_exists?.score ?? 0) > 0,
+    test: (e) => (e.dimensions?.agent_compatibility?.sub_factors?.mcp_server_exists?.score ?? 0) > 0,
   },
   {
     id: "openapi",
     label: "Has OpenAPI Spec",
-    test: (e) => (e.dimensions.data_structuring.sub_factors?.schema_definition?.score ?? 0) > 5,
+    test: (e) => (e.dimensions?.data_structuring?.sub_factors?.schema_definition?.score ?? 0) > 5,
   },
   {
     id: "errors",
     label: "Good Error Handling",
-    test: (e) => (e.dimensions.data_structuring.sub_factors?.error_structure?.score ?? 0) > 5,
+    test: (e) => (e.dimensions?.data_structuring?.sub_factors?.error_structure?.score ?? 0) > 5,
   },
   {
     id: "fast",
     label: "Fast Response",
-    test: (e) => (e.dimensions.api_accessibility.sub_factors?.response_speed?.score ?? 0) >= 7,
+    test: (e) => (e.dimensions?.api_accessibility?.sub_factors?.response_speed?.score ?? 0) >= 7,
   },
 ];
 
@@ -188,11 +188,12 @@ function dimBarGradient(score: number, max: number): string {
 }
 
 function dimValue(entry: ScanEntry, key: SortKey): number {
+  const d = entry.dimensions;
   switch (key) {
-    case "api": return entry.dimensions.api_accessibility.score;
-    case "data": return entry.dimensions.data_structuring.score;
-    case "agent": return entry.dimensions.agent_compatibility.score;
-    case "trust": return entry.dimensions.trust_signals.score;
+    case "api": return d?.api_accessibility?.score ?? 0;
+    case "data": return d?.data_structuring?.score ?? 0;
+    case "agent": return d?.agent_compatibility?.score ?? 0;
+    case "trust": return d?.trust_signals?.score ?? 0;
     case "score": return entry.clarvia_score;
     default: return 0;
   }
@@ -560,6 +561,18 @@ export default function LeaderboardPage() {
                 Register
               </Link>
               <Link
+                href="/trending"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Trending
+              </Link>
+              <Link
+                href="/compare"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Compare
+              </Link>
+              <Link
                 href="/docs"
                 className="text-sm text-muted hover:text-foreground transition-colors"
               >
@@ -869,32 +882,32 @@ export default function LeaderboardPage() {
                           className="px-2 py-4 text-center hidden md:table-cell"
                           onClick={() => handleRowClick(item)}
                         >
-                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions.api_accessibility.score, item.dimensions.api_accessibility.max)}`} aria-label={`API: ${item.dimensions.api_accessibility.score} out of ${item.dimensions.api_accessibility.max}`}>
-                            {item.dimensions.api_accessibility.score}
+                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions?.api_accessibility?.score ?? 0, item.dimensions?.api_accessibility?.max ?? 30)}`} aria-label={`API: ${item.dimensions?.api_accessibility?.score ?? 0} out of ${item.dimensions?.api_accessibility?.max ?? 30}`}>
+                            {item.dimensions?.api_accessibility?.score ?? 0}
                           </span>
                         </td>
                         <td
                           className="px-2 py-4 text-center hidden md:table-cell"
                           onClick={() => handleRowClick(item)}
                         >
-                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions.data_structuring.score, item.dimensions.data_structuring.max)}`} aria-label={`Data: ${item.dimensions.data_structuring.score} out of ${item.dimensions.data_structuring.max}`}>
-                            {item.dimensions.data_structuring.score}
+                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions?.data_structuring?.score ?? 0, item.dimensions?.data_structuring?.max ?? 25)}`} aria-label={`Data: ${item.dimensions?.data_structuring?.score ?? 0} out of ${item.dimensions?.data_structuring?.max ?? 25}`}>
+                            {item.dimensions?.data_structuring?.score ?? 0}
                           </span>
                         </td>
                         <td
                           className="px-2 py-4 text-center hidden md:table-cell"
                           onClick={() => handleRowClick(item)}
                         >
-                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions.agent_compatibility.score, item.dimensions.agent_compatibility.max)}`} aria-label={`Agent: ${item.dimensions.agent_compatibility.score} out of ${item.dimensions.agent_compatibility.max}`}>
-                            {item.dimensions.agent_compatibility.score}
+                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions?.agent_compatibility?.score ?? 0, item.dimensions?.agent_compatibility?.max ?? 25)}`} aria-label={`Agent: ${item.dimensions?.agent_compatibility?.score ?? 0} out of ${item.dimensions?.agent_compatibility?.max ?? 25}`}>
+                            {item.dimensions?.agent_compatibility?.score ?? 0}
                           </span>
                         </td>
                         <td
                           className="px-2 py-4 text-center hidden md:table-cell"
                           onClick={() => handleRowClick(item)}
                         >
-                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions.trust_signals.score, item.dimensions.trust_signals.max)}`} aria-label={`Trust: ${item.dimensions.trust_signals.score} out of ${item.dimensions.trust_signals.max}`}>
-                            {item.dimensions.trust_signals.score}
+                          <span className={`font-mono text-xs font-semibold ${dimScoreColor(item.dimensions?.trust_signals?.score ?? 0, item.dimensions?.trust_signals?.max ?? 20)}`} aria-label={`Trust: ${item.dimensions?.trust_signals?.score ?? 0} out of ${item.dimensions?.trust_signals?.max ?? 20}`}>
+                            {item.dimensions?.trust_signals?.score ?? 0}
                           </span>
                         </td>
 
@@ -903,23 +916,23 @@ export default function LeaderboardPage() {
                           <div className="space-y-1">
                             <DimMiniBar
                               label="API"
-                              score={item.dimensions.api_accessibility.score}
-                              max={item.dimensions.api_accessibility.max}
+                              score={item.dimensions?.api_accessibility?.score ?? 0}
+                              max={item.dimensions?.api_accessibility?.max ?? 30}
                             />
                             <DimMiniBar
                               label="Data"
-                              score={item.dimensions.data_structuring.score}
-                              max={item.dimensions.data_structuring.max}
+                              score={item.dimensions?.data_structuring?.score ?? 0}
+                              max={item.dimensions?.data_structuring?.max ?? 25}
                             />
                             <DimMiniBar
                               label="Agent"
-                              score={item.dimensions.agent_compatibility.score}
-                              max={item.dimensions.agent_compatibility.max}
+                              score={item.dimensions?.agent_compatibility?.score ?? 0}
+                              max={item.dimensions?.agent_compatibility?.max ?? 25}
                             />
                             <DimMiniBar
                               label="Trust"
-                              score={item.dimensions.trust_signals.score}
-                              max={item.dimensions.trust_signals.max}
+                              score={item.dimensions?.trust_signals?.score ?? 0}
+                              max={item.dimensions?.trust_signals?.max ?? 20}
                             />
                           </div>
                         </td>

@@ -50,6 +50,13 @@ export async function generateMetadata({
     ? `${tool.description.slice(0, 120)} | AEO score: ${score ?? "N/A"}/100 on Clarvia.`
     : `AEO agent readiness score for ${tool.name}. Analyzed on Clarvia — the standard for AI Engine Optimization.`;
 
+  // Build dynamic OG image URL with tool metadata
+  const ogParams = new URLSearchParams({ type: "tool", name: tool.name });
+  if (score != null) ogParams.set("score", String(score));
+  if (tool.service_type) ogParams.set("stype", tool.service_type);
+  if (tool.category) ogParams.set("category", tool.category);
+  const ogImageUrl = `/api/og?${ogParams.toString()}`;
+
   return {
     title,
     description,
@@ -68,11 +75,20 @@ export async function generateMetadata({
       url: `https://clarvia.art/tool/${id}`,
       siteName: "Clarvia",
       type: "website",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${tool.name} — Clarvia AEO Score`,
+        },
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
+      images: [ogImageUrl],
     },
   };
 }
