@@ -304,30 +304,40 @@ app.include_router(analytics_router)
 
 # MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
 try:
-    from .mcp_server import mcp_app
+    from .mcp_server import mcp, mcp_session_manager
+    from mcp.server.streamable_http import StreamableHTTPASGIApp
 
-    # Use ASGI middleware approach to avoid Render 421 Host header issues.
-    # Starlette Mount creates a sub-application scope that Render's proxy
-    # rejects. Instead, intercept /mcp requests at the ASGI level before
-    # FastAPI routing, keeping the original Host scope intact.
-    _original_app = app.router.app
+    _mcp_handler = StreamableHTTPASGIApp(mcp_session_manager)
 
-    class MCPMiddleware:
-        def __init__(self, app):
-            self.app = app
+    @app.api_route("/mcp", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+    @app.api_route("/mcp/", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+    async def mcp_endpoint(request: Request) -> Response:
+        """Forward MCP requests directly, avoiding Mount host scope issues."""
+        from starlette.responses import StreamingResponse as _SR
+        # Collect response parts
+        response_started = False
+        status_code = 200
+        response_headers = {}
+        body_parts = []
 
-        async def __call__(self, scope, receive, send):
-            if scope["type"] in ("http", "websocket"):
-                path = scope.get("path", "")
-                if path == "/mcp" or path.startswith("/mcp/"):
-                    new_path = path[4:] or "/"
-                    scope = dict(scope, path=new_path, root_path=scope.get("root_path", ""))
-                    await mcp_app(scope, receive, send)
-                    return
-            await self.app(scope, receive, send)
+        async def send(message):
+            nonlocal response_started, status_code, response_headers
+            if message["type"] == "http.response.start":
+                response_started = True
+                status_code = message["status"]
+                response_headers = {
+                    k.decode(): v.decode()
+                    for k, v in message.get("headers", [])
+                }
+            elif message["type"] == "http.response.body":
+                body_parts.append(message.get("body", b""))
 
-    app.router.app = MCPMiddleware(app.router.app)
-    logger.info("MCP Streamable HTTP server mounted at /mcp (middleware)")
+        scope = dict(request.scope, path="/", root_path="")
+        await _mcp_handler(scope, request.receive, send)
+        body = b"".join(body_parts)
+        return Response(content=body, status_code=status_code, headers=response_headers)
+
+    logger.info("MCP Streamable HTTP server mounted at /mcp (api_route)")
 except Exception as exc:
     logger.warning("MCP server not available: %s", exc)
 
