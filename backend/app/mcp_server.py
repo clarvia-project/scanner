@@ -37,6 +37,7 @@ mcp = FastMCP(
         "stakeholder reports, trending tools, featured picks, search demand intelligence, "
         "category rankings, agent feedback, tool similarity, and rescan for tool authors."
     ),
+    host="0.0.0.0",  # Disable auto DNS rebinding protection (production behind Render proxy)
     stateless_http=True,
     streamable_http_path="/",
 )

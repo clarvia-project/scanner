@@ -303,13 +303,12 @@ app.include_router(team_router)
 app.include_router(analytics_router)
 
 # MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
-# NOTE: mcp_app is mounted via wrap_app_with_mcp() below, after all routes.
 try:
     from .mcp_server import mcp_app
-    _mcp_app_available = True
-    logger.info("MCP server module loaded, will mount at /mcp")
+    from starlette.routing import Mount
+    app.router.routes.insert(0, Mount("/mcp", app=mcp_app))
+    logger.info("MCP Streamable HTTP server mounted at /mcp")
 except Exception as exc:
-    _mcp_app_available = False
     logger.warning("MCP server not available: %s", exc)
 
 # Payment: Lemon Squeezy (primary) with Stripe fallback
@@ -3488,33 +3487,3 @@ async def _stop_monitor():
     except Exception:
         pass
 
-
-# ---------------------------------------------------------------------------
-# ASGI wrapper: intercept /mcp requests before FastAPI sees them.
-# This avoids Mount/Route host scope issues that cause Render 421 errors.
-# The wrapper is applied AFTER all FastAPI routes are registered.
-# ---------------------------------------------------------------------------
-
-def _create_asgi_app():
-    """Return the final ASGI application, optionally wrapping with MCP."""
-    if not _mcp_app_available:
-        return app
-
-    from .mcp_server import mcp_app
-
-    async def asgi_app(scope, receive, send):
-        if scope["type"] in ("http", "websocket"):
-            path = scope.get("path", "")
-            if path == "/mcp" or path.startswith("/mcp/"):
-                # Rewrite path for the MCP sub-app (it expects "/")
-                new_path = path[4:] or "/"
-                mcp_scope = dict(scope, path=new_path, root_path="")
-                await mcp_app(mcp_scope, receive, send)
-                return
-        await app(scope, receive, send)
-
-    return asgi_app
-
-
-# This is what uvicorn imports: `app.main:asgi_app`
-asgi_app = _create_asgi_app()
