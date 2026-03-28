@@ -306,7 +306,18 @@ app.include_router(analytics_router)
 try:
     from .mcp_server import mcp_app
     from starlette.routing import Mount
-    app.router.routes.insert(0, Mount("/mcp", app=mcp_app))
+
+    # Use Mount with host-transparent forwarding to avoid Render 421 errors.
+    # Wrap the sub-app so it inherits the parent's Host scope.
+    async def _mcp_asgi(scope, receive, send):
+        # Strip /mcp prefix so the sub-app sees "/"
+        if scope["type"] in ("http", "websocket"):
+            path = scope.get("path", "")
+            if path.startswith("/mcp"):
+                scope = dict(scope, path=path[4:] or "/", root_path="")
+        await mcp_app(scope, receive, send)
+
+    app.router.routes.insert(0, Mount("/mcp", app=_mcp_asgi))
     logger.info("MCP Streamable HTTP server mounted at /mcp")
 except Exception as exc:
     logger.warning("MCP server not available: %s", exc)

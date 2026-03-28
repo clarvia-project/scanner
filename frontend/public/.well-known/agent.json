@@ -1,0 +1,29 @@
+{
+  "name": "Clarvia",
+  "description": "AI agent tool discovery and AEO scoring platform. 15,400+ indexed tools.",
+  "url": "https://clarvia.art",
+  "api": {
+    "base_url": "https://clarvia-api.onrender.com",
+    "openapi": "https://clarvia-api.onrender.com/openapi.json",
+    "docs": "https://clarvia-api.onrender.com/docs"
+  },
+  "mcp": {
+    "npm_package": "clarvia-mcp-server",
+    "install": "npx -y clarvia-mcp-server",
+    "tools_count": 24,
+    "transport": "stdio"
+  },
+  "capabilities": [
+    "tool_discovery",
+    "tool_scoring",
+    "vulnerability_check",
+    "dependency_audit",
+    "compliance_checklist",
+    "tool_comparison",
+    "trend_analysis",
+    "demand_intelligence",
+    "tool_enrichment"
+  ],
+  "pricing": "free",
+  "version": "2.0"
+}
