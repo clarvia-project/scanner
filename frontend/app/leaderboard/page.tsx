@@ -365,9 +365,21 @@ function CompareModal({
 
 // ----- Main Page -----
 
+interface LeaderboardEntry {
+  rank: number;
+  name: string;
+  url: string;
+  score: number;
+  rating: string;
+  category: string;
+  scan_id: string;
+}
+
 export default function LeaderboardPage() {
   const [data, setData] = useState<ScanEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [topPerformers, setTopPerformers] = useState<LeaderboardEntry[]>([]);
+  const [topLoading, setTopLoading] = useState(true);
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [activeSubFilters, setActiveSubFilters] = useState<Set<string>>(new Set());
@@ -389,6 +401,17 @@ export default function LeaderboardPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
+
+  // Fetch top performers from the live API leaderboard
+  useEffect(() => {
+    fetch(`${API_BASE}/v1/leaderboard?limit=12`)
+      .then((res) => (res.ok ? res.json() : { leaderboard: [] }))
+      .then((json: { leaderboard: LeaderboardEntry[] }) => {
+        setTopPerformers(json.leaderboard || []);
+      })
+      .catch(() => {})
+      .finally(() => setTopLoading(false));
   }, []);
 
   // Fetch type-filtered data from API
@@ -611,6 +634,41 @@ export default function LeaderboardPage() {
             />
           </div>
         </div>
+
+        {/* Top Performers — Exceptional-rated tools */}
+        {!topLoading && topPerformers.length > 0 && !search.trim() && (
+          <div className="mb-12">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="h-px flex-1 max-w-[60px] bg-gradient-to-r from-transparent to-accent/30" />
+              <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
+                Top Performers
+              </h2>
+              <div className="h-px flex-1 max-w-[60px] bg-gradient-to-l from-transparent to-accent/30" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {topPerformers.slice(0, 12).map((tp, i) => (
+                <Link
+                  key={tp.scan_id}
+                  href={`/tool/${tp.scan_id}`}
+                  className="group glass-card rounded-xl p-4 text-center transition-all duration-200 hover:border-accent/40 hover:shadow-lg hover:shadow-accent/5 hover:-translate-y-0.5"
+                >
+                  <div className="text-[10px] font-mono text-muted/50 mb-1">#{i + 1}</div>
+                  <div className={`text-2xl font-mono font-bold mb-1 ${scoreColor(tp.score)}`}>
+                    {tp.score}
+                  </div>
+                  <div className="text-xs font-medium truncate group-hover:text-accent transition-colors mb-1">
+                    {tp.name.length > 30
+                      ? tp.name.replace(/^(io\.github\.|com\.|dev\.|app\.)/, "").split("/").pop()
+                      : tp.name}
+                  </div>
+                  <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-mono uppercase bg-score-green/10 text-score-green border border-score-green/20">
+                    {tp.rating}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Service type tabs */}
         <div className="flex justify-center gap-1 mb-6">

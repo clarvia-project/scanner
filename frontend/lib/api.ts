@@ -5,7 +5,7 @@
  * instead of declaring it locally.
  */
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL || "https://clarvia-api.onrender.com";
 
 export interface RecommendResult {
   name: string;

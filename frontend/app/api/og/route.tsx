@@ -268,7 +268,7 @@ export async function GET(req: NextRequest) {
   }
 
   // ─── Compare mode (existing) ───
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://clarvia-api.onrender.com";
   let tools: { name: string; clarvia_score: number; service_type: string }[] =
     [];
 
