@@ -90,13 +90,13 @@
 </head>
 <body>
   <h1>Clarvia Automation Dashboard</h1>
-  <p class="subtitle">Generated: 2026-03-27 05:00 UTC</p>
+  <p class="subtitle">Generated: 2026-03-29 22:00 UTC</p>
 
   <!-- Summary cards -->
   <div class="grid">
     <div class="card">
       <h2>Total Tools Indexed</h2>
-      <div class="stat-number">40,977</div>
+      <div class="stat-number">12,964</div>
       <div class="stat-label">across 5 sources</div>
     </div>
     <div class="card">
@@ -106,13 +106,13 @@
     </div>
     <div class="card">
       <h2>Queue Size</h2>
-      <div class="stat-number">4,277</div>
+      <div class="stat-number">38,113</div>
       <div class="stat-label">tools pending classification</div>
     </div>
     <div class="card">
       <h2>Active Tasks</h2>
-      <div class="stat-number">18</div>
-      <div class="stat-label">of 18 configured</div>
+      <div class="stat-number">21</div>
+      <div class="stat-label">of 21 configured</div>
     </div>
   </div>
 
@@ -145,16 +145,16 @@
             <td><code>scripts/backup.py</code></td>
             <td><code>0 3 * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-ok">ok</span></td>
-            <td>{"timestamp": "2026</td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
         </tr>
         <tr>
             <td><code>harvester</code></td>
             <td><code>scripts/automation/harvester.py</code></td>
             <td><code>0 6 * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-unknown">unknown</span></td>
-            <td>Never</td>
+            <td><span class="status status-error">error</span></td>
+            <td>{"timestamp": "2026</td>
         </tr>
         <tr>
             <td><code>classifier</code></td>
@@ -177,8 +177,8 @@
             <td><code>scripts/automation/daily_report.py</code></td>
             <td><code>0 22 * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-unknown">unknown</span></td>
-            <td>Never</td>
+            <td><span class="status status-ok">ok</span></td>
+            <td>{"timestamp": "2026</td>
         </tr>
         <tr>
             <td><code>weekly_report</code></td>
@@ -217,8 +217,8 @@
             <td><code>scripts/automation/feedback_engine.py</code></td>
             <td><code>0 2 * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-ok">ok</span></td>
-            <td>{"timestamp": "2026</td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
         </tr>
         <tr>
             <td><code>dashboard</code></td>
@@ -226,7 +226,7 @@
             <td><code>0 * * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
             <td><span class="status status-error">error</span></td>
-            <td>2026-03-27 14:00:23</td>
+            <td>2026-03-30 07:00:26</td>
         </tr>
         <tr>
             <td><code>schema_watchdog</code></td>
@@ -249,21 +249,45 @@
             <td><code>scripts/automation/data_auditor.py</code></td>
             <td><code>0 7 * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-unknown">unknown</span></td>
-            <td>Never</td>
+            <td><span class="status status-error">error</span></td>
+            <td>{"timestamp": "2026</td>
         </tr>
         <tr>
             <td><code>self_healer</code></td>
             <td><code>scripts/automation/self_healer.py</code></td>
             <td><code>0 */6 * * *</code></td>
             <td><span class="badge badge-on">ON</span></td>
-            <td><span class="status status-unknown">unknown</span></td>
-            <td>Never</td>
+            <td><span class="status status-error">error</span></td>
+            <td>{"timestamp": "2026</td>
         </tr>
         <tr>
             <td><code>auto_merge</code></td>
             <td><code>scripts/automation/auto_merge_and_deploy.py</code></td>
             <td><code>0 8 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>marketing_automation</code></td>
+            <td><code>scripts/automation/marketing_automation.py</code></td>
+            <td><code>0 9 * * *</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>sitemap_refresh</code></td>
+            <td><code>scripts/automation/sitemap_refresh.py</code></td>
+            <td><code>0 10 * * 1</code></td>
+            <td><span class="badge badge-on">ON</span></td>
+            <td><span class="status status-unknown">unknown</span></td>
+            <td>Never</td>
+        </tr>
+        <tr>
+            <td><code>score_calibration</code></td>
+            <td><code>scripts/automation/score_calibration.py</code></td>
+            <td><code>0 11 * * 0</code></td>
             <td><span class="badge badge-on">ON</span></td>
             <td><span class="status status-unknown">unknown</span></td>
             <td>Never</td>
@@ -304,7 +328,7 @@
 
   <script>
     // Uptime chart
-    const uptimeData = [{"time": "2026-03-27T03:00:16.622374+00:00", "healthy": true}, {"time": "2026-03-27T03:00:17.381350+00:00", "healthy": true}, {"time": "2026-03-27T03:05:21.314307+00:00", "healthy": true}, {"time": "2026-03-27T03:05:21.592549+00:00", "healthy": true}, {"time": "2026-03-27T03:10:24.175698+00:00", "healthy": true}, {"time": "2026-03-27T03:10:24.266783+00:00", "healthy": true}, {"time": "2026-03-27T03:15:26.123844+00:00", "healthy": true}, {"time": "2026-03-27T03:15:26.195366+00:00", "healthy": true}, {"time": "2026-03-27T03:20:28.857824+00:00", "healthy": true}, {"time": "2026-03-27T03:20:28.929799+00:00", "healthy": true}, {"time": "2026-03-27T03:25:00.958367+00:00", "healthy": true}, {"time": "2026-03-27T03:25:01.015946+00:00", "healthy": true}, {"time": "2026-03-27T03:30:02.864642+00:00", "healthy": true}, {"time": "2026-03-27T03:30:02.918585+00:00", "healthy": true}, {"time": "2026-03-27T03:35:06.041122+00:00", "healthy": true}, {"time": "2026-03-27T03:35:06.096995+00:00", "healthy": true}, {"time": "2026-03-27T03:40:08.940991+00:00", "healthy": true}, {"time": "2026-03-27T03:40:09.001765+00:00", "healthy": true}, {"time": "2026-03-27T03:45:11.944226+00:00", "healthy": true}, {"time": "2026-03-27T03:45:12.000371+00:00", "healthy": true}, {"time": "2026-03-27T03:50:14.798545+00:00", "healthy": true}, {"time": "2026-03-27T03:50:14.850851+00:00", "healthy": true}, {"time": "2026-03-27T03:55:17.974537+00:00", "healthy": true}, {"time": "2026-03-27T03:55:18.041604+00:00", "healthy": true}, {"time": "2026-03-27T04:00:21.103545+00:00", "healthy": true}, {"time": "2026-03-27T04:00:21.190670+00:00", "healthy": true}, {"time": "2026-03-27T04:05:24.369065+00:00", "healthy": true}, {"time": "2026-03-27T04:05:24.438697+00:00", "healthy": true}, {"time": "2026-03-27T04:10:27.311234+00:00", "healthy": true}, {"time": "2026-03-27T04:10:27.573115+00:00", "healthy": true}, {"time": "2026-03-27T04:15:28.390410+00:00", "healthy": true}, {"time": "2026-03-27T04:15:28.456524+00:00", "healthy": true}, {"time": "2026-03-27T04:20:01.211870+00:00", "healthy": true}, {"time": "2026-03-27T04:20:01.266565+00:00", "healthy": true}, {"time": "2026-03-27T04:25:03.873057+00:00", "healthy": true}, {"time": "2026-03-27T04:25:03.983103+00:00", "healthy": true}, {"time": "2026-03-27T04:30:05.629804+00:00", "healthy": true}, {"time": "2026-03-27T04:30:05.691344+00:00", "healthy": true}, {"time": "2026-03-27T04:35:07.854436+00:00", "healthy": true}, {"time": "2026-03-27T04:35:07.936565+00:00", "healthy": true}, {"time": "2026-03-27T04:40:09.814431+00:00", "healthy": true}, {"time": "2026-03-27T04:40:10.555788+00:00", "healthy": true}, {"time": "2026-03-27T04:45:13.117221+00:00", "healthy": true}, {"time": "2026-03-27T04:45:14.352735+00:00", "healthy": true}, {"time": "2026-03-27T04:50:15.979197+00:00", "healthy": true}, {"time": "2026-03-27T04:50:16.264769+00:00", "healthy": true}, {"time": "2026-03-27T04:55:18.169374+00:00", "healthy": true}, {"time": "2026-03-27T04:55:19.152792+00:00", "healthy": true}, {"time": "2026-03-27T05:00:23.059808+00:00", "healthy": true}, {"time": "2026-03-27T05:00:23.629999+00:00", "healthy": true}];
+    const uptimeData = [{"time": "2026-03-29T20:00:18.261058+00:00", "healthy": true}, {"time": "2026-03-29T20:00:18.325241+00:00", "healthy": true}, {"time": "2026-03-29T20:05:21.180251+00:00", "healthy": true}, {"time": "2026-03-29T20:05:21.248000+00:00", "healthy": true}, {"time": "2026-03-29T20:10:24.027655+00:00", "healthy": true}, {"time": "2026-03-29T20:10:24.115548+00:00", "healthy": true}, {"time": "2026-03-29T20:15:26.622028+00:00", "healthy": true}, {"time": "2026-03-29T20:15:26.692555+00:00", "healthy": true}, {"time": "2026-03-29T20:20:29.446282+00:00", "healthy": true}, {"time": "2026-03-29T20:20:29.546053+00:00", "healthy": true}, {"time": "2026-03-29T20:25:02.164148+00:00", "healthy": true}, {"time": "2026-03-29T20:25:02.252166+00:00", "healthy": true}, {"time": "2026-03-29T20:30:04.937894+00:00", "healthy": true}, {"time": "2026-03-29T20:30:05.037578+00:00", "healthy": true}, {"time": "2026-03-29T20:35:07.756085+00:00", "healthy": true}, {"time": "2026-03-29T20:35:07.829499+00:00", "healthy": true}, {"time": "2026-03-29T20:40:10.351872+00:00", "healthy": true}, {"time": "2026-03-29T20:40:10.424152+00:00", "healthy": true}, {"time": "2026-03-29T20:45:12.960052+00:00", "healthy": true}, {"time": "2026-03-29T20:45:13.027932+00:00", "healthy": true}, {"time": "2026-03-29T20:50:15.788842+00:00", "healthy": true}, {"time": "2026-03-29T20:50:15.853287+00:00", "healthy": true}, {"time": "2026-03-29T20:55:18.406182+00:00", "healthy": true}, {"time": "2026-03-29T20:55:18.472309+00:00", "healthy": true}, {"time": "2026-03-29T21:00:21.217093+00:00", "healthy": true}, {"time": "2026-03-29T21:00:21.278261+00:00", "healthy": true}, {"time": "2026-03-29T21:05:24.121357+00:00", "healthy": true}, {"time": "2026-03-29T21:05:24.202802+00:00", "healthy": true}, {"time": "2026-03-29T21:10:26.867038+00:00", "healthy": true}, {"time": "2026-03-29T21:10:26.933801+00:00", "healthy": true}, {"time": "2026-03-29T21:15:29.500749+00:00", "healthy": true}, {"time": "2026-03-29T21:15:29.573554+00:00", "healthy": true}, {"time": "2026-03-29T21:20:02.018720+00:00", "healthy": true}, {"time": "2026-03-29T21:20:02.123840+00:00", "healthy": true}, {"time": "2026-03-29T21:25:04.947035+00:00", "healthy": true}, {"time": "2026-03-29T21:25:05.021652+00:00", "healthy": true}, {"time": "2026-03-29T21:30:07.646642+00:00", "healthy": true}, {"time": "2026-03-29T21:30:07.716497+00:00", "healthy": true}, {"time": "2026-03-29T21:35:10.480159+00:00", "healthy": true}, {"time": "2026-03-29T21:35:10.555583+00:00", "healthy": true}, {"time": "2026-03-29T21:40:13.139250+00:00", "healthy": true}, {"time": "2026-03-29T21:40:13.208604+00:00", "healthy": true}, {"time": "2026-03-29T21:45:16.273248+00:00", "healthy": true}, {"time": "2026-03-29T21:45:16.343945+00:00", "healthy": true}, {"time": "2026-03-29T21:50:18.873556+00:00", "healthy": true}, {"time": "2026-03-29T21:50:18.949053+00:00", "healthy": true}, {"time": "2026-03-29T21:55:21.559098+00:00", "healthy": true}, {"time": "2026-03-29T21:55:21.653094+00:00", "healthy": true}, {"time": "2026-03-29T22:00:24.510164+00:00", "healthy": true}, {"time": "2026-03-29T22:00:24.576325+00:00", "healthy": true}];
     const uptimeChart = document.getElementById('uptime-chart');
     uptimeData.forEach((d, i) => {
       const bar = document.createElement('div');
@@ -333,7 +357,7 @@
     }
 
     // Sources list
-    const sourcesData = {"mcp_registry": 1733, "github": 2592, "glama": 4599, "prebuilt": 28015, "all_agent_tools": 4038};
+    const sourcesData = {"mcp_registry": 1733, "github": 2592, "glama": 4599, "prebuilt": 2, "all_agent_tools": 4038};
     const sourcesList = document.getElementById('sources-list');
     const sortedSources = Object.entries(sourcesData).sort((a, b) => b[1] - a[1]);
     sortedSources.forEach(([name, count]) => {

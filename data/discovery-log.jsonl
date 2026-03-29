@@ -1,0 +1,37 @@
+{"ts":"2026-03-27T09:14:04","action":"discovery","catalog_size":15410}
+{"ts":"2026-03-27T11:14:26","action":"discovery","catalog_size":15408}
+{"ts":"2026-03-27T13:14:36","action":"discovery","catalog_size":15413}
+{"ts":"2026-03-27T15:14:50","action":"discovery","catalog_size":0}
+{"ts":"2026-03-27T17:14:50","action":"discovery","catalog_size":15413}
+{"ts":"2026-03-27T18:20:21","action":"daily_rescan","status":"complete","triggered":"admin_rescan_all","total_services":15406}
+{"ts":"2026-03-27T19:15:46","action":"discovery","catalog_size":15416}
+{"ts":"2026-03-27T21:14:35","action":"discovery","catalog_size":15424}
+{"ts":"2026-03-27T23:14:22","action":"discovery","catalog_size":15430}
+{"ts":"2026-03-28T01:13:24","action":"distribution_check","npm":"listed","mcp_so":"listed","pulsemcp":"missing","smithery":"missing","glama":"missing","pypi":"missing","github_actions":"404"}
+{"ts":"2026-03-28T01:15:47","action":"discovery","catalog_size":15442,"queue_total":4388,"discovered_today":0,"scanned_today":12,"found_today":27}
+{"ts":"2026-03-28T03:14:27","action":"discovery","catalog_size":0}
+{"ts":"2026-03-28T05:14:35","action":"discovery","catalog_size":15414}
+{"ts":"2026-03-28T07:15:51","action":"discovery","catalog_size":15416}
+{"ts":"2026-03-28T09:13:59","action":"discovery","catalog_size":0}
+{"ts":"2026-03-28T11:14:25","action":"discovery","catalog_size":15415}
+{"ts":"2026-03-28T14:58:50","action":"discovery","catalog_size":15425,"found_today":0,"queue_total":4456,"scan_run":27}
+{"ts":"2026-03-28T15:13:42","action":"discovery","catalog_size":15425}
+{"ts":"2026-03-28T17:15:57","action":"discovery","catalog_size":15435,"found_today":0,"total_queue":4472,"scanned":10,"discovered_session":14}
+{"ts":"2026-03-28T18:18:17","action":"daily_rescan","status":"complete","services_found":100,"note":"scores_zero_api_issue"}
+{"ts":"2026-03-28T19:14:59","action":"discovery","catalog_size":0}
+{"ts":"2026-03-28T20:20:28","action":"weekly_crawl","status":"complete","queue_before":25891,"queue_after":26053,"new_discovered":162,"catalog_count":15444,"note":"skills_crawler_bugfix_applied_list_response_handling,github_crawlers_rate_limited_still_running"}
+{"ts":"2026-03-28T21:15:53","action":"discovery","catalog_size":15454,"scanned":10,"discovered":16}
+{"ts":"2026-03-28T23:14:36","action":"discovery","catalog_size":15460}
+{"ts":"2026-03-29T01:14:02","action":"distribution_check","npm":"listed","glama":"listed","pulsemcp":"missing","smithery":"missing","mcp_so":"uncertain_403","pypi":"missing","github_actions":"unknown","note":"pulsemcp+smithery same as 2026-03-28 check, glama NOW listed (was missing)"}
+{"ts":"2026-03-29T01:15:48","action":"discovery","catalog_size":15470,"found_today":0,"queue_total":38011,"scan_run":"19 found, 10 scanned"}
+{"ts":"2026-03-29T03:14:22","action":"discovery","catalog_size":15476}
+{"ts":"2026-03-29T05:13:54","action":"discovery","catalog_size":15482}
+{"ts":"2026-03-29T07:13:48","action":"discovery","catalog_size":15487}
+{"ts":"2026-03-29T09:14:34","action":"discovery","catalog_size":0}
+{"ts":"2026-03-29T11:14:36","action":"discovery","catalog_size":15425}
+{"ts":"2026-03-29T13:15:42","action":"discovery","catalog_size":0}
+{"ts":"2026-03-29T15:15:03","action":"discovery","catalog_size":15444,"found_today":0,"total_discovered":4219,"total_scanned":4038}
+{"ts":"2026-03-29T17:15:41","action":"discovery","catalog_size":0}
+{"ts":"2026-03-29T18:19:04","action":"daily_rescan","status":"complete","note":"batch_rescan ran, 2/48 succeeded (rate limit 10/hr), data saved to prebuilt-scans.json"}
+{"ts":"2026-03-29T19:14:47","action":"discovery","catalog_size":15473}
+{"ts":"2026-03-29T21:15:03","action":"discovery","catalog_size":0}

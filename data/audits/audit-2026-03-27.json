@@ -1,0 +1,726 @@
+{
+  "timestamp": "2026-03-27T07:00:20.226420+00:00",
+  "checks": [
+    {
+      "check": "score_distribution",
+      "status": "ok",
+      "issues": [],
+      "historical_mean": 45.09,
+      "historical_std": 14.11,
+      "recent_count": 175,
+      "recent_mean": 53.49,
+      "deviation_std": 0.6
+    },
+    {
+      "check": "category_distribution",
+      "status": "ok",
+      "issues": [],
+      "total_tools": 28015,
+      "other_count": 1120,
+      "other_pct": 4.0,
+      "top_categories": {
+        "mcp": 5380,
+        "developer_tools": 4713,
+        "ai": 4330,
+        "cloud": 2000,
+        "productivity": 1651,
+        "ai-ml": 1527,
+        "automation": 1199,
+        "other": 1120,
+        "database": 682,
+        "analytics": 631
+      }
+    },
+    {
+      "check": "duplicates",
+      "status": "alert",
+      "issues": [
+        "Found 11332 exact URL dupes + 791 fuzzy name dupes"
+      ],
+      "duplicates": [
+        {
+          "type": "exact_url",
+          "url": "https://feedoracle.io",
+          "count": 2,
+          "names": [
+            "feedoracle",
+            "io.github.feedoracle/stablecoin-risk"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://ai-readiness.mingles.ai",
+          "count": 2,
+          "names": [
+            "ai-readiness",
+            "io.github.minglesai/ai-site-scorer"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://agentry.com",
+          "count": 2,
+          "names": [
+            "agentry",
+            "io.github.cthulhutoo/agentry"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://aipaygen.com",
+          "count": 2,
+          "names": [
+            "aipaygen",
+            "io.github.damien829/aipaygen"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://clerk.com",
+          "count": 2,
+          "names": [
+            "clerk",
+            "@clerk/agent-toolkit"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://gia.aceadvising.com",
+          "count": 2,
+          "names": [
+            "gia",
+            "io.github.knowledgepa3/gia-mcp-server"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://github.com/baixianger/langchain-mcp",
+          "count": 2,
+          "names": [
+            "baixianger/langchain-mcp",
+            "io.github.baixianger/langchain-mcp"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://blocklens.co",
+          "count": 2,
+          "names": [
+            "blocklens",
+            "io.github.blocklens/blocklens-mcp-server"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://brainstormrouter.com",
+          "count": 2,
+          "names": [
+            "brainstormrouter",
+            "io.github.justinjilg/brainstormrouter"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://netlify.com",
+          "count": 2,
+          "names": [
+            "netlify",
+            "@netlify/ts-cli"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://example-mcp-server.mctx.ai",
+          "count": 2,
+          "names": [
+            "example-mcp-server",
+            "io.github.mctx-ai/example-mcp-server"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://raw.githubusercontent.com/ably/open-specs/main/definitions/control-v1.yaml",
+          "count": 2,
+          "names": [
+            "ably.net:control",
+            "ably.net:control"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://www.abstractapi.com/ip-geolocation-api#docs",
+          "count": 2,
+          "names": [
+            "abstractapi.com:geolocation",
+            "abstractapi.com:geolocation"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://raw.githubusercontent.com/adafruit/io-api/gh-pages/v2.json",
+          "count": 2,
+          "names": [
+            "adafruit.com",
+            "adafruit.com"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://raw.githubusercontent.com/adyen/adyen-openapi/main/json/accountservice-v6.json",
+          "count": 2,
+          "names": [
+            "adyen.com:accountservice",
+            "adyen.com:accountservice"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://raw.githubusercontent.com/adyen/adyen-openapi/main/json/balancecontrolservice-v1.json",
+          "count": 2,
+          "names": [
+            "adyen.com:balancecontrolservice",
+            "adyen.com:balancecontrolservice"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://raw.githubusercontent.com/adyen/adyen-openapi/main/json/balanceplatformconfigurationnotification-v1.json",
+          "count": 2,
+          "names": [
+            "adyen.com:balanceplatformconfigurationnotification-v1",
+            "adyen.com:balanceplatformconfigurationnotification-v1"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://raw.githubusercontent.com/adyen/adyen-openapi/main/json/balanceplatformpaymentnotification-v1.json",
+          "count": 2,
+          "names": [
+            "adyen.com:balanceplatformpaymentnotification-v1",
+            "adyen.com:balanceplatformpaymentnotification-v1"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://raw.githubusercontent.com/adyen/adyen-openapi/main/json/balanceplatformreportnotification-v1.json",
+          "count": 2,
+          "names": [
+            "adyen.com:balanceplatformreportnotification-v1",
+            "adyen.com:balanceplatformreportnotification-v1"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://raw.githubusercontent.com/adyen/adyen-openapi/main/json/balanceplatformservice-v2.json",
+          "count": 2,
+          "names": [
+            "adyen.com:balanceplatformservice",
+            "adyen.com:balanceplatformservice"
+          ]
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "adyen.com:balanceplatformpaymentnotification-v1",
+          "name_b": "adyen.com:balanceplatformreportnotification-v1",
+          "similarity": 0.903,
+          "url_a": "https://raw.githubusercontent.com/adyen/adyen-openapi/main/json/balanceplatformpaymentnotification-v1.json",
+          "url_b": "https://raw.githubusercontent.com/adyen/adyen-openapi/main/json/balanceplatformreportnotification-v1.json"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amadeus.com:amadeus-flight-most-booked-destinations",
+          "name_b": "amadeus.com:amadeus-flight-most-traveled-destinations",
+          "similarity": 0.904,
+          "url_a": "https://raw.githubusercontent.com/amadeus4dev/amadeus-open-api-specification/main/spec/json/flightmostbookeddestinations_v1_swagger_specification.json",
+          "url_b": "https://raw.githubusercontent.com/amadeus4dev/amadeus-open-api-specification/main/spec/json/flightmosttraveleddestinations_v1_swagger_specification.json"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:acm",
+          "name_b": "amazonaws.com:ce",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/acm",
+          "url_b": "https://docs.aws.amazon.com/ce"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:acm",
+          "name_b": "amazonaws.com:iam",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/acm",
+          "url_b": "https://docs.aws.amazon.com/iam"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:acm",
+          "name_b": "amazonaws.com:mq",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/acm",
+          "url_b": "https://docs.aws.amazon.com/mq"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:acm",
+          "name_b": "amazonaws.com:ram",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/acm",
+          "url_b": "https://docs.aws.amazon.com/ram"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:appconfig",
+          "name_b": "amazonaws.com:config",
+          "similarity": 0.93,
+          "url_a": "https://docs.aws.amazon.com/appconfig",
+          "url_b": "https://docs.aws.amazon.com/config"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ce",
+          "name_b": "amazonaws.com:chime",
+          "similarity": 0.914,
+          "url_a": "https://docs.aws.amazon.com/ce",
+          "url_b": "https://docs.aws.amazon.com/chime"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ce",
+          "name_b": "amazonaws.com:cur",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/ce",
+          "url_b": "https://docs.aws.amazon.com/cur"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ce",
+          "name_b": "amazonaws.com:ebs",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/ce",
+          "url_b": "https://docs.aws.amazon.com/ebs"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ce",
+          "name_b": "amazonaws.com:ec2",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/ce",
+          "url_b": "https://docs.aws.amazon.com/ec2"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ce",
+          "name_b": "amazonaws.com:ecr",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/ce",
+          "url_b": "https://docs.aws.amazon.com/ecr"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ce",
+          "name_b": "amazonaws.com:ecs",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/ce",
+          "url_b": "https://docs.aws.amazon.com/ecs"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ce",
+          "name_b": "amazonaws.com:eks",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/ce",
+          "url_b": "https://docs.aws.amazon.com/eks"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ce",
+          "name_b": "amazonaws.com:es",
+          "similarity": 0.938,
+          "url_a": "https://docs.aws.amazon.com/ce",
+          "url_b": "https://docs.aws.amazon.com/es"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ce",
+          "name_b": "amazonaws.com:macie",
+          "similarity": 0.914,
+          "url_a": "https://docs.aws.amazon.com/ce",
+          "url_b": "https://docs.aws.amazon.com/macie"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:cloud9",
+          "name_b": "amazonaws.com:cloudhsm",
+          "similarity": 0.905,
+          "url_a": "https://docs.aws.amazon.com/cloud9",
+          "url_b": "https://docs.aws.amazon.com/cloudhsm"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:cloudhsm",
+          "name_b": "amazonaws.com:cloudhsmv2",
+          "similarity": 0.957,
+          "url_a": "https://docs.aws.amazon.com/cloudhsm",
+          "url_b": "https://docs.aws.amazon.com/cloudhsmv2"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:cur",
+          "name_b": "amazonaws.com:ecr",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/cur",
+          "url_b": "https://docs.aws.amazon.com/ecr"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:dax",
+          "name_b": "amazonaws.com:ds",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/dax",
+          "url_b": "https://docs.aws.amazon.com/ds"
+        }
+      ],
+      "exact_url_duplicates": 11332,
+      "fuzzy_name_duplicates": 791
+    },
+    {
+      "check": "freshness",
+      "status": "ok",
+      "issues": [],
+      "recent_additions": 175,
+      "freshness_days": 7,
+      "latest_addition": "2026-03-24T02:56:07.052481+00:00",
+      "days_since_latest": 3
+    },
+    {
+      "check": "completeness",
+      "status": "warning",
+      "issues": [
+        "4980 tools have incomplete data"
+      ],
+      "incomplete_tools": [
+        {
+          "name": "Replicate",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Workos",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Gitbook",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Grafana",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Helius",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Assemblyai",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Elevenlabs",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Novu",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Cerebras",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Directus",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Nansen",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Mintlify",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Crewai",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Hygraph",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Mapbox",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Newrelic",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Postman",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Figma",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Groq",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Linear",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Monday",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Cohere",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Mongodb",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Readme",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Resend",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Stripe",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Ai",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Auth0",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Axiom",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Circleci",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Heroku",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Imgix",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Qdrant",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Retool",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Runpod",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Sanity",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Travis-ci",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Cloudflare",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Datadog",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Doppler",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Flagsmith",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Hoppscotch",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Insomnia",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Snipcart",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Stytch",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Supabase",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Anyscale",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Backblaze",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Buildkite",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Cockroachlabs",
+          "missing": [
+            "description"
+          ]
+        }
+      ],
+      "total_tools": 28015,
+      "missing_description": 4084,
+      "missing_category": 0,
+      "missing_score": 0,
+      "missing_url": 896,
+      "incomplete_count": 4980
+    },
+    {
+      "check": "anomaly_batch",
+      "status": "skipped",
+      "issues": []
+    }
+  ],
+  "summary": {
+    "ok": 3,
+    "warning": 1,
+    "alert": 1,
+    "skipped": 1
+  },
+  "fixes_applied": [
+    "Removed 12132 exact URL duplicates",
+    "Flagged 859 'other' category tools for reclassification"
+  ],
+  "total_issues": 2
+}

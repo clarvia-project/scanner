@@ -1,0 +1,145 @@
+{
+  "started_at": "2026-03-28T19:26:59.527407+00:00",
+  "finished_at": "2026-03-28T22:32:21.953683+00:00",
+  "elapsed_seconds": 11122.4,
+  "dry_run": false,
+  "crawlers_run": 13,
+  "total_found_across_all": 35736,
+  "total_new_unique": 25302,
+  "per_source": {
+    "pulsemcp": {
+      "source": "pulsemcp",
+      "total_found": 13201,
+      "new_unique": 13201,
+      "duplicates_skipped": 0,
+      "queued": 13201,
+      "elapsed_seconds": 591.7,
+      "status": "success"
+    },
+    "smithery": {
+      "source": "smithery",
+      "total_found": 4173,
+      "new_unique": 995,
+      "duplicates_skipped": 3178,
+      "queued": 995,
+      "elapsed_seconds": 418.5,
+      "status": "success"
+    },
+    "anthropic": {
+      "source": "anthropic_mcp",
+      "sub_sources": {
+        "official_registry": 0,
+        "github_org_repos": 0,
+        "servers_readme": 1286
+      },
+      "total_found": 1286,
+      "new_unique": 812,
+      "duplicates_skipped": 474,
+      "queued": 812,
+      "elapsed_seconds": 7.9,
+      "status": "success"
+    },
+    "mcpservers": {
+      "source": "mcpservers_org",
+      "total_found": 461,
+      "new_unique": 163,
+      "duplicates_skipped": 298,
+      "queued": 163,
+      "elapsed_seconds": 38.0,
+      "status": "success"
+    },
+    "mcpso": {
+      "source": "mcp_so",
+      "total_found": 1851,
+      "new_unique": 1849,
+      "duplicates_skipped": 2,
+      "queued": 1849,
+      "elapsed_seconds": 126.3,
+      "status": "success"
+    },
+    "awesome": {
+      "source": "awesome_mcp_lists",
+      "total_found": 3085,
+      "new_unique": 1276,
+      "duplicates_skipped": 1809,
+      "queued": 1276,
+      "elapsed_seconds": 195.5,
+      "status": "success"
+    },
+    "npm": {
+      "source": "npm_comprehensive",
+      "total_found": 4717,
+      "new_unique": 3114,
+      "duplicates_skipped": 1603,
+      "queued": 3114,
+      "elapsed_seconds": 27.5,
+      "status": "success"
+    },
+    "pypi": {
+      "source": "pypi_comprehensive",
+      "total_found": 183,
+      "new_unique": 162,
+      "duplicates_skipped": 21,
+      "queued": 162,
+      "elapsed_seconds": 775.9,
+      "status": "success"
+    },
+    "skills": {
+      "source": "github_skills",
+      "total_found": 5,
+      "new_unique": 2,
+      "duplicates_skipped": 3,
+      "queued": 2,
+      "elapsed_seconds": 2271.8,
+      "status": "success"
+    },
+    "github_comprehensive": {
+      "source": "github_comprehensive",
+      "total_found": 6727,
+      "new_unique": 3681,
+      "duplicates_skipped": 3046,
+      "per_strategy": {
+        "topics": 6355,
+        "dependencies": 0,
+        "files": 0,
+        "awesome": 517
+      },
+      "elapsed_seconds": 6624.8,
+      "queued": 3681,
+      "status": "success"
+    },
+    "langchain": {
+      "sources": {
+        "langchain": 32
+      },
+      "total_found": 32,
+      "new_unique": 32,
+      "duplicates_skipped": 0,
+      "queued": 32,
+      "elapsed_seconds": 33.2,
+      "status": "success"
+    },
+    "huggingface": {
+      "sources": {
+        "huggingface": 15
+      },
+      "total_found": 15,
+      "new_unique": 15,
+      "duplicates_skipped": 0,
+      "queued": 15,
+      "elapsed_seconds": 4.5,
+      "status": "success"
+    },
+    "composio": {
+      "sources": {
+        "composio": 0
+      },
+      "total_found": 0,
+      "new_unique": 0,
+      "duplicates_skipped": 0,
+      "queued": 0,
+      "elapsed_seconds": 7.0,
+      "status": "success"
+    }
+  }
+}

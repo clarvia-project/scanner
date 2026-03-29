@@ -1,0 +1,636 @@
+{
+  "timestamp": "2026-03-28T07:00:03.271766+00:00",
+  "checks": [
+    {
+      "check": "score_distribution",
+      "status": "ok",
+      "issues": [],
+      "historical_mean": 48.33,
+      "historical_std": 14.7,
+      "recent_count": 169,
+      "recent_mean": 53.53,
+      "deviation_std": 0.35
+    },
+    {
+      "check": "category_distribution",
+      "status": "ok",
+      "issues": [],
+      "total_tools": 15406,
+      "other_count": 811,
+      "other_pct": 5.3,
+      "top_categories": {
+        "developer_tools": 3285,
+        "mcp": 1693,
+        "ai": 1689,
+        "ai-ml": 1505,
+        "automation": 1154,
+        "cloud": 1022,
+        "other": 811,
+        "database": 543,
+        "infrastructure": 473,
+        "productivity": 331
+      }
+    },
+    {
+      "check": "duplicates",
+      "status": "alert",
+      "issues": [
+        "Found 10 exact URL dupes + 126 fuzzy name dupes"
+      ],
+      "duplicates": [
+        {
+          "type": "exact_url",
+          "url": "https://github.com/teamwork/mcp",
+          "count": 2,
+          "names": [
+            "com.teamwork/mcp",
+            "teamwork/mcp"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://github.com/kevinrabun/judges",
+          "count": 2,
+          "names": [
+            "io.github.kevinrabun/judges",
+            "kevinrabun/judges"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://github.com/promptpartner/bexio-mcp-server",
+          "count": 2,
+          "names": [
+            "io.github.promptpartner/bexio-mcp-server",
+            "promptpartner/bexio-mcp-server"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://github.com/thijssmudde/agentreacher",
+          "count": 2,
+          "names": [
+            "io.github.thijssmudde/agentreacher",
+            "thijssmudde/agentreacher"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://github.com/coinversaa/mcp-server",
+          "count": 2,
+          "names": [
+            "io.github.coinversaa/mcp-server",
+            "coinversaa/mcp-server"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://github.com/qbt-labs/openmm-mcp",
+          "count": 2,
+          "names": [
+            "io.github.adacapo21/openmm-mcp",
+            "qbt-labs/openmm-mcp"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://github.com/chromedevtools/chrome-devtools-mcp",
+          "count": 2,
+          "names": [
+            "io.github.chromedevtools/chrome-devtools-mcp",
+            "chrome-devtools-mcp"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://github.com/btouchard/herald",
+          "count": 2,
+          "names": [
+            "io.github.btouchard/herald",
+            "btouchard/herald"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://github.com/katomato65/time-mcp",
+          "count": 2,
+          "names": [
+            "io.github.katomato65/time-mcp",
+            "katomato65/time-mcp"
+          ]
+        },
+        {
+          "type": "exact_url",
+          "url": "https://github.com/hack23/european-parliament-mcp-server",
+          "count": 2,
+          "names": [
+            "hack23/european-parliament-mcp-server",
+            "hack23/european-parliament-mcp-server"
+          ]
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:sts",
+          "name_b": "amazonaws.com:es",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/sts",
+          "url_b": "https://docs.aws.amazon.com/es"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:sts",
+          "name_b": "amazonaws.com:ds",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/sts",
+          "url_b": "https://docs.aws.amazon.com/ds"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:sts",
+          "name_b": "amazonaws.com:sns",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/sts",
+          "url_b": "https://docs.aws.amazon.com/sns"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:sts",
+          "name_b": "amazonaws.com:ssm",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/sts",
+          "url_b": "https://docs.aws.amazon.com/ssm"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:sts",
+          "name_b": "amazonaws.com:states",
+          "similarity": 0.919,
+          "url_a": "https://docs.aws.amazon.com/sts",
+          "url_b": "https://docs.aws.amazon.com/states"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:sts",
+          "name_b": "amazonaws.com:sms",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/sts",
+          "url_b": "https://docs.aws.amazon.com/sms"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:sts",
+          "name_b": "amazonaws.com:sqs",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/sts",
+          "url_b": "https://docs.aws.amazon.com/sqs"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:sts",
+          "name_b": "amazonaws.com:sso",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/sts",
+          "url_b": "https://docs.aws.amazon.com/sso"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:opsworks",
+          "name_b": "amazonaws.com:opsworkscm",
+          "similarity": 0.957,
+          "url_a": "https://docs.aws.amazon.com/opsworks",
+          "url_b": "https://docs.aws.amazon.com/opsworks-cm"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "io.github.cyanheads/pubmed-mcp-server",
+          "name_b": "io.github.cyanheads/pubchem-mcp-server",
+          "similarity": 0.933,
+          "url_a": "https://github.com/cyanheads/pubmed-mcp-server",
+          "url_b": "https://github.com/cyanheads/pubchem-mcp-server"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "io.github.domdomegg/google-cal-mcp",
+          "name_b": "io.github.domdomegg/google-contacts-mcp",
+          "similarity": 0.904,
+          "url_a": "https://github.com/domdomegg/google-calendar-mcp#readme",
+          "url_b": "https://github.com/domdomegg/google-contacts-mcp#readme"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:cloud9",
+          "name_b": "amazonaws.com:cloudhsm",
+          "similarity": 0.905,
+          "url_a": "https://docs.aws.amazon.com/cloud9",
+          "url_b": "https://docs.aws.amazon.com/cloudhsm"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:cloudhsm",
+          "name_b": "amazonaws.com:cloudhsmv2",
+          "similarity": 0.957,
+          "url_a": "https://docs.aws.amazon.com/cloudhsm",
+          "url_b": "https://docs.aws.amazon.com/cloudhsmv2"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ecs",
+          "name_b": "amazonaws.com:es",
+          "similarity": 0.97,
+          "url_a": "https://docs.aws.amazon.com/ecs",
+          "url_b": "https://docs.aws.amazon.com/es"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ecs",
+          "name_b": "amazonaws.com:ds",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/ecs",
+          "url_b": "https://docs.aws.amazon.com/ds"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ecs",
+          "name_b": "amazonaws.com:ec2",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/ecs",
+          "url_b": "https://docs.aws.amazon.com/ec2"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ecs",
+          "name_b": "amazonaws.com:ce",
+          "similarity": 0.909,
+          "url_a": "https://docs.aws.amazon.com/ecs",
+          "url_b": "https://docs.aws.amazon.com/ce"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ecs",
+          "name_b": "amazonaws.com:ebs",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/ecs",
+          "url_b": "https://docs.aws.amazon.com/ebs"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ecs",
+          "name_b": "amazonaws.com:ecr",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/ecs",
+          "url_b": "https://docs.aws.amazon.com/ecr"
+        },
+        {
+          "type": "fuzzy_name",
+          "name_a": "amazonaws.com:ecs",
+          "name_b": "amazonaws.com:eks",
+          "similarity": 0.941,
+          "url_a": "https://docs.aws.amazon.com/ecs",
+          "url_b": "https://docs.aws.amazon.com/eks"
+        }
+      ],
+      "exact_url_duplicates": 10,
+      "fuzzy_name_duplicates": 126
+    },
+    {
+      "check": "freshness",
+      "status": "ok",
+      "issues": [],
+      "recent_additions": 169,
+      "freshness_days": 7,
+      "latest_addition": "2026-03-24T02:56:07.052481+00:00",
+      "days_since_latest": 4
+    },
+    {
+      "check": "completeness",
+      "status": "alert",
+      "issues": [
+        "4193 tools (27%) are missing essential fields"
+      ],
+      "incomplete_tools": [
+        {
+          "name": "Replicate",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "io.github.djautomd-lab/aipaygent",
+          "missing": [
+            "url"
+          ]
+        },
+        {
+          "name": "Workos",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Gitbook",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Grafana",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Helius",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Assemblyai",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "io.github.jflamb/fdic-mcp-server",
+          "missing": [
+            "url"
+          ]
+        },
+        {
+          "name": "Elevenlabs",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Novu",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Cerebras",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Directus",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "ai.gossiper/shopify-admin-mcp",
+          "missing": [
+            "url"
+          ]
+        },
+        {
+          "name": "io.github.michu5696/paycrow",
+          "missing": [
+            "url"
+          ]
+        },
+        {
+          "name": "Nansen",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "ai.meetlark/mcp-server",
+          "missing": [
+            "url"
+          ]
+        },
+        {
+          "name": "Mintlify",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "com.nitrosend/nitrosend",
+          "missing": [
+            "url"
+          ]
+        },
+        {
+          "name": "Crewai",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "io.github.michu5696/agora402",
+          "missing": [
+            "url"
+          ]
+        },
+        {
+          "name": "azure.com:appconfiguration",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-account",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-certificate",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-connection",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-connectionType",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-credential",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-dscCompilationJob",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-dscConfiguration",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-dscNode",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-dscNodeConfiguration",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-dscNodeCounts",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-hybridRunbookWorkerGroup",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-job",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-jobSchedule",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-linkedWorkspace",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-module",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-python2package",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-runbook",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-schedule",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-sourceControl",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-sourceControlSyncJob",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-variable",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-watcher",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:automation-webhook",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:azsadmin-Compute",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:azsadmin-PlatformImages",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:azsadmin-Quotas",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:azsadmin-VMExtensions",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:azure-kusto",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "azure.com:azurestack-AzureStack",
+          "missing": [
+            "description"
+          ]
+        }
+      ],
+      "total_tools": 15406,
+      "missing_description": 3743,
+      "missing_category": 0,
+      "missing_score": 0,
+      "missing_url": 450,
+      "incomplete_count": 4193
+    },
+    {
+      "check": "anomaly_batch",
+      "status": "skipped",
+      "issues": []
+    }
+  ],
+  "summary": {
+    "ok": 3,
+    "warning": 0,
+    "alert": 2,
+    "skipped": 1
+  },
+  "fixes_applied": [
+    "Removed 10 exact URL duplicates",
+    "Flagged 808 'other' category tools for reclassification"
+  ],
+  "total_issues": 2
+}

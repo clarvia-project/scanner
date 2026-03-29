@@ -1,0 +1,10 @@
+{
+  "started_at": "2026-03-26T07:06:06.943695+00:00",
+  "sources": {
+    "mcp_registry": 0
+  },
+  "total_discovered": 0,
+  "dry_run": true,
+  "queued": 0,
+  "finished_at": "2026-03-26T07:06:07.735427+00:00"
+}
