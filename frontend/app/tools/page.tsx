@@ -300,7 +300,7 @@ export default function ToolsPage() {
           <p className="text-muted max-w-2xl">
             Search{" "}
             <span className="text-foreground font-semibold font-mono">
-              {stats?.total_services?.toLocaleString() || "12,000+"}
+              {stats?.total_services?.toLocaleString() || "..."}
             </span>{" "}
             tools across MCP servers, APIs, CLI tools, and skills.
             Every tool scored for agent readiness.

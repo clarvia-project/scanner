@@ -203,7 +203,7 @@ export default function LandingPage() {
   >("idle");
   const [topScores, setTopScores] = useState<TopScore[]>(FALLBACK_SCORES);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [stats, setStats] = useState({ totalTools: 28000, totalScored: 28000, avgScore: 0, categories: 20 });
+  const [stats, setStats] = useState({ totalTools: 15000, totalScored: 15000, avgScore: 48, categories: 20, excellentCount: 83 });
   const [altQuery, setAltQuery] = useState("");
   const [altLoading, setAltLoading] = useState(false);
   const [altResults, setAltResults] = useState<{
@@ -213,6 +213,8 @@ export default function LandingPage() {
     total_in_category: number;
   } | null>(null);
   const [altError, setAltError] = useState("");
+  const [topPicks, setTopPicks] = useState<{ name: string; score: number; category: string; scan_id: string; description: string }[]>([]);
+  const [topPicksCat, setTopPicksCat] = useState<string>("all");
   const router = useRouter();
 
   // Animated counters for hero stats
@@ -247,16 +249,29 @@ export default function LandingPage() {
     ]).then(([apiStats, scans]) => {
       const scoredCount = Array.isArray(scans) ? scans.length : 0;
       const apiTotal = apiStats?.total_services ?? 0;
-      // totalTools = broader catalog (API tools + scored), totalScored = AEO-scored tools
-      const broader = Math.max(apiTotal, scoredCount, 28000);
+      const excellent = Array.isArray(scans) ? scans.filter((s: { clarvia_score: number }) => s.clarvia_score >= 80).length : 0;
       setStats({
-        totalTools: broader,
-        totalScored: scoredCount || 28000,
+        totalTools: apiTotal,
+        totalScored: scoredCount || apiTotal,
         avgScore: apiStats?.avg_score || 0,
         categories: apiStats?.categories_count || 20,
+        excellentCount: excellent,
       });
     });
   }, []);
+
+  // Fetch top picks (score >= 80)
+  useEffect(() => {
+    fetch(`${API_BASE}/v1/featured/top?limit=50`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.top_picks) setTopPicks(data.top_picks);
+      })
+      .catch(() => {});
+  }, []);
+
+  const topPicksCategories = ["all", ...new Set(topPicks.map((t) => t.category))];
+  const filteredPicks = topPicksCat === "all" ? topPicks : topPicks.filter((t) => t.category === topPicksCat);
 
   async function handleScan(targetUrl?: string) {
     const scanUrl = targetUrl || url.trim();
@@ -440,7 +455,7 @@ export default function LandingPage() {
             <div className="flex items-center justify-center gap-8 text-sm font-mono opacity-0 animate-fade-in stagger-2">
               <div className="text-center">
                 <div className="text-2xl font-bold text-foreground">{animatedTools.toLocaleString()}+</div>
-                <div className="text-xs text-muted">tools scored</div>
+                <div className="text-xs text-muted">tools indexed</div>
               </div>
               <div className="w-px h-8 bg-card-border" />
               <div className="text-center">
@@ -464,6 +479,14 @@ export default function LandingPage() {
               <br className="hidden sm:block" />
               <span className="text-foreground/80">We make you visible to AI agents.</span>
             </p>
+
+            {stats.excellentCount > 0 && (
+              <p className="text-sm text-muted/80 font-mono opacity-0 animate-fade-in-up stagger-2">
+                {stats.totalScored.toLocaleString()} tools scanned. Only{" "}
+                <span className="text-score-green font-semibold">{stats.excellentCount}</span>{" "}
+                scored Excellent. Find out where yours stands.
+              </p>
+            )}
 
             {/* URL Input */}
             <form onSubmit={handleSubmit} className="flex gap-3 max-w-lg mx-auto pt-4 opacity-0 animate-fade-in-up stagger-3">
@@ -780,6 +803,75 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* ─── Top Picks ─── */}
+        {topPicks.length > 0 && (
+          <section className="relative px-6 py-24">
+            <div className="divider-gradient absolute top-0 left-0 right-0" />
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <p className="text-xs font-mono text-score-green uppercase tracking-widest mb-3">Agent-Verified</p>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Top Picks</h2>
+                <p className="text-sm text-muted">
+                  {stats.totalScored.toLocaleString()}+ tools scanned. Only <span className="text-score-green font-semibold">{topPicks.length}</span> scored 80+.
+                  These are the most agent-ready services in the ecosystem.
+                </p>
+              </div>
+
+              {/* Category tabs */}
+              <div className="flex flex-wrap gap-2 justify-center mb-8">
+                {topPicksCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setTopPicksCat(cat)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
+                      topPicksCat === cat
+                        ? "bg-accent/20 text-accent border border-accent/30"
+                        : "bg-card-bg/50 text-muted border border-card-border/30 hover:text-foreground"
+                    }`}
+                  >
+                    {cat === "all" ? "All" : cat.replace(/_/g, " ")}
+                  </button>
+                ))}
+              </div>
+
+              {/* Cards grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredPicks.slice(0, 12).map((tool) => (
+                  <Link
+                    key={tool.scan_id}
+                    href={`/report/${tool.scan_id}`}
+                    className="glass-card rounded-xl p-5 hover:border-accent/30 transition-all group"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm truncate group-hover:text-accent transition-colors">{tool.name}</h3>
+                        <p className="text-xs text-muted font-mono">{tool.category.replace(/_/g, " ")}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 ml-3">
+                        <span className={`text-lg font-bold ${scoreColor(tool.score)}`}>{tool.score}</span>
+                      </div>
+                    </div>
+                    {tool.description && (
+                      <p className="text-xs text-muted/70 line-clamp-2">{tool.description}</p>
+                    )}
+                  </Link>
+                ))}
+              </div>
+
+              {filteredPicks.length > 12 && (
+                <div className="text-center mt-8">
+                  <Link
+                    href="/leaderboard"
+                    className="text-sm text-accent hover:text-accent/80 font-mono"
+                  >
+                    View all {filteredPicks.length} top picks →
+                  </Link>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* ─── Leaderboard Preview ─── */}
         <section className="relative px-6 py-24">

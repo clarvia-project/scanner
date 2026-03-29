@@ -185,7 +185,7 @@ export default function TrendingPage() {
           <p className="text-muted max-w-2xl">
             Top-performing agent tools across{" "}
             <span className="text-foreground font-semibold font-mono">
-              {data?.total_indexed?.toLocaleString() || "12,000+"}
+              {data?.total_indexed?.toLocaleString() || "..."}
             </span>{" "}
             indexed services. Updated weekly.
           </p>
