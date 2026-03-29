@@ -1121,13 +1121,27 @@ async def list_services(
 
     if q:
         q_lower = q.lower()
-        filtered = [
-            s for s in filtered
-            if q_lower in s.get("service_name", "").lower()
-            or q_lower in s.get("description", "").lower()
-            or q_lower in s.get("url", "").lower()
-            or any(q_lower in t.lower() for t in s.get("tags", []))
-        ]
+        matched = []
+        for s in filtered:
+            name = s.get("service_name", "").lower()
+            desc = s.get("description", "").lower()
+            url = s.get("url", "").lower()
+            tags = [t.lower() for t in s.get("tags", [])]
+            if q_lower not in name and q_lower not in desc and q_lower not in url and not any(q_lower in t for t in tags):
+                continue
+            # Relevance: name exact > name contains > tags > description
+            if name == q_lower:
+                relevance = 4
+            elif q_lower in name:
+                relevance = 3
+            elif any(q_lower in t for t in tags):
+                relevance = 2
+            else:
+                relevance = 1
+            matched.append((relevance, s))
+        # Sort by relevance first, then by score within same relevance
+        matched.sort(key=lambda x: (x[0], x[1]["clarvia_score"]), reverse=True)
+        filtered = [s for _, s in matched]
 
     filtered = [s for s in filtered if s["clarvia_score"] >= min_score]
 
@@ -1141,16 +1155,30 @@ async def list_services(
     if similar_to:
         filtered = [s for s in filtered if s["scan_id"] != similar_to]
 
-    if sort == SortOrder.score_desc:
-        filtered.sort(key=lambda s: s["clarvia_score"], reverse=True)
-    elif sort == SortOrder.score_asc:
-        filtered.sort(key=lambda s: s["clarvia_score"])
-    elif sort == SortOrder.name_asc:
-        filtered.sort(key=lambda s: s["service_name"].lower())
-    elif sort == SortOrder.name_desc:
-        filtered.sort(key=lambda s: s["service_name"].lower(), reverse=True)
-    elif sort == SortOrder.recent:
-        filtered.sort(key=lambda s: s.get("scanned_at") or "", reverse=True)
+    # When a text query is active, relevance sort is already applied — skip re-sort
+    # unless user explicitly requested a different sort order
+    if not q:
+        if sort == SortOrder.score_desc:
+            filtered.sort(key=lambda s: s["clarvia_score"], reverse=True)
+        elif sort == SortOrder.score_asc:
+            filtered.sort(key=lambda s: s["clarvia_score"])
+        elif sort == SortOrder.name_asc:
+            filtered.sort(key=lambda s: s["service_name"].lower())
+        elif sort == SortOrder.name_desc:
+            filtered.sort(key=lambda s: s["service_name"].lower(), reverse=True)
+        elif sort == SortOrder.recent:
+            filtered.sort(key=lambda s: s.get("scanned_at") or "", reverse=True)
+    else:
+        # With text query: only re-sort if user explicitly set a non-default sort
+        if sort == SortOrder.score_asc:
+            filtered.sort(key=lambda s: s["clarvia_score"])
+        elif sort == SortOrder.name_asc:
+            filtered.sort(key=lambda s: s["service_name"].lower())
+        elif sort == SortOrder.name_desc:
+            filtered.sort(key=lambda s: s["service_name"].lower(), reverse=True)
+        elif sort == SortOrder.recent:
+            filtered.sort(key=lambda s: s.get("scanned_at") or "", reverse=True)
+        # score_desc (default) → keep relevance order
 
     total = len(filtered)
 
@@ -1186,6 +1214,7 @@ async def list_services(
 async def search_alias(
     response: Response,
     q: str | None = Query(None),
+    query: str | None = Query(None, description="Alias for q — agents may use either"),
     category: str | None = Query(None),
     service_type: str | None = Query(None),
     min_score: int = Query(0, ge=0, le=100),
@@ -1197,9 +1226,10 @@ async def search_alias(
     offset: int = Query(0, ge=0),
 ):
     """Alias for /v1/services — agents naturally look for /search."""
+    effective_q = q or query
     return await list_services(
         response=response, category=category, service_type=service_type,
-        q=q, min_score=min_score, max_score=None, sort=sort,
+        q=effective_q, min_score=min_score, max_score=None, sort=sort,
         source=source, added_after=added_after, similar_to=similar_to,
         limit=limit, offset=offset,
     )
@@ -1661,25 +1691,51 @@ async def get_category_detail(
 @router.get("/compare")
 async def compare_services(
     response: Response,
-    ids: str = Query(..., description="Comma-separated scan_ids (max 4)"),
+    ids: str | None = Query(None, description="Comma-separated scan_ids (max 4)"),
+    names: str | None = Query(None, description="Comma-separated tool names (max 4) — fuzzy matched"),
+    services: str | None = Query(None, description="Alias for names — comma-separated tool names"),
 ):
-    """Compare up to 4 services side by side."""
+    """Compare up to 4 services side by side.
+
+    Accepts scan_ids via `ids`, or tool names via `names`/`services` for convenience.
+    Names are fuzzy-matched against service_name fields.
+    """
     _ensure_loaded()
     _load_collected()
     _add_headers(response)
 
-    scan_ids = [s.strip() for s in ids.split(",")][:4]
     results = []
 
-    for sid in scan_ids:
-        service = _by_scan_id.get(sid)
-        if not service:
-            for t in _collected_tools:
-                if t["scan_id"] == sid:
-                    service = t
+    if ids:
+        scan_ids = [s.strip() for s in ids.split(",")][:4]
+        for sid in scan_ids:
+            service = _by_scan_id.get(sid)
+            if not service:
+                for t in _collected_tools:
+                    if t["scan_id"] == sid:
+                        service = t
+                        break
+            if service:
+                results.append(_compact_service(service))
+    elif names or services:
+        name_list = [n.strip().lower() for n in (names or services).split(",")][:4]
+        all_tools = list(_services) + list(_collected_tools)
+        for name_q in name_list:
+            # Exact match first, then substring match
+            found = None
+            for t in all_tools:
+                if t.get("service_name", "").lower() == name_q:
+                    found = t
                     break
-        if service:
-            results.append(_compact_service(service))
+            if not found:
+                for t in all_tools:
+                    if name_q in t.get("service_name", "").lower():
+                        found = t
+                        break
+            if found:
+                results.append(_compact_service(found))
+    else:
+        raise HTTPException(status_code=400, detail="Provide 'ids' (scan_ids) or 'names'/'services' (tool names) to compare")
 
     return {"services": results, "count": len(results)}
 
@@ -2052,6 +2108,53 @@ async def get_featured(response: Response):
         ],
         "category_picks": editors_picks[:50],
         "total_categories": len(by_cat),
+    }
+
+
+@router.get("/featured/top")
+async def get_featured_top(
+    response: Response,
+    category: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=100),
+):
+    """Agent-verified top picks — only tools scoring >= 80 (Excellent/Strong)."""
+    _ensure_loaded()
+    _add_headers(response)
+    filtered = [s for s in _services if s["clarvia_score"] >= 80]
+    if category:
+        filtered = [s for s in filtered if s.get("category") == category]
+    filtered = sorted(filtered, key=lambda s: s["clarvia_score"], reverse=True)[:limit]
+
+    # Group by category for frontend tabs
+    by_category: dict[str, list] = {}
+    for s in filtered:
+        cat = s.get("category", "other")
+        by_category.setdefault(cat, []).append({
+            "name": s["service_name"],
+            "url": s["url"],
+            "score": s["clarvia_score"],
+            "rating": s["rating"],
+            "category": cat,
+            "scan_id": s["scan_id"],
+            "description": s.get("description", "")[:200],
+        })
+
+    return {
+        "top_picks": [
+            {
+                "name": s["service_name"],
+                "url": s["url"],
+                "score": s["clarvia_score"],
+                "rating": s["rating"],
+                "category": s.get("category", "other"),
+                "scan_id": s["scan_id"],
+                "description": s.get("description", "")[:200],
+            }
+            for s in filtered
+        ],
+        "by_category": by_category,
+        "total": len(filtered),
+        "threshold": 80,
     }
 
 
