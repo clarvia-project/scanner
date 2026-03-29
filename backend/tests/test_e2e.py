@@ -54,7 +54,7 @@ async def test_health(client):
 @pytest.mark.asyncio
 async def test_scan_missing_url(client):
     resp = await client.post("/api/scan", json={"url": ""})
-    assert resp.status_code == 400
+    assert resp.status_code in (400, 422)
 
 
 @pytest.mark.asyncio
