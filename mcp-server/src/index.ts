@@ -7,7 +7,7 @@ import { registerTools } from "./tools.js";
 function createServer() {
   const server = new McpServer({
     name: "clarvia",
-    version: "1.0.0",
+    version: "1.1.2",
   });
   registerTools(server);
   return server;

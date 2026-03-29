@@ -24,7 +24,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "User-Agent": "clarvia-mcp-server/1.0",
+    "User-Agent": "clarvia-mcp-server/1.1.2",
   };
 
   const res = await fetch(url, {
@@ -347,6 +347,35 @@ export async function listCSTickets(params?: {
 }): Promise<TicketListResult> {
   return request<TicketListResult>("/v1/cs/tickets", {
     params: params as Record<string, string | undefined>,
+  });
+}
+
+export interface TopPick {
+  name: string;
+  url: string;
+  score: number;
+  rating: string;
+  category: string;
+  scan_id: string;
+  description: string;
+}
+
+export interface TopPicksResult {
+  top_picks: TopPick[];
+  by_category: Record<string, TopPick[]>;
+  total: number;
+  threshold: number;
+}
+
+export async function getTopPicks(params?: {
+  category?: string;
+  limit?: number;
+}): Promise<TopPicksResult> {
+  return request<TopPicksResult>("/v1/featured/top", {
+    params: {
+      category: params?.category,
+      limit: params?.limit,
+    },
   });
 }
 

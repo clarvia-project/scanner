@@ -17,6 +17,7 @@ import {
   recommendForSetup,
   createCSTicket,
   listCSTickets,
+  getTopPicks,
 } from "./api-client.js";
 
 export function registerTools(server: McpServer): void {
@@ -441,6 +442,41 @@ export function registerTools(server: McpServer): void {
         const result = await recommendForSetup(setup_id, limit || 10);
         return {
           content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // clarvia_top_picks
+  server.tool(
+    "clarvia_top_picks",
+    "Get agent-verified top picks — only tools that scored Excellent (80+) out of 15,400+ scanned. These are the most agent-ready services in the ecosystem, curated by Clarvia's AEO scoring. Use when an agent asks 'what are the best tools?' or 'recommend verified tools'.",
+    {
+      category: z.string().optional().describe("Filter by category (e.g. 'ai', 'developer_tools', 'data')"),
+      limit: z.number().min(1).max(100).optional().describe("Max results (default 50)"),
+    },
+    async ({ category, limit }) => {
+      try {
+        const result = await getTopPicks({ category, limit: limit || 50 });
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                ...result,
+                _meta: {
+                  threshold: "Only tools scoring 80+ (Excellent) are included",
+                  total_scanned: "15,400+",
+                  scoring: "Clarvia AEO Score — measures how easily AI agents can discover, connect, and use a service",
+                },
+              }, null, 2),
+            },
+          ],
         };
       } catch (err) {
         return {
