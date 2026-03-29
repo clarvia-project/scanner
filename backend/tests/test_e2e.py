@@ -464,3 +464,113 @@ async def test_ssrf_scan_private_ip(client):
         resp = await client.post("/api/scan", json={"url": url})
         # 프라이빗 IP 스캔이 성공해서는 안 됨
         assert resp.status_code != 200, f"Private IP URL '{url}' was not blocked"
+
+
+# ---------------------------------------------------------------------------
+# Deduplication
+# ---------------------------------------------------------------------------
+
+class TestDeduplicateServices:
+    """Unit tests for _deduplicate_services."""
+
+    def _dedup(self, services):
+        from app.routes.index_routes import _deduplicate_services
+        return _deduplicate_services(services)
+
+    def _make(self, name, url, score=50, scan_id=None):
+        return {
+            "scan_id": scan_id or f"scan_{name}",
+            "service_name": name,
+            "url": url,
+            "clarvia_score": score,
+        }
+
+    def test_exact_url_dedup_keeps_higher_score(self):
+        services = [
+            self._make("com.teamwork/mcp", "https://github.com/teamwork/mcp", score=40),
+            self._make("teamwork/mcp", "https://github.com/teamwork/mcp", score=60),
+        ]
+        result = self._dedup(services)
+        assert len(result) == 1
+        assert result[0]["service_name"] == "teamwork/mcp"
+        assert result[0]["clarvia_score"] == 60
+
+    def test_exact_url_dedup_case_insensitive(self):
+        services = [
+            self._make("A", "https://GitHub.com/Foo/Bar", score=30),
+            self._make("B", "https://github.com/foo/bar", score=70),
+        ]
+        result = self._dedup(services)
+        assert len(result) == 1
+        assert result[0]["clarvia_score"] == 70
+
+    def test_exact_url_trailing_slash(self):
+        services = [
+            self._make("A", "https://example.com/tool/", score=30),
+            self._make("B", "https://example.com/tool", score=50),
+        ]
+        result = self._dedup(services)
+        assert len(result) == 1
+
+    def test_different_urls_not_deduped(self):
+        services = [
+            self._make("A", "https://github.com/foo/a", score=50),
+            self._make("B", "https://github.com/foo/b", score=50),
+        ]
+        result = self._dedup(services)
+        assert len(result) == 2
+
+    def test_fuzzy_name_dedup_same_domain(self):
+        services = [
+            self._make(
+                "io.github.coinversaa/mcp-server",
+                "https://github.com/coinversaa/mcp-server-v1",
+                score=40,
+            ),
+            self._make(
+                "io.github.coinversaa/mcp-servers",
+                "https://github.com/coinversaa/mcp-server-v2",
+                score=60,
+            ),
+        ]
+        result = self._dedup(services)
+        # Names are >90% similar, same domain -> dedup
+        assert len(result) == 1
+        assert result[0]["clarvia_score"] == 60
+
+    def test_fuzzy_name_different_domain_not_deduped(self):
+        services = [
+            self._make("my-tool", "https://github.com/a/my-tool", score=40),
+            self._make("my-tool", "https://gitlab.com/a/my-tool", score=60),
+        ]
+        result = self._dedup(services)
+        # Different domains -> no fuzzy dedup (exact URL pass won't match either)
+        assert len(result) == 2
+
+    def test_aws_services_not_deduped(self):
+        """AWS services like ecs vs eks are different tools, not duplicates."""
+        services = [
+            self._make("amazonaws.com:ecs", "https://docs.aws.amazon.com/ecs", score=50),
+            self._make("amazonaws.com:eks", "https://docs.aws.amazon.com/eks", score=50),
+        ]
+        result = self._dedup(services)
+        # Different URLs -> not deduped by URL pass
+        # Name similarity ~94% but URLs differ -> only fuzzy within same domain
+        # They share domain but URLs differ, so exact URL pass keeps both
+        # Fuzzy pass: names are similar AND same domain -> would merge
+        # But these are legitimately different services!
+        # The fuzzy check requires >90% name similarity, which ecs/eks has (~94%)
+        # However the exact URL pass already kept both (different URLs)
+        # The fuzzy pass groups by domain and compares names
+        assert len(result) == 2  # Should stay as 2 distinct services
+
+    def test_empty_list(self):
+        assert self._dedup([]) == []
+
+    def test_no_url_entries_preserved(self):
+        services = [
+            self._make("tool-a", "", score=50),
+            self._make("tool-b", "", score=60),
+        ]
+        result = self._dedup(services)
+        assert len(result) == 2

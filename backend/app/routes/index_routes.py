@@ -821,6 +821,114 @@ def _load_collected() -> None:
     logger.info("Loaded %d collected tools from %d files", len(tools), len(_COLLECTED_FILES))
 
 
+def _deduplicate_services(services: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Remove duplicate tools from the services list.
+
+    Two dedup passes:
+    1. Exact URL duplicates — same normalized URL, keep higher score.
+    2. Fuzzy name duplicates — names >90% similar AND sharing the same
+       base URL domain+path (e.g. io.github.X/foo vs X/foo both pointing
+       to github.com/X/foo).  Keep higher score.
+    """
+    if not services:
+        return services
+
+    # --- Pass 1: exact URL dedup ---
+    url_best: dict[str, int] = {}  # normalized_url -> index of best entry
+    for i, s in enumerate(services):
+        url = (s.get("url") or "").rstrip("/").lower()
+        if not url:
+            continue
+        if url in url_best:
+            existing_score = services[url_best[url]].get("clarvia_score", 0)
+            current_score = s.get("clarvia_score", 0)
+            if current_score > existing_score:
+                url_best[url] = i
+        else:
+            url_best[url] = i
+
+    # Build set of indices to keep (for entries with URLs)
+    kept_indices: set[int] = set(url_best.values())
+    # Also keep entries without URLs
+    for i, s in enumerate(services):
+        url = (s.get("url") or "").rstrip("/").lower()
+        if not url:
+            kept_indices.add(i)
+
+    deduped = [services[i] for i in sorted(kept_indices)]
+    removed_url = len(services) - len(deduped)
+
+    # --- Pass 2: fuzzy name dedup (same URL domain+path root) ---
+    # Group by base URL domain to limit comparison scope
+    from urllib.parse import urlparse
+
+    domain_groups: dict[str, list[int]] = {}
+    for i, s in enumerate(deduped):
+        url = s.get("url") or ""
+        try:
+            parsed = urlparse(url)
+            domain = parsed.netloc.lower()
+        except Exception:
+            domain = ""
+        if domain:
+            domain_groups.setdefault(domain, []).append(i)
+
+    def _url_path_root(url: str) -> str:
+        """Extract domain + first path segment for grouping."""
+        try:
+            parsed = urlparse(url)
+            parts = [p for p in parsed.path.strip("/").split("/") if p]
+            root = parts[0] if parts else ""
+            return f"{parsed.netloc.lower()}/{root}"
+        except Exception:
+            return ""
+
+    remove_fuzzy: set[int] = set()
+    for domain, indices in domain_groups.items():
+        if len(indices) < 2:
+            continue
+        # Compare pairs within the same domain
+        for a_pos in range(len(indices)):
+            a_idx = indices[a_pos]
+            if a_idx in remove_fuzzy:
+                continue
+            a_name = deduped[a_idx].get("service_name", "").lower().strip()
+            a_path_root = _url_path_root(deduped[a_idx].get("url", ""))
+            for b_pos in range(a_pos + 1, len(indices)):
+                b_idx = indices[b_pos]
+                if b_idx in remove_fuzzy:
+                    continue
+                b_name = deduped[b_idx].get("service_name", "").lower().strip()
+                name_ratio = SequenceMatcher(None, a_name, b_name).ratio()
+                if name_ratio <= 0.90:
+                    continue
+                # Also require the URL paths to share the same root
+                # (same project, not just same domain like docs.aws.amazon.com).
+                # If paths differ, these are different tools even with similar names.
+                b_path_root = _url_path_root(deduped[b_idx].get("url", ""))
+                if a_path_root and b_path_root and a_path_root != b_path_root:
+                    continue
+                # Keep the one with higher score
+                a_score = deduped[a_idx].get("clarvia_score", 0)
+                b_score = deduped[b_idx].get("clarvia_score", 0)
+                if b_score > a_score:
+                    remove_fuzzy.add(a_idx)
+                    break  # a_idx is removed, stop comparing it
+                else:
+                    remove_fuzzy.add(b_idx)
+
+    if remove_fuzzy:
+        deduped = [s for i, s in enumerate(deduped) if i not in remove_fuzzy]
+
+    total_removed = removed_url + len(remove_fuzzy)
+    if total_removed > 0:
+        logger.info(
+            "Dedup: removed %d exact-URL dupes + %d fuzzy-name dupes (%d total)",
+            removed_url, len(remove_fuzzy), total_removed,
+        )
+    return deduped
+
+
 def _load_data() -> None:
     global _services, _by_scan_id
     data_dir = _find_data_dir()
@@ -837,6 +945,8 @@ def _load_data() -> None:
             entry.get("service_name", ""),
             entry.get("description", ""),
         )
+
+    raw = _deduplicate_services(raw)
     _services = raw
     _by_scan_id = {s["scan_id"]: s for s in _services}
     logger.info("Loaded %d services for Index API", len(_services))
