@@ -122,10 +122,16 @@ async def lifespan(app: FastAPI):
     _load_profiles()
     logger.info("Profiles loaded during startup")
 
-    # Load index data
+    # Load index data in background so Uvicorn can bind the port immediately
     from .routes.index_routes import _load_data
-    _load_data()
-    logger.info("Index data loaded during startup")
+
+    def _bg_load():
+        _load_data()
+        logger.info("Index data loaded (background)")
+
+    import threading
+    threading.Thread(target=_bg_load, daemon=True).start()
+    logger.info("Index data loading scheduled (background thread)")
 
     # Start background cache cleanup
     _cache_cleanup_task = asyncio.create_task(_periodic_cache_cleanup())
