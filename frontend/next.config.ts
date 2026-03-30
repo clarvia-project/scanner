@@ -12,6 +12,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/openapi.json",
+        destination: "https://clarvia-api.onrender.com/openapi.json",
+        permanent: false,
+      },
+      {
+        source: "/api/docs",
+        destination: "https://clarvia-api.onrender.com/docs",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
