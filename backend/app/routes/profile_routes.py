@@ -455,11 +455,75 @@ async def list_profiles(
 
 @router.get("/profiles/{profile_id}")
 async def get_profile(profile_id: str):
-    """Get full profile details."""
+    """Get full profile details.
+
+    Accepts:
+      - profile_id (prf_xxx)  — registered profile
+      - scan_id (scn_xxx)     — prebuilt scan from index
+      - slug (e.g. github-com-org-repo) — matched by URL slug
+    """
+    # 1. Direct profile lookup
     profile = _profiles.get(profile_id)
-    if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
-    return profile
+    if profile:
+        return profile
+
+    # 2. Fallback: look up from main services index (prebuilt-scans + collected)
+    try:
+        from .index_routes import _by_scan_id, _services, _ensure_loaded, _load_collected, _collected_tools
+        _ensure_loaded()
+
+        # Try scan_id match
+        service = _by_scan_id.get(profile_id)
+
+        # Try collected tools
+        if not service:
+            _load_collected()
+            for t in _collected_tools:
+                if t.get("scan_id") == profile_id:
+                    service = t
+                    break
+
+        # Try slug match (url-derived slug)
+        if not service:
+            import re
+            slug = profile_id.strip().lower()
+            for s in _services:
+                url = (s.get("url") or "").lower()
+                url_slug = re.sub(r"^https?://", "", url).rstrip("/")
+                url_slug = re.sub(r"[^a-z0-9]+", "-", url_slug).strip("-")
+                if url_slug == slug:
+                    service = s
+                    break
+
+        # Try name match (case-insensitive, hyphenated)
+        if not service:
+            normalized = profile_id.replace("-", " ").replace("_", " ").lower()
+            for s in _services:
+                if s.get("service_name", "").lower() == normalized:
+                    service = s
+                    break
+
+        if service:
+            return {
+                "profile_id": service.get("scan_id", profile_id),
+                "name": service.get("service_name", ""),
+                "url": service.get("url", ""),
+                "description": service.get("description", ""),
+                "category": service.get("category", "other"),
+                "service_type": service.get("service_type", "general"),
+                "clarvia_score": service.get("clarvia_score"),
+                "rating": service.get("rating", ""),
+                "dimensions": service.get("dimensions", {}),
+                "scan_id": service.get("scan_id", ""),
+                "tags": service.get("tags", []),
+                "status": "scanned",
+                "source": "index",
+                "last_scanned_at": service.get("scanned_at"),
+            }
+    except Exception as e:
+        logger.warning("Fallback profile lookup failed: %s", e)
+
+    raise HTTPException(status_code=404, detail="Profile not found")
 
 
 @router.put("/profiles/{profile_id}")

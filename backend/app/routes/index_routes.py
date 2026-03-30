@@ -631,6 +631,25 @@ for _cat, _keywords in _DESCRIPTION_KEYWORDS.items():
 _DESC_KEYWORD_CATEGORY.sort(key=lambda x: len(x[0]), reverse=True)
 
 
+# --- Category ↔ service_type aliases ---
+# "mcp", "skills", "cli" are not real categories in _CATEGORY_MAP;
+# they map to service_type values.  When a caller passes ?category=mcp,
+# we want to match service_type="mcp_server" instead.
+_CATEGORY_TYPE_ALIASES: dict[str, str] = {
+    "mcp": "mcp_server",
+    "skills": "skill",
+    "cli": "cli_tool",
+}
+
+
+def _filter_by_category(items: list[dict], category: str) -> list[dict]:
+    """Filter items by category, handling pseudo-categories that map to service_type."""
+    alias = _CATEGORY_TYPE_ALIASES.get(category)
+    if alias:
+        return [s for s in items if s.get("service_type", "general") == alias]
+    return [s for s in items if s.get("category") == category]
+
+
 def _classify(service_name: str, description: str = "") -> str:
     """Classify a tool into a category using name and description matching.
 
@@ -1243,7 +1262,7 @@ async def list_services(
         filtered = _services
 
     if category:
-        filtered = [s for s in filtered if s.get("category") == category]
+        filtered = _filter_by_category(filtered, category)
 
     if service_type:
         filtered = [s for s in filtered if s.get("service_type", "general") == service_type]
@@ -1550,7 +1569,7 @@ async def leaderboard(
     ]
     filtered = pool
     if category:
-        filtered = [s for s in filtered if s.get("category") == category]
+        filtered = _filter_by_category(filtered, category)
     filtered = sorted(filtered, key=lambda s: s["clarvia_score"], reverse=True)[:limit]
     return {
         "leaderboard": [
@@ -1634,6 +1653,11 @@ async def list_categories(
     for cat in _CATEGORY_MAP:
         if cat not in counts:
             counts[cat] = 0
+
+    # Add pseudo-categories based on service_type (mcp, skills, cli)
+    for alias_name, alias_type in _CATEGORY_TYPE_ALIASES.items():
+        alias_count = sum(1 for s in pool if s.get("service_type", "general") == alias_type)
+        counts[alias_name] = alias_count
 
     return {
         "categories": sorted(
@@ -1749,6 +1773,16 @@ _CATEGORY_META: dict[str, dict[str, str]] = {
         "description": "Modular SKILL.md capabilities for AI coding assistants like Claude Code and OpenAI Codex. Includes reusable slash commands, workflow skills, and agent-specific task modules.",
         "icon": "puzzle",
     },
+    "mcp": {
+        "label": "MCP Servers",
+        "description": "Model Context Protocol servers that extend AI assistants with external tool access. Includes database connectors, API bridges, file system access, and specialized integrations.",
+        "icon": "server",
+    },
+    "cli": {
+        "label": "CLI Tools",
+        "description": "Command-line interface tools for AI agents and developers. Includes terminal utilities, build tools, and developer productivity commands.",
+        "icon": "terminal",
+    },
     "other": {
         "label": "Other",
         "description": "Miscellaneous tools and services for AI agents that span multiple categories or serve specialized use cases.",
@@ -1776,10 +1810,10 @@ async def get_category_detail(
         t for t in _collected_tools if t["scan_id"] not in scanned_ids
     ]
 
-    # Filter by category
-    filtered = [s for s in pool if s.get("category") == slug]
+    # Filter by category (handles pseudo-categories like "mcp" → service_type)
+    filtered = _filter_by_category(pool, slug)
 
-    if not filtered and slug not in _CATEGORY_MAP and slug not in _CATEGORY_META:
+    if not filtered and slug not in _CATEGORY_MAP and slug not in _CATEGORY_META and slug not in _CATEGORY_TYPE_ALIASES:
         raise HTTPException(status_code=404, detail=f"Category '{slug}' not found")
 
     # Optional service_type filter
@@ -2252,12 +2286,12 @@ async def get_featured_top(
     category: str | None = Query(None),
     limit: int = Query(50, ge=1, le=100),
 ):
-    """Agent-verified top picks — only tools scoring >= 80 (Excellent/Strong)."""
+    """Agent-verified top picks — only tools scoring >= 60 (Strong+)."""
     _ensure_loaded()
     _add_headers(response)
-    filtered = [s for s in _services if s["clarvia_score"] >= 80]
+    filtered = [s for s in _services if s["clarvia_score"] >= 60]
     if category:
-        filtered = [s for s in filtered if s.get("category") == category]
+        filtered = _filter_by_category(filtered, category)
     filtered = sorted(filtered, key=lambda s: s["clarvia_score"], reverse=True)[:limit]
 
     # Group by category for frontend tabs
@@ -2289,7 +2323,7 @@ async def get_featured_top(
         ],
         "by_category": by_category,
         "total": len(filtered),
-        "threshold": 80,
+        "threshold": 60,
     }
 
 

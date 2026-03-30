@@ -102,6 +102,83 @@ def _load_from_jsonl(slug: str, limit: int = 50) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Seed from prebuilt-scans.json (called once at startup if history is empty)
+# ---------------------------------------------------------------------------
+
+def seed_history_from_prebuilt() -> int:
+    """Populate scan-history.jsonl with baseline entries from prebuilt-scans.json.
+
+    Only runs if the history file is empty or missing. Each prebuilt scan gets
+    one entry so that /v1/history/{slug}/delta has data immediately.
+    Returns the number of entries seeded.
+    """
+    path = _history_file()
+    # Skip if already has data
+    if path.exists() and path.stat().st_size > 100:
+        return 0
+
+    # Find prebuilt-scans.json
+    from pathlib import Path as _P
+    candidates = [
+        _P("/app/data/prebuilt-scans.json"),
+    ]
+    base = _P(__file__).resolve()
+    for i in range(2, 6):
+        try:
+            candidates.append(base.parents[i] / "data" / "prebuilt-scans.json")
+        except IndexError:
+            break
+
+    prebuilt_path = None
+    for p in candidates:
+        if p.exists():
+            prebuilt_path = p
+            break
+
+    if not prebuilt_path:
+        logger.warning("prebuilt-scans.json not found for history seeding")
+        return 0
+
+    try:
+        with open(prebuilt_path) as f:
+            scans = json.load(f)
+    except Exception as e:
+        logger.error("Failed to read prebuilt-scans.json for seeding: %s", e)
+        return 0
+
+    count = 0
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a") as f:
+        for s in scans:
+            url = s.get("url", "")
+            if not url:
+                continue
+            entry = {
+                "url": url,
+                "slug": _url_to_slug(url),
+                "scan_id": s.get("scan_id", ""),
+                "score": s.get("clarvia_score", 0),
+                "rating": s.get("rating", ""),
+                "service_name": s.get("service_name", ""),
+                "scanned_at": s.get("scanned_at", datetime.now(timezone.utc).isoformat()),
+                "source": "prebuilt_seed",
+            }
+            # Include dimensions if present
+            dims = s.get("dimensions")
+            if dims:
+                # Flatten dimension scores for history
+                entry["dimensions"] = {
+                    k: v.get("score", 0) if isinstance(v, dict) else v
+                    for k, v in dims.items()
+                }
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            count += 1
+
+    logger.info("Seeded scan-history.jsonl with %d entries from prebuilt-scans.json", count)
+    return count
+
+
+# ---------------------------------------------------------------------------
 # Public function: called from main.py after each scan
 # ---------------------------------------------------------------------------
 

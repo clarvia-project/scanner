@@ -211,6 +211,12 @@ sys.stdout.buffer.write(pickle.dumps(raw))
     # Start keep-alive ping to prevent Render cold starts
     asyncio.create_task(keepalive_loop())
 
+    # Seed scan history from prebuilt-scans if empty
+    from .routes.scan_history_routes import seed_history_from_prebuilt
+    seeded = seed_history_from_prebuilt()
+    if seeded:
+        logger.info("Scan history seeded: %d entries", seeded)
+
     # Start persistent analytics JSONL writer
     from .services.analytics_writer import analytics_writer
     analytics_writer.start()
@@ -3047,7 +3053,7 @@ from collections import defaultdict  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 
 class BatchScanRequest(BaseModel):
-    urls: list[str] = Field(..., min_length=1, max_length=10)
+    urls: list[str] = Field(..., min_length=1, max_length=5)
 
 class BatchScanResultItem(BaseModel):
     url: str
@@ -3082,12 +3088,15 @@ def _check_batch_rate_limit(client_ip: str) -> bool:
 
 @app.post("/api/v1/batch-score", tags=["scan"], response_model=BatchScanResponse)
 async def batch_score(req: BatchScanRequest, request: Request):
-    """Run AEO scans on multiple URLs in parallel (max 10)."""
+    """Run AEO scans on multiple URLs in parallel (max 5, 10s timeout each).
+
+    Returns partial results — URLs that timeout get status="timeout".
+    """
     # Validate
     if not req.urls:
         raise HTTPException(status_code=400, detail="urls array must not be empty")
-    if len(req.urls) > 10:
-        raise HTTPException(status_code=400, detail="Maximum 10 URLs per batch request")
+    if len(req.urls) > 5:
+        raise HTTPException(status_code=400, detail="Maximum 5 URLs per batch request")
 
     # Rate limit check
     client_ip = request.client.host if request.client else "unknown"
@@ -3097,9 +3106,11 @@ async def batch_score(req: BatchScanRequest, request: Request):
             detail="Batch rate limit exceeded (5 requests per minute)",
         )
 
+    _SCAN_TIMEOUT = 10  # seconds per URL
+
     async def _scan_one(url: str) -> BatchScanResultItem:
         try:
-            result = await run_scan(url)
+            result = await asyncio.wait_for(run_scan(url), timeout=_SCAN_TIMEOUT)
             return BatchScanResultItem(
                 url=url,
                 score=result.clarvia_score,
@@ -3108,6 +3119,12 @@ async def batch_score(req: BatchScanRequest, request: Request):
                     for k, v in result.dimensions.items()
                 },
                 status="success",
+            )
+        except asyncio.TimeoutError:
+            return BatchScanResultItem(
+                url=url,
+                status="error",
+                error=f"Scan timed out after {_SCAN_TIMEOUT}s",
             )
         except Exception:
             return BatchScanResultItem(
