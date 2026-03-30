@@ -937,16 +937,24 @@ def _load_data() -> None:
     if data_path is None or not data_path.exists():
         logger.error("prebuilt-scans.json not found in any candidate path")
         return
+    import time
     with open(data_path, "r") as f:
         raw = json.load(f)
+    # Yield GIL after heavy JSON parse so event loop can breathe
+    time.sleep(0.1)
 
-    for entry in raw:
+    for i, entry in enumerate(raw):
         entry["category"] = _classify(
             entry.get("service_name", ""),
             entry.get("description", ""),
         )
+        # Yield GIL every 500 items so the event loop can serve requests
+        if i % 500 == 0:
+            time.sleep(0)
 
+    time.sleep(0.1)  # yield before dedup
     raw = _deduplicate_services(raw)
+    time.sleep(0.1)  # yield after dedup
     _services = raw
     _by_scan_id = {s["scan_id"]: s for s in _services}
     logger.info("Loaded %d services for Index API", len(_services))
