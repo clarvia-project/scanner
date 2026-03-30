@@ -1073,3 +1073,31 @@ or the package ranking being too low. Consider:
 2. Badge outreach to high-star GitHub MCP repos once scans complete (exa, firecrawl, excel-mcp)
 3. Follow up on PRs after 7 days (due 2026-04-02 for oldest PRs)
 4. Consider comparison page generation (S10) for AI search traffic
+
+---
+
+## Field Notes
+
+### 2026-03-30 Badge Outreach Campaign
+- Submitted badge issues to 4 high-traffic repos totaling ~19K combined stars:
+  - exa-labs/exa-mcp-server (4118⭐) — Issue #254
+  - mendableai/firecrawl-mcp-server (5902⭐) — Issue #198  
+  - AgentDeskAI/browser-tools-mcp (7156⭐) — Issue #227
+  - blazickjp/arxiv-mcp-server (2448⭐) — Issue #75
+- **Insight**: Badge issues are a long-tail play — 1-2% accept rate but those are permanent backlinks + daily badge renders = API traffic. Focus on repos 2K+ stars.
+
+### 2026-03-30 OpenAPI Exposure
+- Added clarvia.art/openapi.json redirect → clarvia-api.onrender.com/openapi.json
+- Added clarvia.art/api/docs redirect → clarvia-api.onrender.com/docs
+- **Insight**: Agents that follow OpenAPI-first discovery (LangChain, AutoGPT style) can now find Clarvia's 126 endpoints from the canonical domain without knowing the API subdomain.
+
+### 2026-03-30 npm Downloads
+- Weekly total up to 595 (from 232 baseline = +156%)
+- Daily pattern: 232 → 130 → 113 → 110 → 10 (drop on 03-29 may be weekend effect)
+- After 1.1.3 publish with A2A keywords, monitor if A2A traffic flows in
+
+### 2026-03-30 Registries
+- Smithery: Published clarvia/clarvia-mcp-server via CLI
+- PulseMCP: Submitted (auto-ingests from MCP Registry daily)  
+- Glama: Confirmed listed at /mcp/servers/clarvia-mcp-server
+- MCPHub.tools: Not yet listed (returns 404) — manual submission needed

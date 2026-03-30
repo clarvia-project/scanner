@@ -89,7 +89,8 @@ def _load_from_jsonl(slug: str, limit: int = 50) -> list[dict]:
                     continue
                 try:
                     entry = json.loads(line)
-                    if _slug_matches(entry.get("url", ""), slug):
+                    # Match by slug field directly OR by URL-derived slug
+                    if entry.get("slug") == slug or _slug_matches(entry.get("url", ""), slug):
                         results.append(entry)
                 except json.JSONDecodeError:
                     continue
@@ -97,7 +98,7 @@ def _load_from_jsonl(slug: str, limit: int = 50) -> list[dict]:
         logger.warning("Failed to read scan history JSONL: %s", e)
 
     # Sort by timestamp descending (most recent first)
-    results.sort(key=lambda x: x.get("scanned_at", ""), reverse=True)
+    results.sort(key=lambda x: x.get("scanned_at", x.get("timestamp", "")), reverse=True)
     return results[:limit]
 
 
