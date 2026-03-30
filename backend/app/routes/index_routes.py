@@ -1570,17 +1570,18 @@ async def leaderboard(
     filtered = pool
     if category:
         filtered = _filter_by_category(filtered, category)
-    filtered = sorted(filtered, key=lambda s: s["clarvia_score"], reverse=True)[:limit]
+    filtered = sorted(filtered, key=lambda s: s.get("clarvia_score", 0), reverse=True)[:limit]
     return {
         "leaderboard": [
             {
                 "rank": i + 1,
-                "name": s["service_name"],
-                "url": s["url"],
-                "score": s["clarvia_score"],
-                "rating": s["rating"],
+                "name": s.get("service_name", "Unknown"),
+                "url": s.get("url", ""),
+                "score": s.get("clarvia_score", 0),
+                "clarvia_score": s.get("clarvia_score", 0),
+                "rating": s.get("rating", "Unknown"),
                 "category": s.get("category", "other"),
-                "scan_id": s["scan_id"],
+                "scan_id": s.get("scan_id", ""),
             }
             for i, s in enumerate(filtered)
         ],

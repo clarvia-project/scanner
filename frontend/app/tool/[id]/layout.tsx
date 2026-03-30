@@ -16,7 +16,7 @@ interface ToolData {
 
 async function fetchTool(id: string): Promise<ToolData | null> {
   try {
-    const toolId = id.startsWith("tool_") ? id : `tool_${id}`;
+    const toolId = id;
     const res = await fetch(`${API_BASE}/v1/services/${toolId}`, {
       next: { revalidate: 3600 },
     });

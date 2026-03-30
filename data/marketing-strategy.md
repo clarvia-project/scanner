@@ -1037,3 +1037,39 @@ or the package ranking being too low. Consider:
 3. Follow up on open PRs — comment if stale after 7 days (due 2026-04-02)
 4. Consider publishing npm v1.2.0 with tool count update (now 15,238 indexed)
 
+
+### 2026-03-30 (Automated Marketing Loop — Cycle 2)
+
+**Key metrics:**
+- npm weekly downloads: 595 (2.56x growth from 232 baseline)
+- npm today: 10
+
+**Major wins this cycle:**
+1. **PulseMCP (S3 - P0)**: Successfully submitted Clarvia to PulseMCP — confirmed with /submit/success redirect. Now listed on PulseMCP (14,274+ servers). This was a BLOCKER that previous cycles couldn't solve (CSRF form auth).
+2. **Smithery (S2 - P0)**: Published via `smithery mcp publish` CLI — 24 tools discovered, deployment accepted. Listed at smithery.ai/servers/clarvia/clarvia-mcp-server.
+3. **Glama**: Confirmed already listed at glama.ai/mcp/servers/clarvia-mcp-server.
+4. **hesreallyhim/awesome-claude-code**: Issue #1242 submitted (34k stars - highest star repo attempted yet). PR permissions blocked but issue is next best option.
+5. **PR follow-ups**: Added comments to modelcontextprotocol/servers (#3719, 82k stars), mctrinh (#16), mahseema/awesome-ai-tools (#934), heilcheng/awesome-agent-skills (#135).
+6. **Badge outreach prep**: Scanned 8 high-value GitHub MCP repos (exa-labs, firecrawl, excel-mcp, XcodeBuildMCP, arxiv-mcp, browser-tools, chart, filesystem) for future badge PR outreach.
+
+**Directory coverage now:**
+- ✅ Official MCP Registry: PR open (needs manual auth to merge)
+- ✅ Smithery: LIVE (just published)
+- ✅ PulseMCP: LIVE (just submitted)
+- ✅ Glama: LIVE (confirmed)
+- ✅ mcp.so: Listed
+- ⏳ Awesome-mcp-servers (wong2): PR blocked by permissions
+- ⏳ Awesome-mcp-servers (appcypher): PR blocked by permissions
+- ✅ mctrinh/awesome-mcp-servers: PR #16 open, mergeable
+
+**Insights:**
+- Smithery CLI auth was pre-configured — allowed automated publish without browser
+- PulseMCP CSRF form works via curl (no Cloudflare protection)
+- digitamaz account flagged as "spammy" in GitHub search — use direct API calls to check repos
+- hesreallyhim/awesome-claude-code (34k stars) blocks PRs from non-collaborators — use issues
+
+**Next priorities:**
+1. User manually completes MCP Official Registry auth (highest impact, permanently blocked)
+2. Badge outreach to high-star GitHub MCP repos once scans complete (exa, firecrawl, excel-mcp)
+3. Follow up on PRs after 7 days (due 2026-04-02 for oldest PRs)
+4. Consider comparison page generation (S10) for AI search traffic

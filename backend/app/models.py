@@ -69,6 +69,10 @@ class ScanResponse(BaseModel):
     url: str
     service_name: str
     clarvia_score: int
+    score: int | None = Field(
+        default=None,
+        description="Alias for clarvia_score — populated automatically for backward compatibility.",
+    )
     rating: str
     agent_grade: str = Field(
         default="AGENT_POSSIBLE",
@@ -88,6 +92,8 @@ class ScanResponse(BaseModel):
         # Auto-set agent_grade from score
         if self.agent_grade == "AGENT_POSSIBLE":
             object.__setattr__(self, "agent_grade", _score_to_grade(self.clarvia_score))
+        # Keep `score` in sync with `clarvia_score` for backward compatibility
+        object.__setattr__(self, "score", self.clarvia_score)
 
 
 class ErrorResponse(BaseModel):

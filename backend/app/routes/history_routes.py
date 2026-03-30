@@ -56,11 +56,5 @@ async def get_history(days: int = Query(30, ge=1, le=365)):
     load_snapshots()
     return {"snapshots": _snapshots[-days:], "total_days": len(_snapshots)}
 
-@router.get("/history/{scan_id}")
-async def get_tool_history(scan_id: str):
-    """Get score history for a specific tool (placeholder for future implementation)."""
-    return {
-        "scan_id": scan_id,
-        "history": [],
-        "message": "Per-tool history tracking starts from today. Check back in a few days."
-    }
+# NOTE: Per-tool history is handled by scan_history_routes.py at /v1/history/{tool_slug}.
+# The placeholder route that was here has been removed to avoid shadowing the real handler.
