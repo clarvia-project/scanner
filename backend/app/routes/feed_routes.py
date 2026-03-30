@@ -26,10 +26,14 @@ router = APIRouter(prefix="/v1/feed", tags=["feed"])
 
 
 def _load_all_services() -> list[dict[str, Any]]:
-    """Return prebuilt services via index_routes (shared, no duplicate JSON load)."""
+    """Return all services (prebuilt + collected) via index_routes."""
     from . import index_routes
     index_routes._ensure_loaded()
-    return index_routes._services
+    index_routes._load_collected()
+    scanned_ids = {s["scan_id"] for s in index_routes._services}
+    return list(index_routes._services) + [
+        t for t in index_routes._collected_tools if t["scan_id"] not in scanned_ids
+    ]
 
 
 @router.get("/scores")

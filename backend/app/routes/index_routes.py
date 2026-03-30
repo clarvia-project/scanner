@@ -1163,10 +1163,17 @@ def _full_service(s: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _add_headers(response: Response) -> None:
+def _total_tool_count() -> int:
+    """Single source of truth for the total tool count across all data sources."""
     _ensure_loaded()
+    _load_collected()
+    scanned_ids = {s["scan_id"] for s in _services}
+    return len(_services) + sum(1 for t in _collected_tools if t["scan_id"] not in scanned_ids)
+
+
+def _add_headers(response: Response) -> None:
     response.headers["X-Clarvia-Version"] = "1.0"
-    response.headers["X-Clarvia-Total-Services"] = str(len(_services))
+    response.headers["X-Clarvia-Total-Services"] = str(_total_tool_count())
 
 
 # ---------------------------------------------------------------------------
@@ -1182,7 +1189,7 @@ async def list_services(
     min_score: int = Query(0, ge=0, le=100, description="Minimum Clarvia Score"),
     max_score: int | None = Query(None, ge=0, le=100, description="Maximum Clarvia Score"),
     sort: SortOrder = Query(SortOrder.score_desc, description="Sort order"),
-    source: str | None = Query(None, description="'all' to include 20k+ collected tools, 'collected' for collected only, default=scanned only"),
+    source: str | None = Query("all", description="'all' (default) includes 27k+ tools, 'scanned' for prebuilt only, 'collected' for collected only"),
     added_after: str | None = Query(None, description="ISO date filter, e.g. 2026-03-20"),
     similar_to: str | None = Query(None, description="Find tools similar to this scan_id"),
     limit: int = Query(20, ge=1, le=100),
@@ -1191,8 +1198,9 @@ async def list_services(
     """Search and filter services for agent consumption.
 
     Supports compound filters: service_type + category + score + text search.
-    Use source=all to search across 20,000+ agent tools (MCP servers, APIs, CLIs, Skills).
-    Example: GET /v1/services?source=all&service_type=mcp_server&q=github
+    Defaults to all 27,000+ agent tools (MCP servers, APIs, CLIs, Skills).
+    Use source=scanned to limit to prebuilt-scans only.
+    Example: GET /v1/services?service_type=mcp_server&q=github
     """
     _ensure_loaded()
     _add_headers(response)
@@ -1535,7 +1543,12 @@ async def leaderboard(
     """Top-scoring services leaderboard."""
     _ensure_loaded()
     _add_headers(response)
-    filtered = _services
+    _load_collected()
+    scanned_ids = {s["scan_id"] for s in _services}
+    pool = list(_services) + [
+        t for t in _collected_tools if t["scan_id"] not in scanned_ids
+    ]
+    filtered = pool
     if category:
         filtered = [s for s in filtered if s.get("category") == category]
     filtered = sorted(filtered, key=lambda s: s["clarvia_score"], reverse=True)[:limit]
@@ -1552,7 +1565,7 @@ async def leaderboard(
             }
             for i, s in enumerate(filtered)
         ],
-        "total": len(_services),
+        "total": _total_tool_count(),
     }
 
 
@@ -1864,20 +1877,21 @@ async def compare_services(
 @router.get("/stats")
 async def get_stats(
     response: Response,
-    source: str | None = Query(None, description="'all' to include collected tools"),
+    source: str | None = Query("all", description="'all' (default) includes collected tools, 'scanned' for prebuilt-scans only"),
 ):
     """Overall statistics across all indexed services."""
     _ensure_loaded()
     _add_headers(response)
 
-    if source == "all":
+    if source == "scanned":
+        pool = _services
+    else:
+        # Default: include all tools for consistent counts
         _load_collected()
         scanned_ids = {s["scan_id"] for s in _services}
         pool = list(_services) + [
             t for t in _collected_tools if t["scan_id"] not in scanned_ids
         ]
-    else:
-        pool = _services
 
     total = len(pool)
     if total == 0:
