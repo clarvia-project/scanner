@@ -944,10 +944,13 @@ def _load_data() -> None:
     time.sleep(0.1)
 
     for i, entry in enumerate(raw):
-        entry["category"] = _classify(
-            entry.get("service_name", ""),
-            entry.get("description", ""),
-        )
+        # Respect existing category from prebuilt-scans.json; only auto-classify if missing or "other"
+        existing_cat = entry.get("category", "other")
+        if not existing_cat or existing_cat == "other":
+            entry["category"] = _classify(
+                entry.get("service_name", ""),
+                entry.get("description", ""),
+            )
         # Yield GIL every 500 items so the event loop can serve requests
         if i % 500 == 0:
             time.sleep(0)
