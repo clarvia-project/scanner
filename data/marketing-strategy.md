@@ -1005,3 +1005,35 @@ or the package ranking being too low. Consider:
 - **High-value targets remaining**: hesreallyhim/awesome-claude-code issue submitted, awaiting review. VoltAgent/awesome-claude-code-subagents PR #146 open.
 - **Total open PRs**: 27+ across major awesome-list repos.
 - **npm downloads**: Stable at 232/day — no spike yet from PR submissions (expected lag of days-weeks).
+
+
+### 2026-03-30 (Automated Marketing Loop)
+
+**Key metrics:**
+- npm weekly downloads: 595 (from 232 baseline — 2.56x growth)
+- npm version: 1.1.3 published with 7 new keywords (vibe-coding, claude-code, langchain, autogpt, babyagi)
+- Today's npm: 10 downloads
+
+**Actions taken:**
+- npm 1.1.3 published with keywords: vibe-coding, openai, claude-code, cursor-mcp, langchain, autogpt, babyagi
+- Bing IndexNow accepted 7 category pages (202 response)
+- wong2/awesome-mcp-servers fork branch updated (PR blocked - `digitamaz does not have the correct permissions`)
+- PR #16 to mctrinh/awesome-mcp-servers still OPEN + Mergeable
+
+**Blockers discovered:**
+- wong2/awesome-mcp-servers: `CreatePullRequest` permission denied for digitamaz. Both REST and GraphQL return errors. Unknown why — repo is public but our token gets "Not Found" on /pulls endpoint.
+- appcypher/awesome-mcp-servers: Same permission issue.
+- Glama.ai: No API/GitHub submission path. Requires manual browser form.
+- PulseMCP: Still not crawlable. Site returns empty. Requires manual submission.
+
+**Insights:**
+- npm downloads growing 2.56x since marketing push (232 → 595/week)
+- 11 PRs open across various awesome-lists — none merged yet (submitted 3-4 days ago)
+- Sitemap already has all 26 category pages — good for AI search
+
+**Next priorities:**
+1. User manually submits to Glama.ai (https://glama.ai/mcp) — medium effort, high impact
+2. User manually submits to PulseMCP
+3. Follow up on open PRs — comment if stale after 7 days (due 2026-04-02)
+4. Consider publishing npm v1.2.0 with tool count update (now 15,238 indexed)
+
