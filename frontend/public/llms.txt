@@ -4,14 +4,14 @@
 
 ## What is Clarvia?
 
-Clarvia is an AI Engine Optimization (AEO) scanner and agent tool directory. It indexes 15,400+ tools across the agent ecosystem and scores each one on a 0-100 scale for agent readiness.
+Clarvia is an AI Engine Optimization (AEO) scanner and agent tool directory. It indexes 15,200+ tools across the agent ecosystem and scores each one on a 0-100 scale for agent readiness.
 
 Think of it as "Lighthouse for AI agents" — instead of measuring web performance, it measures how well a service can be found and used by autonomous AI agents.
 
 ## Core Features
 
 - **AEO Scan**: Enter any URL → get a Clarvia Score (0-100) with improvement recommendations
-- **Tool Directory**: Search 15,400+ MCP servers, APIs, CLIs, and Skills
+- **Tool Directory**: Search 15,200+ MCP servers, APIs, CLIs, and Skills
 - **Intent-Based Recommendation**: Describe what you want to do → get ranked tool suggestions
 - **Tool Comparison**: Compare up to 4 tools side-by-side with dimension breakdowns
 - **Trending**: Weekly top-performing tools by category

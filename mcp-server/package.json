@@ -53,7 +53,15 @@
     "windsurf",
     "tool-search",
     "mcp-registry",
-    "agent-discovery"
+    "agent-discovery",
+    "a2a",
+    "agent-to-agent",
+    "agentic",
+    "ai-infrastructure",
+    "autonomous-agent",
+    "google-a2a",
+    "mcp-tools",
+    "tool-registry"
   ],
   "author": "Clarvia",
   "homepage": "https://clarvia.art",
