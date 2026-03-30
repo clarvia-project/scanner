@@ -5,8 +5,9 @@ Runs each crawler sequentially, deduplicates across sources, and outputs
 new discoveries to data/new-tools-queue.jsonl.
 
 Sources (Tier 1 — 100% coverage):
-  pulsemcp              — PulseMCP directory (12,500+ servers)
+  pulsemcp              — PulseMCP directory via REST API / HTML fallback (12,500+ servers)
   smithery              — Smithery.ai registry (4,100+ servers)
+  glama                 — Glama.ai MCP server registry
   anthropic             — Official MCP registry + GitHub org
   mcpservers            — mcpservers.org curated list
   mcpso                 — mcp.so marketplace (19,000+ servers)
@@ -62,12 +63,17 @@ CRAWLERS = {
     "pulsemcp": {
         "module": "pulsemcp_crawler",
         "tier": 1,
-        "description": "PulseMCP directory (12,500+ servers)",
+        "description": "PulseMCP directory via REST API / HTML fallback (12,500+ servers)",
     },
     "smithery": {
         "module": "smithery_crawler",
         "tier": 1,
         "description": "Smithery.ai registry (4,100+ servers)",
+    },
+    "glama": {
+        "module": "glama_crawler",
+        "tier": 1,
+        "description": "Glama.ai MCP server registry",
     },
     "anthropic": {
         "module": "anthropic_mcp_crawler",
@@ -265,7 +271,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Sources:
-  Tier 1: pulsemcp, smithery, anthropic, mcpservers, mcpso, awesome, npm, pypi, skills, github_comprehensive
+  Tier 1: pulsemcp, smithery, glama, anthropic, mcpservers, mcpso, awesome, npm, pypi, skills, github_comprehensive
   Tier 2: langchain, huggingface, composio
 
 Examples:

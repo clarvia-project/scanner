@@ -40,10 +40,10 @@ Effort: S (< 1 day), M (1-3 days), L (1-2 weeks), XL (2+ weeks)
 - **Problem**: MCP 10pts too high, Rate Limit 3pts too low. Scores don't match reality.
 - **Who said it**: Marcus, Jake, Sarah (3/5)
 - **Action**:
-  - [ ] Rate Limit Info: 3 → 6pts (agents die from 429 most often)
-  - [ ] MCP Server Exists: 10 → 7pts (important but not 40% of Agent Compatibility)
-  - [ ] Add Idempotency check: 2pts (agent retry safety)
-  - [ ] Add Pagination pattern check: 2pts
+  - [x] Rate Limit Info: 3 → 6pts (agents die from 429 most often) — DONE in api_accessibility.py
+  - [x] MCP Server Exists: 10 → 7pts (important but not 40% of Agent Compatibility) — DONE in agent_compatibility.py
+  - [x] Add Idempotency check: 3pts (agent retry safety) — DONE in agent_compatibility.py
+  - [x] Add Pagination pattern check: 2pts — DONE in agent_compatibility.py
   - [ ] Publish scoring methodology page at /methodology with weight rationale
 - **Effort**: M
 - **Impact**: High — scoring credibility is the product's foundation

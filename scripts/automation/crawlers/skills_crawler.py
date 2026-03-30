@@ -252,6 +252,10 @@ async def fetch_file_content(
     if not data:
         return None
 
+    # GitHub sometimes returns a list (directory listing) instead of a file object
+    if isinstance(data, list):
+        return None
+
     # GitHub returns base64-encoded content
     encoding = data.get("encoding", "")
     content = data.get("content", "")

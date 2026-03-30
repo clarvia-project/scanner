@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-03-30T07:00:26.111725+00:00",
+  "checks": [
+    {
+      "check": "score_distribution",
+      "status": "skipped",
+      "issues": [],
+      "reason": "Too few scored tools (2)"
+    },
+    {
+      "check": "category_distribution",
+      "status": "ok",
+      "issues": [],
+      "total_tools": 2,
+      "other_count": 0,
+      "other_pct": 0.0,
+      "top_categories": {
+        "ai-ml": 2
+      }
+    },
+    {
+      "check": "duplicates",
+      "status": "ok",
+      "issues": [],
+      "duplicates": [],
+      "exact_url_duplicates": 0,
+      "fuzzy_name_duplicates": 0
+    },
+    {
+      "check": "freshness",
+      "status": "ok",
+      "issues": [],
+      "recent_additions": 2,
+      "freshness_days": 7,
+      "latest_addition": "2026-03-29T18:18:42.314410+00:00",
+      "days_since_latest": 0
+    },
+    {
+      "check": "completeness",
+      "status": "alert",
+      "issues": [
+        "2 tools (100%) are missing essential fields"
+      ],
+      "incomplete_tools": [
+        {
+          "name": "Replicate",
+          "missing": [
+            "description"
+          ]
+        },
+        {
+          "name": "Cohere",
+          "missing": [
+            "description"
+          ]
+        }
+      ],
+      "total_tools": 2,
+      "missing_description": 2,
+      "missing_category": 0,
+      "missing_score": 0,
+      "missing_url": 0,
+      "incomplete_count": 2
+    },
+    {
+      "check": "anomaly_batch",
+      "status": "skipped",
+      "issues": []
+    }
+  ],
+  "summary": {
+    "ok": 3,
+    "warning": 0,
+    "alert": 1,
+    "skipped": 2
+  },
+  "fixes_applied": [],
+  "total_issues": 1
+}

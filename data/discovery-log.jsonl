@@ -35,3 +35,11 @@
 {"ts":"2026-03-29T18:19:04","action":"daily_rescan","status":"complete","note":"batch_rescan ran, 2/48 succeeded (rate limit 10/hr), data saved to prebuilt-scans.json"}
 {"ts":"2026-03-29T19:14:47","action":"discovery","catalog_size":15473}
 {"ts":"2026-03-29T21:15:03","action":"discovery","catalog_size":0}
+{"ts":"2026-03-29T23:13:47","action":"discovery","catalog_size":0,"found_today":3,"queue_total":38116}
+{"ts":"2026-03-30T01:12:47","action":"distribution_check","npm":"listed","glama":"listed","pulsemcp":"missing","smithery":"missing","mcp_so":"listed","pypi":"missing","github_actions":"404","note":"pulsemcp+smithery still missing (known since 2026-03-28, no new gaps)"}
+{"ts":"2026-03-30T01:15:47","action":"discovery","catalog_size":0,"scanned":9,"found":21,"cumulative_found":4285,"cumulative_scanned":4080}
+{"ts":"2026-03-30T03:15:48","action":"discovery","catalog_size":24,"found_today":0,"queue_total":38154,"sync_result":"17 discovered, 10 scanned, cumulative 4302/4090"}
+{"ts":"2026-03-30T05:14:28","action":"discovery","catalog_size":32}
+{"ts":"2026-03-30T07:14:34","action":"discovery","catalog_size":0}
+{"ts":"2026-03-30T07:14:42","action":"discovery","catalog_size":40,"found_today":0,"queue_total":38170,"sync_result":"8 discovered, 8 scanned, cumulative 4318/4106"}
+{"ts":"2026-03-30T09:14:12","action":"discovery","catalog_size":15238,"found_today":5,"scanned_today":5,"cumulative_found":4323,"cumulative_scanned":4111}

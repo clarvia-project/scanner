@@ -1,13 +1,50 @@
 const BASE_URL = "https://clarvia-api.onrender.com";
 
+// --- In-memory cache with 5-minute TTL ---
+
+interface CacheEntry<T = unknown> {
+  data: T;
+  expiresAt: number;
+}
+
+const cache = new Map<string, CacheEntry>();
+const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function cacheGet<T>(key: string): T | undefined {
+  const entry = cache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() > entry.expiresAt) {
+    cache.delete(key);
+    return undefined;
+  }
+  return entry.data as T;
+}
+
+function cacheSet<T>(key: string, data: T, ttlMs: number = DEFAULT_TTL_MS): void {
+  // Evict expired entries when cache grows large (simple GC)
+  if (cache.size > 500) {
+    const now = Date.now();
+    for (const [k, v] of cache) {
+      if (now > v.expiresAt) cache.delete(k);
+    }
+  }
+  cache.set(key, { data, expiresAt: Date.now() + ttlMs });
+}
+
+// --- HTTP request layer ---
+
 interface RequestOptions {
   method?: string;
   body?: unknown;
   params?: Record<string, string | number | undefined>;
+  /** Set to false to skip cache for this request (default: true for GET) */
+  useCache?: boolean;
+  /** Override TTL for this request in ms */
+  cacheTtlMs?: number;
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, params } = options;
+  const { method = "GET", body, params, useCache = true, cacheTtlMs } = options;
 
   let url = `${BASE_URL}${path}`;
 
@@ -20,6 +57,15 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     }
     const qs = searchParams.toString();
     if (qs) url += `?${qs}`;
+  }
+
+  // Only cache GET requests (reads); POST requests always go through
+  const isGetRequest = method === "GET";
+  if (isGetRequest && useCache) {
+    const cached = cacheGet<T>(url);
+    if (cached !== undefined) {
+      return cached;
+    }
   }
 
   const headers: Record<string, string> = {
@@ -38,7 +84,14 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     throw new Error(`Clarvia API error ${res.status}: ${text || res.statusText}`);
   }
 
-  return res.json() as Promise<T>;
+  const data = (await res.json()) as T;
+
+  // Cache successful GET responses
+  if (isGetRequest && useCache) {
+    cacheSet(url, data, cacheTtlMs);
+  }
+
+  return data;
 }
 
 // --- Service types ---
@@ -123,10 +176,18 @@ export async function submitFeedback(params: {
 }
 
 export async function scanService(url: string): Promise<ScanResult> {
-  return request<ScanResult>("/api/scan", {
+  // Scan results are POST but idempotent — cache by URL
+  const cacheKey = `scan:${url}`;
+  const cached = cacheGet<ScanResult>(cacheKey);
+  if (cached) return cached;
+
+  const result = await request<ScanResult>("/api/scan", {
     method: "POST",
     body: { url },
+    useCache: false,
   });
+  cacheSet(cacheKey, result);
+  return result;
 }
 
 export async function getServiceDetails(scanId: string): Promise<ServiceDetails> {
@@ -238,10 +299,18 @@ export async function findAlternatives(
 }
 
 export async function probeService(url: string): Promise<ProbeResult> {
-  return request<ProbeResult>("/api/v1/accessibility-probe", {
+  // Probe results are POST but idempotent — cache with shorter TTL (2 min)
+  const cacheKey = `probe:${url}`;
+  const cached = cacheGet<ProbeResult>(cacheKey);
+  if (cached) return cached;
+
+  const result = await request<ProbeResult>("/api/v1/accessibility-probe", {
     method: "POST",
     body: { url },
+    useCache: false,
   });
+  cacheSet(cacheKey, result, 2 * 60 * 1000); // 2 min TTL for probes (more real-time)
+  return result;
 }
 
 // --- Setup comparison API ---

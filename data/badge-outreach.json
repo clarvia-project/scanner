@@ -1,0 +1,177 @@
+{
+  "generated_at": "2026-03-30T09:31:28.866670+00:00",
+  "threshold": 60,
+  "total_eligible": 10,
+  "tools": [
+    {
+      "service_name": "Feedoracle",
+      "scan_id": "scn_e0fa7bb10bd8",
+      "score": 71,
+      "rating": "Moderate",
+      "category": "mcp",
+      "url": "https://feedoracle.io",
+      "badge_snippets": {
+        "markdown": "![Clarvia AEO Score](https://clarvia.art/api/badge/scn_e0fa7bb10bd8.svg)",
+        "markdown_linked": "[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_e0fa7bb10bd8.svg)](https://clarvia.art/tool/scn_e0fa7bb10bd8)",
+        "html": "<a href=\"https://clarvia.art/tool/scn_e0fa7bb10bd8\"><img src=\"https://clarvia.art/api/badge/scn_e0fa7bb10bd8.svg\" alt=\"Clarvia AEO Score: 71/100\" /></a>",
+        "readme_section": "## AEO Score\n\n[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_e0fa7bb10bd8.svg)](https://clarvia.art/tool/scn_e0fa7bb10bd8)\n\nThis project has a Clarvia AEO Score of **71/100**. [View full report](https://clarvia.art/tool/scn_e0fa7bb10bd8).\n",
+        "badge_url": "https://clarvia.art/api/badge/scn_e0fa7bb10bd8.svg",
+        "report_url": "https://clarvia.art/tool/scn_e0fa7bb10bd8"
+      },
+      "outreach_status": "pending"
+    },
+    {
+      "service_name": "Ai-readiness",
+      "scan_id": "scn_f33a514d3696",
+      "score": 70,
+      "rating": "Moderate",
+      "category": "mcp",
+      "url": "https://ai-readiness.mingles.ai",
+      "badge_snippets": {
+        "markdown": "![Clarvia AEO Score](https://clarvia.art/api/badge/scn_f33a514d3696.svg)",
+        "markdown_linked": "[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_f33a514d3696.svg)](https://clarvia.art/tool/scn_f33a514d3696)",
+        "html": "<a href=\"https://clarvia.art/tool/scn_f33a514d3696\"><img src=\"https://clarvia.art/api/badge/scn_f33a514d3696.svg\" alt=\"Clarvia AEO Score: 70/100\" /></a>",
+        "readme_section": "## AEO Score\n\n[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_f33a514d3696.svg)](https://clarvia.art/tool/scn_f33a514d3696)\n\nThis project has a Clarvia AEO Score of **70/100**. [View full report](https://clarvia.art/tool/scn_f33a514d3696).\n",
+        "badge_url": "https://clarvia.art/api/badge/scn_f33a514d3696.svg",
+        "report_url": "https://clarvia.art/tool/scn_f33a514d3696"
+      },
+      "outreach_status": "pending"
+    },
+    {
+      "service_name": "Agentry",
+      "scan_id": "scn_d822cde7b17b",
+      "score": 69,
+      "rating": "Moderate",
+      "category": "mcp",
+      "url": "https://agentry.com",
+      "badge_snippets": {
+        "markdown": "![Clarvia AEO Score](https://clarvia.art/api/badge/scn_d822cde7b17b.svg)",
+        "markdown_linked": "[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_d822cde7b17b.svg)](https://clarvia.art/tool/scn_d822cde7b17b)",
+        "html": "<a href=\"https://clarvia.art/tool/scn_d822cde7b17b\"><img src=\"https://clarvia.art/api/badge/scn_d822cde7b17b.svg\" alt=\"Clarvia AEO Score: 69/100\" /></a>",
+        "readme_section": "## AEO Score\n\n[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_d822cde7b17b.svg)](https://clarvia.art/tool/scn_d822cde7b17b)\n\nThis project has a Clarvia AEO Score of **69/100**. [View full report](https://clarvia.art/tool/scn_d822cde7b17b).\n",
+        "badge_url": "https://clarvia.art/api/badge/scn_d822cde7b17b.svg",
+        "report_url": "https://clarvia.art/tool/scn_d822cde7b17b"
+      },
+      "outreach_status": "pending"
+    },
+    {
+      "service_name": "Replicate",
+      "scan_id": "scn_b68269dcd1dc",
+      "score": 69,
+      "rating": "Strong",
+      "category": "ai-ml",
+      "url": "https://replicate.com",
+      "badge_snippets": {
+        "markdown": "![Clarvia AEO Score](https://clarvia.art/api/badge/scn_b68269dcd1dc.svg)",
+        "markdown_linked": "[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_b68269dcd1dc.svg)](https://clarvia.art/tool/scn_b68269dcd1dc)",
+        "html": "<a href=\"https://clarvia.art/tool/scn_b68269dcd1dc\"><img src=\"https://clarvia.art/api/badge/scn_b68269dcd1dc.svg\" alt=\"Clarvia AEO Score: 69/100\" /></a>",
+        "readme_section": "## AEO Score\n\n[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_b68269dcd1dc.svg)](https://clarvia.art/tool/scn_b68269dcd1dc)\n\nThis project has a Clarvia AEO Score of **69/100**. [View full report](https://clarvia.art/tool/scn_b68269dcd1dc).\n",
+        "badge_url": "https://clarvia.art/api/badge/scn_b68269dcd1dc.svg",
+        "report_url": "https://clarvia.art/tool/scn_b68269dcd1dc"
+      },
+      "outreach_status": "pending"
+    },
+    {
+      "service_name": "Aipaygen",
+      "scan_id": "scn_bcf42a37a67a",
+      "score": 67,
+      "rating": "Moderate",
+      "category": "mcp",
+      "url": "https://aipaygen.com",
+      "badge_snippets": {
+        "markdown": "![Clarvia AEO Score](https://clarvia.art/api/badge/scn_bcf42a37a67a.svg)",
+        "markdown_linked": "[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_bcf42a37a67a.svg)](https://clarvia.art/tool/scn_bcf42a37a67a)",
+        "html": "<a href=\"https://clarvia.art/tool/scn_bcf42a37a67a\"><img src=\"https://clarvia.art/api/badge/scn_bcf42a37a67a.svg\" alt=\"Clarvia AEO Score: 67/100\" /></a>",
+        "readme_section": "## AEO Score\n\n[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_bcf42a37a67a.svg)](https://clarvia.art/tool/scn_bcf42a37a67a)\n\nThis project has a Clarvia AEO Score of **67/100**. [View full report](https://clarvia.art/tool/scn_bcf42a37a67a).\n",
+        "badge_url": "https://clarvia.art/api/badge/scn_bcf42a37a67a.svg",
+        "report_url": "https://clarvia.art/tool/scn_bcf42a37a67a"
+      },
+      "outreach_status": "pending"
+    },
+    {
+      "service_name": "Gia",
+      "scan_id": "scn_405e268d9714",
+      "score": 63,
+      "rating": "Moderate",
+      "category": "mcp",
+      "url": "https://gia.aceadvising.com",
+      "badge_snippets": {
+        "markdown": "![Clarvia AEO Score](https://clarvia.art/api/badge/scn_405e268d9714.svg)",
+        "markdown_linked": "[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_405e268d9714.svg)](https://clarvia.art/tool/scn_405e268d9714)",
+        "html": "<a href=\"https://clarvia.art/tool/scn_405e268d9714\"><img src=\"https://clarvia.art/api/badge/scn_405e268d9714.svg\" alt=\"Clarvia AEO Score: 63/100\" /></a>",
+        "readme_section": "## AEO Score\n\n[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_405e268d9714.svg)](https://clarvia.art/tool/scn_405e268d9714)\n\nThis project has a Clarvia AEO Score of **63/100**. [View full report](https://clarvia.art/tool/scn_405e268d9714).\n",
+        "badge_url": "https://clarvia.art/api/badge/scn_405e268d9714.svg",
+        "report_url": "https://clarvia.art/tool/scn_405e268d9714"
+      },
+      "outreach_status": "pending"
+    },
+    {
+      "service_name": "baixianger/langchain-MCP",
+      "scan_id": "scn_1a9910970a10",
+      "score": 62,
+      "rating": "Moderate",
+      "category": "mcp",
+      "url": "https://github.com/baixianger/langchain-MCP",
+      "badge_snippets": {
+        "markdown": "![Clarvia AEO Score](https://clarvia.art/api/badge/scn_1a9910970a10.svg)",
+        "markdown_linked": "[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_1a9910970a10.svg)](https://clarvia.art/tool/scn_1a9910970a10)",
+        "html": "<a href=\"https://clarvia.art/tool/scn_1a9910970a10\"><img src=\"https://clarvia.art/api/badge/scn_1a9910970a10.svg\" alt=\"Clarvia AEO Score: 62/100\" /></a>",
+        "readme_section": "## AEO Score\n\n[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_1a9910970a10.svg)](https://clarvia.art/tool/scn_1a9910970a10)\n\nThis project has a Clarvia AEO Score of **62/100**. [View full report](https://clarvia.art/tool/scn_1a9910970a10).\n",
+        "badge_url": "https://clarvia.art/api/badge/scn_1a9910970a10.svg",
+        "report_url": "https://clarvia.art/tool/scn_1a9910970a10"
+      },
+      "outreach_status": "pending"
+    },
+    {
+      "service_name": "Blocklens",
+      "scan_id": "scn_c4bf017c8d90",
+      "score": 62,
+      "rating": "Moderate",
+      "category": "mcp",
+      "url": "https://blocklens.co",
+      "badge_snippets": {
+        "markdown": "![Clarvia AEO Score](https://clarvia.art/api/badge/scn_c4bf017c8d90.svg)",
+        "markdown_linked": "[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_c4bf017c8d90.svg)](https://clarvia.art/tool/scn_c4bf017c8d90)",
+        "html": "<a href=\"https://clarvia.art/tool/scn_c4bf017c8d90\"><img src=\"https://clarvia.art/api/badge/scn_c4bf017c8d90.svg\" alt=\"Clarvia AEO Score: 62/100\" /></a>",
+        "readme_section": "## AEO Score\n\n[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_c4bf017c8d90.svg)](https://clarvia.art/tool/scn_c4bf017c8d90)\n\nThis project has a Clarvia AEO Score of **62/100**. [View full report](https://clarvia.art/tool/scn_c4bf017c8d90).\n",
+        "badge_url": "https://clarvia.art/api/badge/scn_c4bf017c8d90.svg",
+        "report_url": "https://clarvia.art/tool/scn_c4bf017c8d90"
+      },
+      "outreach_status": "pending"
+    },
+    {
+      "service_name": "Brainstormrouter",
+      "scan_id": "scn_105b580f3337",
+      "score": 62,
+      "rating": "Moderate",
+      "category": "mcp",
+      "url": "https://brainstormrouter.com",
+      "badge_snippets": {
+        "markdown": "![Clarvia AEO Score](https://clarvia.art/api/badge/scn_105b580f3337.svg)",
+        "markdown_linked": "[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_105b580f3337.svg)](https://clarvia.art/tool/scn_105b580f3337)",
+        "html": "<a href=\"https://clarvia.art/tool/scn_105b580f3337\"><img src=\"https://clarvia.art/api/badge/scn_105b580f3337.svg\" alt=\"Clarvia AEO Score: 62/100\" /></a>",
+        "readme_section": "## AEO Score\n\n[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_105b580f3337.svg)](https://clarvia.art/tool/scn_105b580f3337)\n\nThis project has a Clarvia AEO Score of **62/100**. [View full report](https://clarvia.art/tool/scn_105b580f3337).\n",
+        "badge_url": "https://clarvia.art/api/badge/scn_105b580f3337.svg",
+        "report_url": "https://clarvia.art/tool/scn_105b580f3337"
+      },
+      "outreach_status": "pending"
+    },
+    {
+      "service_name": "Example-mcp-server",
+      "scan_id": "scn_b5ef2f949aee",
+      "score": 61,
+      "rating": "Moderate",
+      "category": "mcp",
+      "url": "https://example-mcp-server.mctx.ai",
+      "badge_snippets": {
+        "markdown": "![Clarvia AEO Score](https://clarvia.art/api/badge/scn_b5ef2f949aee.svg)",
+        "markdown_linked": "[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_b5ef2f949aee.svg)](https://clarvia.art/tool/scn_b5ef2f949aee)",
+        "html": "<a href=\"https://clarvia.art/tool/scn_b5ef2f949aee\"><img src=\"https://clarvia.art/api/badge/scn_b5ef2f949aee.svg\" alt=\"Clarvia AEO Score: 61/100\" /></a>",
+        "readme_section": "## AEO Score\n\n[![Clarvia AEO Score](https://clarvia.art/api/badge/scn_b5ef2f949aee.svg)](https://clarvia.art/tool/scn_b5ef2f949aee)\n\nThis project has a Clarvia AEO Score of **61/100**. [View full report](https://clarvia.art/tool/scn_b5ef2f949aee).\n",
+        "badge_url": "https://clarvia.art/api/badge/scn_b5ef2f949aee.svg",
+        "report_url": "https://clarvia.art/tool/scn_b5ef2f949aee"
+      },
+      "outreach_status": "pending"
+    }
+  ]
+}

@@ -30394,7 +30394,7 @@ function registerTools(server) {
   );
   server.tool(
     "clarvia_gate_check",
-    "Quick pass/fail safety check for agent tool-use decisions. Returns an agent grade (AGENT_NATIVE / AGENT_FRIENDLY / AGENT_POSSIBLE / AGENT_HOSTILE) with a boolean pass result. Use before calling any external API or MCP server to verify it meets your minimum quality threshold. Essential for autonomous agent workflows that need to validate tools at runtime.",
+    "Before calling any external API or MCP, use this to check if it is agent-ready. Returns AGENT_NATIVE / AGENT_FRIENDLY / AGENT_POSSIBLE / AGENT_HOSTILE with a boolean pass/fail. Call this first \u2014 if the service scores below your threshold, use clarvia_find_alternatives to get a better-rated replacement automatically.",
     {
       url: external_exports3.string().url().describe("Service URL to check"),
       min_rating: external_exports3.enum(["AGENT_NATIVE", "AGENT_FRIENDLY", "AGENT_POSSIBLE", "AGENT_HOSTILE"]).optional().describe("Minimum acceptable grade (default: AGENT_FRIENDLY)")

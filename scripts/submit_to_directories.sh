@@ -219,14 +219,14 @@ submit_to_repo \
   "wong2" \
   "awesome-mcp-servers" \
   "$WONG2_ENTRY" \
-  "Developer Tools"
+  "Community Servers"
 
 # 2. appcypher/awesome-mcp-servers
 submit_to_repo \
   "appcypher" \
   "awesome-mcp-servers" \
   "$APPCYPHER_ENTRY" \
-  "Developer Tools"
+  "AI Services"
 
 echo "=========================================="
 echo "Done!"

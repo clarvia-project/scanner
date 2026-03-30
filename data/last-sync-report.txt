@@ -1,79 +1,30 @@
-🔄 Clarvia 실시간 도구 동기화 완료 (16개 신규)
+🔄 Clarvia 실시간 도구 동기화 완료 (5개 신규)
 
 📊 새 도구 분석:
 
-1. 🟡 com.fidensa/mcp-server (AEO: 34)
+1. 🔵 io.github.browser-gateway/browser-gateway (AEO: 53)
    카테고리: ai
    분야 Top 3: ?(90), ?(86), ?(86)
-   → 분야 평균(48) 이하
+   → 분야 평균(39) 이상
 
-2. 🔵 io.github.SwikingSWE/conformy (AEO: 47)
-   카테고리: ai
-   분야 Top 3: ?(90), ?(86), ?(86)
-   → 분야 평균(48) 이하
-
-3. 🔵 io.github.eins78/meteoswiss-mcp (AEO: 47)
-   카테고리: ai
-   분야 Top 3: ?(90), ?(86), ?(86)
-   → 분야 평균(48) 이하
-
-4. 🔵 io.github.jascal/orca-mcp-server (AEO: 47)
+2. 🔵 io.github.getmcpm/cli (AEO: 47)
    카테고리: developer_tools
    분야 Top 3: ?(98), ?(93), ?(92)
-   → 분야 평균(53) 이하
+   → 분야 평균(50) 이하
 
-5. 🟡 io.github.mitchmolstad/scraps-kitchen (AEO: 37)
-   카테고리: ai
-   분야 Top 3: ?(90), ?(86), ?(86)
-   → 분야 평균(48) 이하
-
-6. 🔵 io.github.sagarkalra-tech/timezest-mcp (AEO: 44)
-   카테고리: ai
-   분야 Top 3: ?(90), ?(86), ?(86)
-   → 분야 평균(48) 이하
-
-7. 🟡 io.github.shadoprizm/cyberlens-mcp-server (AEO: 34)
+3. 🔵 ookcite-mcp (AEO: 46)
    카테고리: developer_tools
    분야 Top 3: ?(98), ?(93), ?(92)
-   → 분야 평균(53) 이하
+   → 분야 평균(50) 이하
 
-8. 🔵 press.respira/respira-wordpress (AEO: 40)
-   카테고리: mcp
-   분야 Top 3: ?(91), ?(90), ?(90)
-   → 분야 평균(38) 이상
-
-9. 🟡 xyz.draket/btcpay-mcp (AEO: 37)
-   카테고리: ai
-   분야 Top 3: ?(90), ?(86), ?(86)
-   → 분야 평균(48) 이하
-
-10. 🔵 reddit-mcp (AEO: 48)
-   카테고리: ai
-   분야 Top 3: ?(90), ?(86), ?(86)
-   → 분야 평균(48) 이하
-
-11. ⚪ changelog-hq (스캔 실패)
-   카테고리: ai
-   분야 Top 3: ?(90), ?(86), ?(86)
-
-12. ⚪ CodeMax (스캔 실패)
+4. 🔵 bimp-mcp (AEO: 47)
    카테고리: developer_tools
    분야 Top 3: ?(98), ?(93), ?(92)
+   → 분야 평균(50) 이하
 
-13. ⚪ clawmcp (스캔 실패)
-   카테고리: ai
-   분야 Top 3: ?(90), ?(86), ?(86)
+5. 🟡 ContextWeaver (AEO: 34)
+   카테고리: other
+   분야 Top 3: ?(71), ?(71), ?(69)
+   → 분야 평균(34) 이상
 
-14. ⚪ screenshot-api (스캔 실패)
-   카테고리: mcp
-   분야 Top 3: ?(91), ?(90), ?(90)
-
-15. ⚪ appsec-skills (스캔 실패)
-   카테고리: ai
-   분야 Top 3: ?(90), ?(86), ?(86)
-
-16. ⚪ vaporwave-art-generator (스캔 실패)
-   카테고리: ai
-   분야 Top 3: ?(90), ?(86), ?(86)
-
-📈 누적: 4,261 발견 / 4,068 스캔
+📈 누적: 4,323 발견 / 4,111 스캔

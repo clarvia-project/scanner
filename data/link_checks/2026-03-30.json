@@ -1,0 +1,27 @@
+{
+  "checked_at": "2026-03-30T04:00:17.114122+00:00",
+  "total": 2,
+  "alive": 2,
+  "redirects": 0,
+  "dead": 0,
+  "newly_inactive": 0,
+  "catalog_changes": 0,
+  "results": [
+    {
+      "url": "https://replicate.com",
+      "status": "alive",
+      "status_code": 200,
+      "redirect_url": null,
+      "error": null,
+      "response_time_ms": 713.4
+    },
+    {
+      "url": "https://cohere.com",
+      "status": "alive",
+      "status_code": 200,
+      "redirect_url": null,
+      "error": null,
+      "response_time_ms": 99.1
+    }
+  ]
+}

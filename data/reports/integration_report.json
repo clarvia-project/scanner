@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-29T08:00:34.326357+00:00",
+  "generated_at": "2026-03-30T08:00:13.565315+00:00",
   "summary": {
     "total": 9,
     "passed": 9,
@@ -12,7 +12,7 @@
       "category": "rest_api",
       "passed": true,
       "message": "Health check OK",
-      "duration_ms": 587.0,
+      "duration_ms": 546.8,
       "details": {}
     },
     {
@@ -20,7 +20,7 @@
       "category": "rest_api",
       "passed": true,
       "message": "Search endpoint returns valid JSON with results",
-      "duration_ms": 590.2,
+      "duration_ms": 1043.2,
       "details": {
         "keys": [
           "total",
@@ -34,7 +34,7 @@
       "category": "rest_api",
       "passed": true,
       "message": "Score endpoint returns valid JSON",
-      "duration_ms": 567.2,
+      "duration_ms": 577.3,
       "details": {
         "keys": [
           "url",
@@ -51,19 +51,19 @@
       "category": "rest_api",
       "passed": true,
       "message": "Leaderboard endpoint returns valid JSON",
-      "duration_ms": 843.5,
+      "duration_ms": 573.1,
       "details": {
-        "total": 15487
+        "total": 26798
       }
     },
     {
       "name": "feed_scores",
       "category": "feed",
       "passed": true,
-      "message": "Feed scores OK: 15487 total, 5 returned",
-      "duration_ms": 559.0,
+      "message": "Feed scores OK: 26798 total, 5 returned",
+      "duration_ms": 559.8,
       "details": {
-        "total": 15487,
+        "total": 26798,
         "sample_count": 5
       }
     },
@@ -72,21 +72,21 @@
       "category": "feed",
       "passed": true,
       "message": "Feed top OK: 5 services",
-      "duration_ms": 575.6,
+      "duration_ms": 577.4,
       "details": {
         "count": 5,
-        "top_score": 98
+        "top_score": 75
       }
     },
     {
       "name": "feed_stats",
       "category": "feed",
       "passed": true,
-      "message": "Feed stats OK: 15487 services indexed",
-      "duration_ms": 565.3,
+      "message": "Feed stats OK: 26798 services indexed",
+      "duration_ms": 587.7,
       "details": {
-        "total_services": 15487,
-        "avg_score": 48.3
+        "total_services": 26798,
+        "avg_score": 49.1
       }
     },
     {
@@ -94,7 +94,7 @@
       "category": "mcp_server",
       "passed": true,
       "message": "npm package v1.1.2 exists",
-      "duration_ms": 282.8,
+      "duration_ms": 253.0,
       "details": {
         "published": true,
         "version": "1.1.2",

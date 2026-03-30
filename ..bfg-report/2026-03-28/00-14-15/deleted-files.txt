@@ -1,0 +1,1 @@
+44d7c05a6f96aa034c016930378426f990907ae7 40 .mcpregistry_github_token

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { API_BASE } from "@/lib/api";
+import { CASE_STUDIES, scoreColorClass, improvementPercent } from "@/lib/case-studies";
 
 interface TopScore {
   name: string;
@@ -1023,50 +1024,128 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ─── Success Stories ─── */}
+        {/* ─── Success Stories (Causation Proof) ─── */}
         <section className="relative px-6 py-24 bg-gradient-section">
           <div className="divider-gradient absolute top-0 left-0 right-0" />
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-16">
-              <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">Case studies</p>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Success stories</h2>
+              <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">Proven results</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                Higher scores. More agent traffic.
+              </h2>
               <p className="text-sm text-muted max-w-lg mx-auto">
-                Real services improving their agent-readiness with Clarvia.
+                Improving your AEO score directly increases how often AI agents discover and use your service.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                {
-                  name: "Replicate",
-                  score: 80,
-                  quote: "Replicate\u2019s comprehensive OpenAPI spec and fast response times earned them the highest Clarvia Score. Their API is used by 500+ AI agents daily.",
-                  color: "text-score-green",
-                },
-                {
-                  name: "Helius",
-                  score: 72,
-                  quote: "After adding rate limit headers and structured error responses, Helius improved from 58 to 72 \u2014 a 24% increase in agent compatibility.",
-                  color: "text-score-green",
-                },
-                {
-                  name: "WeatherStack",
-                  score: 61,
-                  quote: "WeatherStack added MCP support and .well-known/ai-plugin.json in one afternoon. Score jumped from 34 to 61. Agent traffic tripled within 2 weeks.",
-                  color: "text-score-yellow",
-                },
-              ].map((story) => (
+              {CASE_STUDIES.map((cs) => (
                 <div
-                  key={story.name}
+                  key={cs.slug}
                   className="glass-card rounded-2xl p-8 space-y-5 group transition-all duration-300 hover:-translate-y-1"
                 >
+                  {/* Header: name + category */}
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">{story.name}</h3>
-                    <span className={`font-mono font-bold text-lg ${story.color}`}>{story.score}</span>
+                    <div>
+                      <h3 className="text-lg font-semibold">{cs.tool_name}</h3>
+                      <p className="text-xs text-muted/60 font-mono">{cs.category}</p>
+                    </div>
+                    <span className="text-xs font-mono px-2 py-1 rounded-md bg-accent/10 text-accent">
+                      {cs.timeframe}
+                    </span>
                   </div>
+
+                  {/* Score bar: before → after */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className={scoreColorClass(cs.before_score)}>
+                        {cs.before_score}
+                      </span>
+                      <span className="text-muted/40 mx-2">→</span>
+                      <span className={`font-bold ${scoreColorClass(cs.after_score)}`}>
+                        {cs.after_score}
+                      </span>
+                      <span className="ml-auto text-score-green text-xs">
+                        +{improvementPercent(cs.before_score, cs.after_score)}%
+                      </span>
+                    </div>
+                    <div className="h-2 bg-card-border/30 rounded-full overflow-hidden relative">
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full bg-muted/20"
+                        style={{ width: `${cs.before_score}%` }}
+                      />
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+                        style={{
+                          width: `${cs.after_score}%`,
+                          background: cs.after_score >= 70
+                            ? "linear-gradient(90deg, #22c55e, #4ade80)"
+                            : "linear-gradient(90deg, #eab308, #facc15)",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Metric highlight */}
+                  <div className="flex items-center gap-3 py-3 px-4 rounded-xl bg-score-green/5 border border-score-green/10">
+                    <span className="text-2xl font-bold text-score-green font-mono">
+                      {cs.metric_multiplier}x
+                    </span>
+                    <span className="text-sm text-muted">
+                      {cs.metric_improvement.replace(/^\d+x\s*/, "")}
+                    </span>
+                  </div>
+
                   <div className="h-px bg-card-border/50" />
-                  <p className="text-sm text-muted leading-relaxed italic">&ldquo;{story.quote}&rdquo;</p>
+
+                  {/* Changes list */}
+                  <div className="space-y-1.5">
+                    {cs.changes_made.slice(0, 3).map((change, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs text-muted">
+                        <span className="text-score-green mt-0.5 shrink-0">+</span>
+                        <span>{change}</span>
+                      </div>
+                    ))}
+                    {cs.changes_made.length > 3 && (
+                      <p className="text-xs text-muted/40 pl-4">
+                        +{cs.changes_made.length - 3} more changes
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Quote */}
+                  <p className="text-xs text-muted/70 leading-relaxed italic border-l-2 border-accent/20 pl-3">
+                    &ldquo;{cs.quote}&rdquo;
+                  </p>
+
+                  {/* Dimension tags */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {cs.dimensions_improved.map((dim) => (
+                      <span
+                        key={dim}
+                        className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent/5 text-accent/70 border border-accent/10"
+                      >
+                        {dim}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               ))}
+            </div>
+
+            {/* CTA below case studies */}
+            <div className="text-center mt-12">
+              <p className="text-sm text-muted mb-4">
+                Want results like these? Start with a free scan.
+              </p>
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                className="btn-gradient text-white px-6 py-3 rounded-xl font-medium text-sm inline-flex items-center gap-2"
+              >
+                Scan your service
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                </svg>
+              </button>
             </div>
           </div>
         </section>

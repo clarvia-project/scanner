@@ -9,7 +9,7 @@
   },
   "mcp": {
     "npm_package": "clarvia-mcp-server",
-    "install": "npx -y clarvia-mcp-server",
+    "install": "npx clarvia-mcp-server",
     "tools_count": 24,
     "transport": "stdio"
   },
@@ -20,10 +20,11 @@
     "dependency_audit",
     "compliance_checklist",
     "tool_comparison",
-    "trend_analysis",
-    "demand_intelligence",
-    "tool_enrichment"
+    "trend_analysis"
   ],
   "pricing": "free",
-  "version": "2.0"
+  "rate_limits": {
+    "requests_per_minute": 100,
+    "batch_max": 100
+  }
 }

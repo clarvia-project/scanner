@@ -230,3 +230,31 @@
 2. Smithery.ai listing (needs manual browser auth)
 3. PulseMCP listing (needs manual auth)
 4. Monitor PR merge status
+
+---
+
+## Day 5 — Evening Report (2026-03-30)
+
+### Today's metrics
+- Marketing activities: 5 (all successful)
+- Channels: npm ×2, web ×1, github ×1, mcp_directories ×1
+- API searches: 1 (query: "github")
+- npm today: 10 downloads
+- npm weekly: 595 downloads
+- Total tools indexed: 15,238 (avg score: 38.2)
+- All-time marketing: 111 activities (86% success rate)
+
+### Stage targets
+- Stage 1 (daily 100 API calls): 1/100 — very early
+- npm weekly 1,000: 595/1,000 — on track
+
+### Strategy notes
+- Manual auth blockers: PulseMCP, Smithery, DevHunt (cannot automate)
+- npm weekly growing: 232 (Day 1) → 595 (Day 5) — +156% in 4 days
+- Awesome-list PRs: ~25 open, waiting for merges (organic traffic boost incoming)
+- Night marketing focus: additional awesome-list PR submissions
+
+### Challenges
+- API usage extremely low (1 search/day) — discovery layer needs work
+- Score quality: 0 "excellent" tools out of 15,238 — scoring calibration needed
+

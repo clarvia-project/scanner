@@ -83,6 +83,9 @@ from .routes.collection_routes import router as collection_router  # noqa: E402
 from .routes.history_routes import router as history_router  # noqa: E402
 from .routes.team_routes import router as team_router  # noqa: E402
 from .routes.analytics_routes import router as analytics_router  # noqa: E402
+from .routes.scan_history_routes import router as scan_history_router  # noqa: E402
+from .routes.agent_traffic_routes import router as agent_traffic_router  # noqa: E402
+from .routes.agent_traffic_routes import AgentTrafficMiddleware  # noqa: E402
 from .keepalive import keepalive_loop  # noqa: E402
 from .scanner import cleanup_cache, get_cached_scan, run_scan  # noqa: E402
 
@@ -301,6 +304,9 @@ app.add_middleware(
 # Analytics (outermost — sees all requests)
 app.add_middleware(AnalyticsMiddleware)
 
+# Agent traffic measurement (detects AI agent user-agents, logs to JSONL)
+app.add_middleware(AgentTrafficMiddleware)
+
 # Security (abuse detection, suspicious request blocking)
 app.add_middleware(SecurityMiddleware)
 
@@ -376,6 +382,32 @@ app.include_router(collection_router)
 app.include_router(history_router)
 app.include_router(team_router)
 app.include_router(analytics_router)
+app.include_router(scan_history_router)
+app.include_router(agent_traffic_router)
+
+# ---------------------------------------------------------------------------
+# Compatibility: /api/v1/* → /v1/* (DESIGN.md specifies /api/v1/*)
+# ---------------------------------------------------------------------------
+from starlette.responses import RedirectResponse as _RedirectResponse
+from fastapi import APIRouter as _APIRouter
+
+_compat_router = _APIRouter(prefix="/api/v1", tags=["compatibility"])
+
+
+@_compat_router.api_route(
+    "/{path:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    include_in_schema=False,
+)
+async def _api_v1_compat(request: Request, path: str):
+    """Proxy /api/v1/* to /v1/* for DESIGN.md contract compatibility."""
+    target = f"/v1/{path}"
+    if request.url.query:
+        target = f"{target}?{request.url.query}"
+    return _RedirectResponse(url=target, status_code=307)
+
+
+app.include_router(_compat_router)
 
 # MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
 try:
@@ -621,14 +653,14 @@ async def scan_url(req: ScanRequest):
             except Exception as e:
                 logger.warning("Failed to persist scan to Supabase: %s", e)
 
-        # Save to scan history (works with or without Supabase)
+        # Save to scan history (Supabase + JSONL fallback)
         try:
-            from .services.supabase_client import save_scan_history
             dim_scores = {}
             if result.dimensions:
                 for k, v in result.dimensions.items():
                     dim_scores[k] = v.score if hasattr(v, "score") else (v.get("score", 0) if isinstance(v, dict) else 0)
-            await save_scan_history(
+            from .routes.scan_history_routes import persist_scan_result
+            await persist_scan_result(
                 url=result.url,
                 scan_id=result.scan_id,
                 score=result.clarvia_score,

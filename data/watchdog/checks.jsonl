@@ -14,3 +14,7 @@
 {"timestamp": "2026-03-29T05:00:18.037439+00:00", "api": "npm_search", "display_name": "npm Registry Search API", "source": "npm", "status": "ok", "severity": "none"}
 {"timestamp": "2026-03-29T05:00:18.702830+00:00", "api": "pypi_package", "display_name": "PyPI Package JSON API", "source": "pypi", "status": "ok", "severity": "none"}
 {"timestamp": "2026-03-29T05:00:18.758803+00:00", "api": "mcp_registry", "display_name": "MCP Registry API", "source": "mcp_registry", "status": "error", "severity": "MAJOR", "error": "Could not navigate to schema_key: [0]"}
+{"timestamp": "2026-03-30T05:00:22.474095+00:00", "api": "github_search", "display_name": "GitHub Search API", "source": "github", "status": "ok", "severity": "none"}
+{"timestamp": "2026-03-30T05:00:22.868127+00:00", "api": "npm_search", "display_name": "npm Registry Search API", "source": "npm", "status": "ok", "severity": "none"}
+{"timestamp": "2026-03-30T05:00:23.594147+00:00", "api": "pypi_package", "display_name": "PyPI Package JSON API", "source": "pypi", "status": "ok", "severity": "none"}
+{"timestamp": "2026-03-30T05:00:23.653037+00:00", "api": "mcp_registry", "display_name": "MCP Registry API", "source": "mcp_registry", "status": "error", "severity": "MAJOR", "error": "Could not navigate to schema_key: [0]"}

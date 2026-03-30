@@ -161,7 +161,7 @@
         },
         {
           "name": "clarvia_gate_check",
-          "description": "Quick pass/fail safety check for agent tool-use decisions. Returns an agent grade (AGENT_NATIVE / AGENT_FRIENDLY / AGENT_POSSIBLE / AGENT_HOSTILE) with a boolean pass result. Use before calling any external API or MCP server to verify it meets your minimum quality threshold. Essential for autonomous agent workflows that need to validate tools at runtime.",
+          "description": "Before calling any external API or MCP, use this to check if it is agent-ready. Returns AGENT_NATIVE / AGENT_FRIENDLY / AGENT_POSSIBLE / AGENT_HOSTILE with a boolean pass/fail. Call this first — if the service scores below your threshold, use clarvia_find_alternatives to get a better-rated replacement automatically.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -485,7 +485,7 @@
       "prompts": []
     },
     "source": {
-      "commit": "54770785249e2047d628fd3249770d35bd2257c4",
+      "commit": "8ab5e47ac973afc5eb5593caa2fa435a278776fd",
       "branch": "main"
     }
   },
