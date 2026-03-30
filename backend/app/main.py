@@ -122,48 +122,85 @@ async def lifespan(app: FastAPI):
     _load_profiles()
     logger.info("Profiles loaded during startup")
 
-    # Load index data in a child process to avoid GIL contention with the
-    # event loop. json.load of 21MB holds the GIL for minutes on 0.5 vCPU,
-    # starving Uvicorn. A subprocess frees the main process entirely.
-    import multiprocessing, pickle, threading
-    from .routes.index_routes import _load_data, _find_data_dir
+    # Load index data via subprocess to completely avoid GIL contention.
+    # json.load of 21MB + classify + dedup holds the GIL for minutes on
+    # 0.5 vCPU, starving Uvicorn. A subprocess does all CPU work in its
+    # own process; main process only does a fast pickle.loads at the end.
+    import subprocess, pickle, threading, tempfile, os
+    from .routes.index_routes import _find_data_dir
 
-    def _bg_load_via_subprocess():
-        """Spawn a child process to parse & classify, then adopt the result."""
+    def _bg_load_subprocess():
+        """Heavy JSON parse + classify + dedup in a child process."""
         from .routes import index_routes as ir
-        import json, time
 
         data_dir = _find_data_dir()
         data_path = data_dir / "prebuilt-scans.json" if data_dir else None
         if data_path is None or not data_path.exists():
-            logger.error("prebuilt-scans.json not found — falling back to in-process load")
-            _load_data()
+            logger.error("prebuilt-scans.json not found")
             return
 
-        # For simplicity, just load in-process but with generous sleeps
-        # between phases so the event loop gets CPU time.
-        raw = json.load(open(data_path))
-        time.sleep(0.5)
+        # Write a small Python script that does all the CPU work
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(f"""
+import json, pickle, sys, re
+with open({str(data_path)!r}) as fh:
+    raw = json.load(fh)
 
-        for i, entry in enumerate(raw):
-            entry["category"] = ir._classify(
-                entry.get("service_name", ""),
-                entry.get("description", ""),
+_AI_KW = re.compile(r"\\b(llm|gpt|claude|openai|anthropic|genai|generative|diffusion|embedding|transformer|neural|machine.?learning|deep.?learning|natural.?language|computer.?vision|reinforcement.?learning|rag|vector.?db|fine.?tun|prompt|chatbot|copilot|ai.?agent|autonomous.?agent|model.?serving|inference|hugging.?face)\\b", re.I)
+_DEV_KW = re.compile(r"\\b(api|sdk|cli|devtool|developer|github|gitlab|docker|kubernetes|terraform|cicd|ci/cd|testing|debug|lint|format|build|deploy|monitor|logging|database|sql|nosql|redis|queue|cache|auth|oauth|jwt|security|cloud|aws|azure|gcp|serverless|cdn|dns|ssl|tls|git|npm|pip|cargo|brew|vscode|ide|editor|terminal|shell|bash|zsh|webhook|graphql|rest|grpc|protobuf|microservice|container|orchestrat)\\b", re.I)
+
+def classify(name, desc):
+    text = (name + " " + desc).lower()
+    if _AI_KW.search(text):
+        return "ai"
+    if _DEV_KW.search(text):
+        return "developer_tools"
+    return "other"
+
+for entry in raw:
+    entry["category"] = classify(entry.get("service_name",""), entry.get("description",""))
+
+# Dedup pass 1: exact URL
+url_best = {{}}
+for i, s in enumerate(raw):
+    url = (s.get("url") or "").rstrip("/").lower()
+    if not url:
+        continue
+    if url in url_best:
+        if s.get("clarvia_score",0) > raw[url_best[url]].get("clarvia_score",0):
+            url_best[url] = i
+    else:
+        url_best[url] = i
+kept = set(url_best.values())
+for i, s in enumerate(raw):
+    if not (s.get("url") or "").strip():
+        kept.add(i)
+raw = [raw[i] for i in sorted(kept)]
+
+sys.stdout.buffer.write(pickle.dumps(raw))
+""")
+            script_path = f.name
+
+        try:
+            result = subprocess.run(
+                [sys.executable, script_path],
+                capture_output=True, timeout=600,
             )
-            if i % 200 == 0:
-                time.sleep(0.01)  # ~0.01s * 135 yields = ~1.35s total yield
-
-        time.sleep(0.5)
-        raw = ir._deduplicate_services(raw)
-        time.sleep(0.5)
+            if result.returncode != 0:
+                logger.error("Subprocess load failed: %s", result.stderr.decode()[:500])
+                return
+            raw = pickle.loads(result.stdout)
+        finally:
+            os.unlink(script_path)
 
         ir._services = raw
         ir._by_scan_id = {s["scan_id"]: s for s in raw}
-        logger.info("Index data loaded (background): %d services", len(raw))
+        logger.info("Index data loaded (subprocess): %d services", len(raw))
         ir._merge_profiles()
 
-    threading.Thread(target=_bg_load_via_subprocess, daemon=True).start()
-    logger.info("Index data loading scheduled (background thread)")
+    import sys
+    threading.Thread(target=_bg_load_subprocess, daemon=True).start()
+    logger.info("Index data loading scheduled (subprocess)")
 
     # Start background cache cleanup
     _cache_cleanup_task = asyncio.create_task(_periodic_cache_cleanup())
