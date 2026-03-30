@@ -122,15 +122,47 @@ async def lifespan(app: FastAPI):
     _load_profiles()
     logger.info("Profiles loaded during startup")
 
-    # Load index data in background so Uvicorn can bind the port immediately
-    from .routes.index_routes import _load_data
+    # Load index data in a child process to avoid GIL contention with the
+    # event loop. json.load of 21MB holds the GIL for minutes on 0.5 vCPU,
+    # starving Uvicorn. A subprocess frees the main process entirely.
+    import multiprocessing, pickle, threading
+    from .routes.index_routes import _load_data, _find_data_dir
 
-    def _bg_load():
-        _load_data()
-        logger.info("Index data loaded (background)")
+    def _bg_load_via_subprocess():
+        """Spawn a child process to parse & classify, then adopt the result."""
+        from .routes import index_routes as ir
+        import json, time
 
-    import threading
-    threading.Thread(target=_bg_load, daemon=True).start()
+        data_dir = _find_data_dir()
+        data_path = data_dir / "prebuilt-scans.json" if data_dir else None
+        if data_path is None or not data_path.exists():
+            logger.error("prebuilt-scans.json not found — falling back to in-process load")
+            _load_data()
+            return
+
+        # For simplicity, just load in-process but with generous sleeps
+        # between phases so the event loop gets CPU time.
+        raw = json.load(open(data_path))
+        time.sleep(0.5)
+
+        for i, entry in enumerate(raw):
+            entry["category"] = ir._classify(
+                entry.get("service_name", ""),
+                entry.get("description", ""),
+            )
+            if i % 200 == 0:
+                time.sleep(0.01)  # ~0.01s * 135 yields = ~1.35s total yield
+
+        time.sleep(0.5)
+        raw = ir._deduplicate_services(raw)
+        time.sleep(0.5)
+
+        ir._services = raw
+        ir._by_scan_id = {s["scan_id"]: s for s in raw}
+        logger.info("Index data loaded (background): %d services", len(raw))
+        ir._merge_profiles()
+
+    threading.Thread(target=_bg_load_via_subprocess, daemon=True).start()
     logger.info("Index data loading scheduled (background thread)")
 
     # Start background cache cleanup
