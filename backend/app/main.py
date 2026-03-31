@@ -117,6 +117,44 @@ async def _periodic_cache_cleanup():
             logger.warning("Background cleanup error: %s", e)
 
 
+async def _send_telegram_alert(text: str) -> None:
+    """Send a Telegram alert (fire-and-forget)."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        return
+    try:
+        import aiohttp
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        async with aiohttp.ClientSession() as session:
+            await session.post(url, json={"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}, timeout=aiohttp.ClientTimeout(total=10))
+    except Exception as e:
+        logger.warning("Telegram alert failed: %s", e)
+
+
+async def _periodic_data_freshness_check():
+    """Background task: alert via Telegram if catalog data is stale (> 36h)."""
+    import asyncio
+    await asyncio.sleep(3600)  # first check after 1h (allow startup to finish)
+    while True:
+        try:
+            from .routes.index_routes import get_data_info
+            info = get_data_info()
+            if info["stale"]:
+                msg = (
+                    f"⚠️ *Clarvia API — Stale Data Alert*\n"
+                    f"Tool count: {info['tool_count']:,}\n"
+                    f"Last loaded: {info['loaded_at'] or 'never'}\n"
+                    f"Age: {info['age_hours']}h (threshold: 36h)\n"
+                    f"Action: check GitHub Actions auto\\_merge job or trigger Render redeploy."
+                )
+                logger.warning("Data stale: %s hours old", info["age_hours"])
+                await _send_telegram_alert(msg)
+        except Exception as e:
+            logger.warning("Freshness check error: %s", e)
+        await asyncio.sleep(3600)  # check every hour
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown hooks."""
@@ -202,6 +240,8 @@ sys.stdout.buffer.write(pickle.dumps(raw))
 
         ir._services = raw
         ir._by_scan_id = {s["scan_id"]: s for s in raw}
+        from datetime import datetime
+        ir._data_loaded_at = datetime.utcnow()
         logger.info("Index data loaded (subprocess): %d services", len(raw))
         ir._merge_profiles()
 
@@ -211,6 +251,9 @@ sys.stdout.buffer.write(pickle.dumps(raw))
 
     # Start background cache cleanup
     _cache_cleanup_task = asyncio.create_task(_periodic_cache_cleanup())
+
+    # Start data freshness monitor (alerts via Telegram if catalog > 36h old)
+    asyncio.create_task(_periodic_data_freshness_check())
 
     # Start keep-alive ping to prevent Render cold starts
     asyncio.create_task(keepalive_loop())
@@ -623,6 +666,18 @@ async def health():
             overall = "degraded"
     except Exception:
         checks["memory"] = {"status": "unavailable"}
+
+    # 4. Data freshness
+    from .routes.index_routes import get_data_info
+    data_info = get_data_info()
+    checks["data"] = {
+        "status": "stale" if data_info["stale"] else "ok",
+        "tool_count": data_info["tool_count"],
+        "loaded_at": data_info["loaded_at"],
+        "age_hours": data_info["age_hours"],
+    }
+    if data_info["stale"]:
+        overall = "degraded"
 
     return {
         "status": overall,

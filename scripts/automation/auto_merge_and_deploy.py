@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -125,6 +126,19 @@ def main() -> int:
         return 1
 
     logger.info("Pushed to origin/main — deploy-on-push workflow will handle deployment")
+
+    # Step 5: Trigger Render deploy hook as backup (in case auto-deploy misses the push)
+    deploy_hook = os.environ.get("RENDER_DEPLOY_HOOK_URL", "")
+    if deploy_hook:
+        import urllib.request
+        try:
+            with urllib.request.urlopen(urllib.request.Request(deploy_hook, method="POST"), timeout=10) as resp:
+                logger.info("Render deploy hook triggered (status %d)", resp.status)
+        except Exception as e:
+            logger.warning("Render deploy hook failed (non-fatal): %s", e)
+    else:
+        logger.info("RENDER_DEPLOY_HOOK_URL not set — relying on GitHub auto-deploy only")
+
     return 0
 
 

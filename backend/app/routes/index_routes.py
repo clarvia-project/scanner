@@ -742,6 +742,21 @@ def _classify(service_name: str, description: str = "") -> str:
 # ---------------------------------------------------------------------------
 _services: list[dict[str, Any]] = []
 _by_scan_id: dict[str, dict[str, Any]] = {}
+_data_loaded_at: datetime | None = None  # UTC timestamp of last successful load
+
+
+def get_data_info() -> dict[str, Any]:
+    """Return data freshness info for health/status endpoints."""
+    return {
+        "tool_count": len(_services),
+        "loaded_at": _data_loaded_at.isoformat() if _data_loaded_at else None,
+        "age_hours": round(
+            (datetime.utcnow() - _data_loaded_at).total_seconds() / 3600, 1
+        ) if _data_loaded_at else None,
+        "stale": (
+            (datetime.utcnow() - _data_loaded_at).total_seconds() > 36 * 3600
+        ) if _data_loaded_at else True,
+    }
 
 
 class SortOrder(str, Enum):
