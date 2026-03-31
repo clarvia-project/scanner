@@ -153,6 +153,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if is_scan and current > limit:
             retry_after = int(entry.remaining)
             logger.warning("Rate limit exceeded for %s (count=%d, limit=%d)", store_key, current, limit)
+            # Include CORS header manually: RateLimitMiddleware returns early (no call_next),
+            # so CORSMiddleware (inner middleware) never runs → browser gets "Failed to fetch".
+            origin = request.headers.get("origin", "")
+            cors_headers: dict[str, str] = {}
+            if origin:
+                cors_headers["Access-Control-Allow-Origin"] = origin
+                cors_headers["Vary"] = "Origin"
             return JSONResponse(
                 status_code=429,
                 content={
@@ -165,6 +172,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "X-RateLimit-Limit": str(limit),
                     "X-RateLimit-Remaining": "0",
                     "X-RateLimit-Reset": str(int(time.time() + entry.remaining)),
+                    **cors_headers,
                 },
             )
 

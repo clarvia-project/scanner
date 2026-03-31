@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { API_BASE } from "@/lib/api";
@@ -168,21 +168,34 @@ export default function ComparePage() {
 
 function CompareContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const ids = searchParams.get("ids") || "";
+  const names = searchParams.get("names") || "";
   const [tools, setTools] = useState<ComparedTool[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inputA, setInputA] = useState("");
+  const [inputB, setInputB] = useState("");
 
   useEffect(() => {
-    if (!ids) {
+    const query = ids ? `ids=${encodeURIComponent(ids)}` : names ? `names=${encodeURIComponent(names)}` : "";
+    if (!query) {
       setLoading(false);
       return;
     }
-    fetch(`${API_BASE}/v1/compare?ids=${encodeURIComponent(ids)}`)
+    fetch(`${API_BASE}/v1/compare?${query}`)
       .then((r) => r.json())
       .then((data) => setTools(data.services || []))
       .catch(() => setTools([]))
       .finally(() => setLoading(false));
-  }, [ids]);
+  }, [ids, names]);
+
+  function handleCompareSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const a = inputA.trim();
+    const b = inputB.trim();
+    if (!a || !b) return;
+    router.push(`/compare?names=${encodeURIComponent(`${a},${b}`)}`);
+  }
 
   // Collect all dimension keys across tools
   const allDimensions = Array.from(
@@ -241,16 +254,37 @@ function CompareContent() {
             ))}
           </div>
         ) : tools.length === 0 ? (
-          <div className="glass-card rounded-xl p-12 text-center space-y-4">
-            <div className="text-4xl mb-2">+</div>
-            <h2 className="text-lg font-semibold">Add tools to compare</h2>
-            <p className="text-muted text-sm max-w-md mx-auto">
-              Go to the Tool Directory and click &quot;Compare&quot; on any tool detail page,
-              or add scan IDs to the URL: <code className="text-accent text-xs">/compare?ids=tool_a,tool_b</code>
+          <div className="glass-card rounded-xl p-12 text-center space-y-6 max-w-lg mx-auto">
+            <div className="text-4xl mb-2">⇄</div>
+            <h2 className="text-lg font-semibold">Compare two tools</h2>
+            <form onSubmit={handleCompareSubmit} className="space-y-3 text-left">
+              <input
+                type="text"
+                value={inputA}
+                onChange={(e) => setInputA(e.target.value)}
+                placeholder="Tool A (e.g. stripe.com)"
+                className="w-full bg-card-bg/80 border border-card-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent/50 font-mono text-sm"
+              />
+              <input
+                type="text"
+                value={inputB}
+                onChange={(e) => setInputB(e.target.value)}
+                placeholder="Tool B (e.g. replicate.com)"
+                className="w-full bg-card-bg/80 border border-card-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent/50 font-mono text-sm"
+              />
+              <button
+                type="submit"
+                disabled={!inputA.trim() || !inputB.trim()}
+                className="w-full btn-gradient text-white px-4 py-3 rounded-xl text-sm font-medium disabled:opacity-40"
+              >
+                Compare
+              </button>
+            </form>
+            <p className="text-muted text-xs">
+              Or{" "}
+              <Link href="/tools" className="text-accent hover:underline">browse tools</Link>
+              {" "}and click Compare on any tool page.
             </p>
-            <Link href="/tools" className="inline-block btn-gradient px-4 py-2 rounded-lg text-sm text-white mt-2">
-              Browse Tools
-            </Link>
           </div>
         ) : (
           <>

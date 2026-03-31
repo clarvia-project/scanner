@@ -202,7 +202,11 @@ export default function TrendingPage() {
             {/* Category Stats Bar */}
             <div className="flex flex-wrap gap-2 mb-8">
               {Object.entries(data.category_stats || {})
-                .sort((a, b) => b[1].count - a[1].count)
+                .sort((a, b) => {
+                  if (a[0] === "other") return 1;
+                  if (b[0] === "other") return -1;
+                  return b[1].count - a[1].count;
+                })
                 .map(([cat, stats]) => {
                   const info = CATEGORY_LABELS[cat] || CATEGORY_LABELS.other;
                   return (

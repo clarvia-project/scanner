@@ -408,7 +408,9 @@ export default function LeaderboardPage() {
     fetch(`${API_BASE}/v1/leaderboard?limit=12`)
       .then((res) => (res.ok ? res.json() : { leaderboard: [] }))
       .then((json: { leaderboard: LeaderboardEntry[] }) => {
-        setTopPerformers(json.leaderboard || []);
+        // 점수 내림차순으로 정렬 — 메인 테이블 기본 정렬 기준(score desc)과 일치
+        const sorted = (json.leaderboard || []).slice().sort((a, b) => b.score - a.score);
+        setTopPerformers(sorted);
       })
       .catch(() => {})
       .finally(() => setTopLoading(false));
@@ -652,7 +654,7 @@ export default function LeaderboardPage() {
                   href={`/tool/${tp.scan_id}`}
                   className="group glass-card rounded-xl p-4 text-center transition-all duration-200 hover:border-accent/40 hover:shadow-lg hover:shadow-accent/5 hover:-translate-y-0.5"
                 >
-                  <div className="text-[10px] font-mono text-muted/50 mb-1">#{i + 1}</div>
+                  <div className="text-[10px] font-mono text-muted/50 mb-1">#{tp.rank ?? i + 1}</div>
                   <div className={`text-2xl font-mono font-bold mb-1 ${scoreColor(tp.score)}`}>
                     {tp.score}
                   </div>

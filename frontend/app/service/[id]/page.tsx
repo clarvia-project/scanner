@@ -45,7 +45,8 @@ interface ServiceData {
   type_config?: TypeConfig;
   github_url?: string;
   tags?: string[];
-  clarvia_score?: number;
+  clarvia_score?: number | null;
+  scan_status?: string;
   rating?: string;
   dimensions?: {
     api_accessibility: Dimension;
@@ -388,7 +389,7 @@ export default function ServiceDetailPage() {
           {/* Left Column: Score + Dimensions */}
           <div className="lg:col-span-1 space-y-6">
             {/* AEO Score */}
-            {service.clarvia_score != null && (
+            {service.clarvia_score != null ? (
               <div className="glass-card rounded-2xl p-6 text-center">
                 <p className="text-xs text-muted uppercase tracking-wider font-medium mb-3">AEO Score</p>
                 <div className={`text-6xl font-mono font-bold ${scoreColor(service.clarvia_score)} ${scoreGlowClass(service.clarvia_score)}`}>
@@ -405,6 +406,26 @@ export default function ServiceDetailPage() {
                     {service.rating}
                   </div>
                 )}
+              </div>
+            ) : (
+              <div className="glass-card rounded-2xl p-6 text-center space-y-4">
+                <p className="text-xs text-muted uppercase tracking-wider font-medium">AEO Score</p>
+                <p className="text-sm text-muted">
+                  {service.scan_status === "scan_failed"
+                    ? "스캔 실패"
+                    : "AEO 스코어 분석 대기중"}
+                </p>
+                <a
+                  href={`https://clarvia.art/?url=${encodeURIComponent(service.url)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium btn-gradient text-white transition-all"
+                >
+                  이 서비스 스캔하기
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </a>
               </div>
             )}
 

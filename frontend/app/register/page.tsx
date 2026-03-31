@@ -415,6 +415,7 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="text"
+                  name="name"
                   value={form.name}
                   onChange={(e) => updateField("name", e.target.value)}
                   placeholder="e.g. My MCP Service"
@@ -429,6 +430,7 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="url"
+                  name="url"
                   value={form.url}
                   onChange={(e) => updateField("url", e.target.value)}
                   placeholder="https://api.example.com"
@@ -442,6 +444,7 @@ export default function RegisterPage() {
                   Description <span className="text-score-red">*</span>
                 </label>
                 <textarea
+                  name="description"
                   value={form.description}
                   onChange={(e) => updateField("description", e.target.value)}
                   placeholder="Brief description of what your service does and how agents can use it."
@@ -502,6 +505,7 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="url"
+                  name="github_url"
                   value={form.github_url}
                   onChange={(e) => updateField("github_url", e.target.value)}
                   placeholder="https://github.com/your-org/your-repo"
@@ -515,6 +519,7 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="text"
+                  name="tags"
                   value={form.tags}
                   onChange={(e) => updateField("tags", e.target.value)}
                   placeholder="e.g. mcp, ai, tools"
@@ -532,6 +537,7 @@ export default function RegisterPage() {
                     </label>
                     <input
                       type="text"
+                      name="mcp_npm_package"
                       value={form.mcp_npm_package}
                       onChange={(e) => updateField("mcp_npm_package", e.target.value)}
                       placeholder="e.g. @org/mcp-server"
@@ -544,6 +550,7 @@ export default function RegisterPage() {
                     </label>
                     <input
                       type="url"
+                      name="mcp_endpoint_url"
                       value={form.mcp_endpoint_url}
                       onChange={(e) => updateField("mcp_endpoint_url", e.target.value)}
                       placeholder="https://mcp.example.com/sse"
@@ -570,6 +577,7 @@ export default function RegisterPage() {
                     </label>
                     <input
                       type="text"
+                      name="mcp_tools"
                       value={form.mcp_tools}
                       onChange={(e) => updateField("mcp_tools", e.target.value)}
                       placeholder="e.g. search, create, update, delete"
@@ -588,6 +596,7 @@ export default function RegisterPage() {
                     </label>
                     <input
                       type="url"
+                      name="skill_file_url"
                       value={form.skill_file_url}
                       onChange={(e) => updateField("skill_file_url", e.target.value)}
                       placeholder="https://example.com/skills/my-skill.md"
@@ -643,6 +652,7 @@ export default function RegisterPage() {
                       </label>
                       <input
                         type="text"
+                        name="cli_package_name"
                         value={form.cli_package_name}
                         onChange={(e) => updateField("cli_package_name", e.target.value)}
                         placeholder="e.g. my-cli-tool"
@@ -656,6 +666,7 @@ export default function RegisterPage() {
                     </label>
                     <input
                       type="text"
+                      name="cli_binary_name"
                       value={form.cli_binary_name}
                       onChange={(e) => updateField("cli_binary_name", e.target.value)}
                       placeholder="e.g. mytool"
@@ -667,6 +678,7 @@ export default function RegisterPage() {
                       Usage Example
                     </label>
                     <textarea
+                      name="cli_usage_example"
                       value={form.cli_usage_example}
                       onChange={(e) => updateField("cli_usage_example", e.target.value)}
                       placeholder={"$ mytool scan --url https://example.com\n$ mytool report --format json"}
@@ -686,6 +698,7 @@ export default function RegisterPage() {
                     </label>
                     <input
                       type="url"
+                      name="api_openapi_url"
                       value={form.api_openapi_url}
                       onChange={(e) => updateField("api_openapi_url", e.target.value)}
                       placeholder="https://api.example.com/openapi.json"
@@ -713,6 +726,7 @@ export default function RegisterPage() {
                     </label>
                     <input
                       type="url"
+                      name="api_base_url"
                       value={form.api_base_url}
                       onChange={(e) => updateField("api_base_url", e.target.value)}
                       placeholder="https://api.example.com/v1"
@@ -752,6 +766,7 @@ export default function RegisterPage() {
                 <div className="flex gap-3">
                   <input
                     type="email"
+                    name="contact_email"
                     value={form.contact_email}
                     onChange={(e) => {
                       updateField("contact_email", e.target.value);

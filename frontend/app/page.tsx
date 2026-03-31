@@ -33,6 +33,23 @@ const SCAN_PHASES = [
   "Calculating Clarvia Score...",
 ];
 
+const CATEGORY_DISPLAY: Record<string, string> = {
+  developer_tools: "Developer Tools",
+  ai_llm: "AI/LLM",
+  ai: "AI/LLM",
+  payments: "Payments",
+  communication: "Communication",
+  data: "Data",
+  productivity: "Productivity",
+  blockchain: "Blockchain",
+  mcp: "MCP",
+  other: "Other",
+};
+
+function formatCategory(cat: string): string {
+  return CATEGORY_DISPLAY[cat] ?? cat.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function scoreColor(score: number) {
   if (score >= 70) return "text-score-green";
   if (score >= 40) return "text-score-yellow";
@@ -291,13 +308,17 @@ export default function LandingPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.detail || `Scan failed (${res.status})`);
+        if (res.status === 429) {
+          throw new Error("스캔 한도 초과 (시간당 10회). 잠시 후 다시 시도하세요.");
+        }
+        throw new Error(data?.detail || "스캔에 실패했습니다. 잠시 후 다시 시도하세요.");
       }
 
       const data = await res.json();
       router.push(`/scan/${data.scan_id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Scan failed");
+      const msg = err instanceof Error ? err.message : "";
+      setError(msg || "스캔에 실패했습니다. 잠시 후 다시 시도하세요.");
       setLoading(false);
       setScanningUrl("");
     }
@@ -565,7 +586,7 @@ export default function LandingPage() {
                   <p className="text-sm text-muted">
                     Alternatives to{" "}
                     <span className="text-foreground font-semibold">{altResults.service}</span>
-                    <span className="text-muted/60 ml-2 text-xs font-mono">({altResults.total_in_category} in {altResults.category})</span>
+                    <span className="text-muted/60 ml-2 text-xs font-mono">· {altResults.total_in_category} {formatCategory(altResults.category)} tools</span>
                   </p>
                   <button onClick={() => setAltResults(null)} className="text-xs text-muted hover:text-foreground transition-colors">
                     Clear
