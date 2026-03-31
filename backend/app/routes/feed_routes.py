@@ -36,6 +36,41 @@ def _load_all_services() -> list[dict[str, Any]]:
     ]
 
 
+@router.get("/", include_in_schema=False)
+@router.get("")
+async def feed_root(
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Feed root — returns recent and top services."""
+    services = _load_all_services()
+    top = sorted(services, key=lambda s: s.get("clarvia_score", 0), reverse=True)[:limit]
+    return {
+        "top_services": [
+            {"name": s.get("service_name", ""), "url": s.get("url", ""), "score": s.get("clarvia_score", 0)}
+            for s in top
+        ],
+        "total": len(services),
+        "attribution": "Clarvia AEO Scanner — clarvia.art",
+    }
+
+
+@router.get("/recent")
+async def feed_recent(
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Recently added/scanned services."""
+    services = _load_all_services()
+    # Sort by scan_id descending (newer scans have higher IDs)
+    recent = sorted(services, key=lambda s: s.get("scan_id", ""), reverse=True)[:limit]
+    return {
+        "recent_services": [
+            {"name": s.get("service_name", ""), "url": s.get("url", ""), "score": s.get("clarvia_score", 0)}
+            for s in recent
+        ],
+        "total": len(services),
+    }
+
+
 @router.get("/scores")
 async def feed_scores(
     min_score: int = Query(0, ge=0, le=100),

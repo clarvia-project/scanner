@@ -4324,7 +4324,7 @@ async def _ci_check_get_alias():
     from fastapi.responses import JSONResponse
     return JSONResponse(
         status_code=405,
-        content={"detail": "Method Not Allowed. Use POST /api/v1/ci/check with a JSON body containing 'url'."},
+        content={"error": {"type": "method_not_allowed", "code": 405, "message": "Use POST /api/v1/ci/check with a JSON body containing 'url'."}},
         headers={"Allow": "POST"},
     )
 
