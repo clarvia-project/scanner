@@ -2279,8 +2279,24 @@ This cycle opened a new outreach category: LLM observability platforms (Opik, Op
 - **API organic traffic** still near zero (17 calls/week) — distribution is the bottleneck
 
 ### Next Priorities
-1. User manually: MCPHub.ai submission (browser login required)
-2. User manually: Official MCP Registry auth (blocks official listing)
-3. Follow up on PRs after 14 days (around 2026-04-08) for oldest PRs
-4. Monitor if badge accept rate produces any backlinks (check repos weekly)
-5. Consider npm v1.3.0 publish with updated tool count (27,875+)
+1. User manually: Official MCP Registry auth (blocks official listing)
+2. Follow up on PRs after 14 days (around 2026-04-08) for oldest PRs
+3. Monitor if badge accept rate produces any backlinks (check repos weekly)
+4. Consider npm v1.3.0 publish with updated tool count (27,875+)
+
+## Field Notes (2026-04-01 Cycle 32)
+
+### Key Activities
+- **MCPHub.ai API submission** — Discovered open REST API at www.mcphub.ai/api/servers. Submitted Clarvia without auth needed. ID: `7c40b89c`, status: draft (pending review/verification). **MCPHub.ai was previously marked as requiring Clerk auth — not true for submission API!**
+- **server.json sync** — Updated version 1.2.2→1.2.6, description 27,000+→27,875+. Was significantly stale.
+- **README badges sync** — MCP tools 16→17, services indexed 27,800+→27,875+. Pushed to GitHub.
+
+### New Discovery: MCPHub.ai API
+MCPHub.ai (www.mcphub.ai) has an open POST endpoint at `/api/servers`. No auth required for submission. Returns immediately with `status: draft`. Submission payload format:
+- name, description, authorName, authorEmail, authorUrl, repositoryUrl, packageName, packageType (npm/pip/cargo/uvicorn), installCommand, installArgs[], category, codebase, environment, tags[]
+
+### Status
+- npm weekly: 714 (+20% WoW), npm today: 119
+- New directory: MCPHub.ai (draft pending verification)
+- server.json: now accurate (v1.2.6, 27,875+)
+- GitHub flag: still active
