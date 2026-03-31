@@ -1592,24 +1592,27 @@ async def leaderboard(
     filtered = pool
     if category:
         filtered = _filter_by_category(filtered, category)
-    if type:
-        # BUG-01 fix: service_type이 null인 항목은 URL/name 기반으로 추론
-        type_lower = type.lower()
-        def _infer_service_type(s: dict) -> str:
-            st = (s.get("service_type") or "").lower()
-            if st:
-                return st
-            url = (s.get("url") or "").lower()
-            name = (s.get("service_name") or "").lower()
-            if "mcp" in url or "-mcp" in name:
-                return "mcp_server"
-            return "api"
+    # Infer service_type for all items (many have service_type=null in data)
+    def _infer_service_type(s: dict) -> str:
+        st = (s.get("service_type") or "").lower()
+        if st:
+            return st
+        url = (s.get("url") or "").lower()
+        name = (s.get("service_name") or "").lower()
+        if "mcp" in url or "-mcp" in name or "mcp" in name:
+            return "mcp_server"
+        return "api"
 
+    for s in filtered:
+        s["_inferred_type"] = _infer_service_type(s)
+
+    if type:
+        type_lower = type.lower()
         mcp_aliases = {"mcp", "mcp_server"}
         if type_lower in mcp_aliases:
-            filtered = [s for s in filtered if _infer_service_type(s) in mcp_aliases]
+            filtered = [s for s in filtered if s["_inferred_type"] in mcp_aliases]
         else:
-            filtered = [s for s in filtered if _infer_service_type(s) == type_lower]
+            filtered = [s for s in filtered if s["_inferred_type"] == type_lower]
 
     # Deduplicate by URL (keep highest-scoring entry for each URL)
     seen_urls: dict[str, dict] = {}
@@ -1633,6 +1636,7 @@ async def leaderboard(
                 "clarvia_score": s.get("clarvia_score", 0),
                 "rating": s.get("rating", "Unknown"),
                 "category": s.get("category", "other"),
+                "service_type": s.get("_inferred_type") or s.get("service_type"),
                 "scan_id": s.get("scan_id", ""),
             }
             for i, s in enumerate(filtered)
