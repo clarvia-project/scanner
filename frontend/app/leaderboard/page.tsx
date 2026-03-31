@@ -423,9 +423,13 @@ export default function LeaderboardPage() {
       return;
     }
     setTypeLoading(true);
-    fetch(`${API_BASE}/v1/services?service_type=${serviceTypeFilter}`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((json: ScanEntry[]) => setTypeFilteredData(json))
+    fetch(`${API_BASE}/v1/services?service_type=${serviceTypeFilter}&limit=100&sort=score_desc`)
+      .then((res) => (res.ok ? res.json() : { services: [] }))
+      .then((json) => {
+        // API returns {services: [...], pagination: {...}}, not a raw array
+        const items = Array.isArray(json) ? json : (json.services || json.items || []);
+        setTypeFilteredData(items);
+      })
       .catch(() => setTypeFilteredData([]))
       .finally(() => setTypeLoading(false));
   }, [serviceTypeFilter]);
