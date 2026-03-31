@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Trending AI Agent Tools — Clarvia",
   description:
-    "Discover the hottest MCP servers, APIs, CLIs, and agent skills trending right now. Ranked by AEO score and momentum across 15,400+ indexed tools.",
+    "Discover the hottest MCP servers, APIs, CLIs, and agent skills trending right now. Ranked by AEO score and momentum across 27,000+ indexed tools.",
   keywords: [
     "trending MCP servers",
     "best AI agent tools 2025",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Trending AI Agent Tools — Clarvia",
     description:
-      "Discover the hottest MCP servers and agent tools trending now. AEO scores for 15,400+ tools.",
+      "Discover the hottest MCP servers and agent tools trending now. AEO scores for 27,000+ tools.",
   },
   alternates: {
     canonical: "https://clarvia.art/trending",

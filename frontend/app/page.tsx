@@ -732,7 +732,7 @@ export default function LandingPage() {
               <p className="text-sm md:text-base text-muted leading-relaxed">
                 Clarvia is the AEO (AI Engine Optimization) standard for the agent economy.
                 It scans any API, MCP server, CLI tool, or skill and scores it on a 0-100 scale
-                for AI agent readiness. With 15,400+ tools indexed across the ecosystem,
+                for AI agent readiness. With 27,000+ tools indexed across the ecosystem,
                 Clarvia helps developers find the best tools for their AI agents,
                 and helps API providers optimize their services to be discovered by AI systems.
                 The Clarvia Score evaluates four dimensions: API Accessibility, Data Structuring,

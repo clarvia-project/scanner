@@ -113,7 +113,7 @@ pip install clarvia-mcp-server
 
 #### 3.1 search_services
 
-Search 15,400+ AI agent tools by keyword, category, or score.
+Search 27,000+ AI agent tools by keyword, category, or score.
 
 **Parameters:**
 | Name | Type | Required | Description |
@@ -409,7 +409,7 @@ Search and filter services. Supports compound filters.
 | min_score | int (0-100) | 0 | Minimum Clarvia Score |
 | max_score | int (0-100) | - | Maximum Clarvia Score |
 | sort | enum | score_desc | Sort: score_desc, score_asc, name_asc, name_desc, recent |
-| source | string | - | "all" for 15,400+ tools, "collected" for registry tools only |
+| source | string | - | "all" for 27,000+ tools, "collected" for registry tools only |
 | limit | int (1-100) | 20 | Page size |
 | offset | int | 0 | Pagination offset |
 

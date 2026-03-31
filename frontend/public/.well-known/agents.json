@@ -1,11 +1,11 @@
 {
   "name": "Clarvia",
-  "description": "AI agent tool discovery and AEO scoring platform. 27,871+ indexed tools.",
+  "description": "AI agent tool discovery and AEO scoring platform. 27,000+ indexed tools.",
   "url": "https://clarvia.art",
   "api": {
     "base_url": "https://clarvia-api.onrender.com",
-    "openapi": "https://clarvia.art/api/openapi.json",
-    "docs": "https://clarvia.art/api/docs"
+    "openapi": "https://clarvia-api.onrender.com/openapi.json",
+    "docs": "https://clarvia-api.onrender.com/docs"
   },
   "mcp": {
     "npm_package": "clarvia-mcp-server",
