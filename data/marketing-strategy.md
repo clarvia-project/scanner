@@ -2300,3 +2300,140 @@ MCPHub.ai (www.mcphub.ai) has an open POST endpoint at `/api/servers`. No auth r
 - New directory: MCPHub.ai (draft pending verification)
 - server.json: now accurate (v1.2.6, 27,875+)
 - GitHub flag: still active
+
+## Field Notes — 2026-04-01 (Cycle ~33, SSR Fix)
+
+### Key Achievement: SSR Profile Pages
+- **Profile pages converted to SSR** — 27,894 tool pages now have:
+  - Tool-specific `<title>` (e.g., "com.supabase/mcp — AEO Score: 92 | Clarvia")
+  - Tool-specific `<meta description>` with score and rating  
+  - Tool-specific `<og:title>` and `<og:description>`
+  - SoftwareApplication JSON-LD with aggregateRating in RSC payload
+  - FAQPage JSON-LD with tool-specific Q&A
+- **Before**: Every profile page had identical generic Clarvia title/description (invisible to AI search)
+- **After**: Each of 27,894 tool pages is individually addressable and citable by AI search engines
+
+### New Directories Discovered
+- **MACH Alliance MCP Registry** — has TypeForm submission (form.typeform.com/to/S35H6Wa0). Not yet submitted (requires browser interaction).
+- **SkillsIndex.dev** — has open web form at skillsindex.dev/submit/. Not yet submitted (web form).
+
+### AI Citation Status
+- Clarvia appears in Google Search for "best MCP server quality scanner AEO" (via Glama listing) 
+- npm search: clarvia-mcp-server appears for "mcp aeo scanner" queries
+- Weekly npm: 714 (+207% vs baseline of 232)
+
+### Status
+- llms.txt/agents.json/well-known: synced to 27,894
+- SSR: CONFIRMED LIVE on all profile pages
+- Smithery: submission sent, not yet indexed (308 redirects)
+
+## Field Notes — 2026-04-01 (Cycle 34, Late Night)
+
+### Key Achievements This Cycle
+1. **SkillsIndex.dev submission** ✅ — Submitted successfully. Review within 48h. New directory not previously targeted.
+2. **MCP.directory submission** ✅ — FastMCP rebranded to MCP.Directory. "Largest curated MCP directory" — submitted and accepted (review within 24h). Was not in our registry list.
+3. **9 new badge outreach issues** — Targeting highest-value repos not yet done:
+   - ollama/ollama (166K stars) — Issue #15183 🔥 Largest target so far
+   - Mintplex-Labs/anything-llm (57K stars) — Issue #5312
+   - openai/openai-python (30K stars) — Issue #3041
+   - openai/swarm (21K stars) — Issue #74
+   - google/adk-python (18.7K stars) — Issue #5089
+   - arc53/DocsGPT (17.8K stars) — Issue #2346
+   - microsoft/NLWeb (6.2K stars) — Issue #419
+   - awslabs/mcp (8.6K stars) — Issue #2831
+   - genkit-ai/genkit (5.7K stars) — Issue #5035
+
+### MACH Alliance TypeForm — Blocked
+form.typeform.com/to/S35H6Wa0 — TypeForm's React state management blocks automated form fill. Email validation fails despite DOM value being set. **Requires manual user submission.** Form takes 7+ minutes (many fields). Mark for manual completion.
+
+### New Directories Discovered
+- **mcp.directory** (FastMCP rebranded) — NOW SUBMITTED ✅. 3,000+ servers. 24h review.
+- **SkillsIndex.dev** — NOW SUBMITTED ✅. AI tool index with scoring. 48h review.
+
+### Cumulative Badge Outreach
+52 badge outreach issues total today. Key wins: ollama (166K), anything-llm (57K). Combined ~400K+ stars across all badge targets.
+
+### Status
+- npm weekly: 714 (stable)
+- New directories: mcp.directory + SkillsIndex.dev submitted this cycle
+- Badge outreach: 52 issues total today, cumulative ~400K combined stars
+
+### Next Priorities
+1. MACH Alliance TypeForm — manual user action needed (form.typeform.com/to/S35H6Wa0)
+2. Monitor mcp.directory listing (24h) + SkillsIndex.dev (48h)
+3. Check if ollama/anything-llm badge issues get traction (large audiences)
+4. Official MCP Registry — still needs manual browser auth (blocks official listing)
+
+## Field Notes — 2026-04-01 (Cycle 34 Update — Smithery + MCP.directory)
+
+### Major Win: Smithery Published ✅
+- **clarvia/clarvia-mcp-server** now live on Smithery Registry
+- URL: `smithery.ai/servers/clarvia/clarvia-mcp-server`
+- Deployment URL: `https://clarvia-mcp-server--clarvia.run.tools`
+- Type: external (free tier, GitHub URL-based)
+- **Key insight**: Namespace is "clarvia" (not "digitalmio") — fix future publish attempts
+- **Key insight**: Smithery hosted deployments require paid plan; external (URL) is free and works
+
+### Major Win: MCP.directory (FastMCP) Submitted ✅
+- FastMCP rebranded to mcp.directory — "largest curated MCP directory, 3,000+ servers"
+- Submitted via web form: GitHub URL + npm package + description
+- Review within 24 hours
+
+### New Registry Status (as of 2026-04-01)
+| Registry | Status |
+|----------|--------|
+| Smithery | ✅ LIVE (`clarvia/clarvia-mcp-server`) |
+| mcp.directory | ⏳ Pending (24h review) |
+| SkillsIndex.dev | ⏳ Pending (48h review) |
+| PulseMCP | ✅ Previously submitted |
+| Glama | ✅ Listed |
+| mcp.so | ✅ Listed |
+| MCPHub.ai | ⏳ Draft (submitted via API) |
+| Official MCP Registry | ❌ Blocked (manual auth needed) |
+
+### Smithery smithery.yaml Fix Needed
+The smithery.yaml in scanner root points to wrong repo (clarvia-project/scanner instead of digitalmio/clarvia-mcp-server). The publish worked by pointing to GitHub URL directly. Update smithery.yaml repository field if needed.
+
+
+## Field Notes — 2026-04-01 (Cycle 35, ~22:20 UTC)
+
+### Sync Actions
+1. **smithery.yaml count sync** ✅ — Updated both root + mcp-server/smithery.yaml to 27,899+. Pushed to GitHub.
+2. **state-of-mcp-quality-2026.md** ✅ — Updated report count from 27,886+ to 27,899+. Pushed to GitHub.
+3. **modelcontextprotocol/servers PR #3719 follow-up** ✅ — Updated comment with current stats: 27,899+ tools, 714+ npm weekly, Smithery/Glama/mcp.so/PulseMCP listed.
+
+### Key Issue Discovered: Smithery Search Visibility
+- Clarvia does NOT appear in Smithery search for "aeo" or "clarvia"
+- Root cause: Smithery listing has **empty description** (the smithery.yaml description field is not used for hosted registry display)
+- Smithery gets description by **inspecting the running server** — the deployment URL requires auth, so description can't be scraped
+- **Action needed**: Investigate if there's a way to provide description for auth-protected deployments (may require Smithery support)
+
+### Directory Status Update (April 1, 2026)
+| Directory | Status |
+|-----------|--------|
+| Smithery | ✅ Live (but empty description — search invisible) |
+| mcp.directory | ⏳ Pending (submitted yesterday, 24h review) |
+| SkillsIndex.dev | ⏳ Pending (submitted yesterday, 48h review) |
+| PulseMCP | ✅ Listed |
+| Glama | ✅ Listed |
+| mcp.so | ✅ Full listing |
+| RapidAPI | ✅ Listed |
+| Futurepedia | ✅ Listed |
+| AIPure | ✅ Listed |
+| OpenTools | ✅ Listed |
+| modelcontextprotocol/servers | 🟡 PR #3719 open (6 days) |
+| Official MCP Registry | ❌ Blocked (manual auth) |
+
+### Untapped Opportunity: HN Show HN
+- No Hacker News submission yet for Clarvia
+- Active MCP discussions happening (Claude Code Source Leak: 503 pts, Lazy-tool MCP: 19 pts)
+- **Best angle**: "Show HN: Scored 27,899 MCP servers — only 0.3% are actually agent-ready" 
+- Data-driven narrative: quality crisis in AI agent tools ecosystem
+- **Requires**: Manual user action (HN requires logged-in posting)
+
+### Current Metrics
+- npm weekly: 714 downloads
+- Total indexed tools: 27,899
+- Excellent tier (AEO 80-100): 91 tools (0.3%)
+- API health: OK, 15,290 tools loaded
+
