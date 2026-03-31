@@ -190,7 +190,10 @@ function normalizeToScanEntry(item: ApiServiceItem): ScanEntry {
     // Already ScanEntry-shaped
     return {
       ...item,
+      url: item.url ?? "",
       service_name: item.service_name || item.name || "",
+      clarvia_score: item.clarvia_score ?? 0,
+      rating: item.rating ?? "Basic",
       scanned_at: "",
       dimensions: item.dimensions as ScanEntry["dimensions"],
     } as ScanEntry;
@@ -214,11 +217,11 @@ function normalizeToScanEntry(item: ApiServiceItem): ScanEntry {
   return {
     scan_id: item.scan_id,
     profile_id: item.profile_id,
-    url: item.url,
+    url: item.url ?? "",
     service_name: item.service_name || item.name || "",
     service_type: item.service_type,
-    clarvia_score: item.clarvia_score,
-    rating: item.rating,
+    clarvia_score: item.clarvia_score ?? 0,
+    rating: item.rating ?? "Basic",
     scanned_at: "",
     dimensions: normalized as ScanEntry["dimensions"],
   };
