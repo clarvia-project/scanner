@@ -198,6 +198,134 @@ function DimensionBar({ label, score, max }: { label: string; score: number; max
   );
 }
 
+// ----- Integrate Section -----
+
+function IntegrateSection({ service }: { service: ServiceData }) {
+  const [activeTab, setActiveTab] = useState<string>("primary");
+  const serviceType = service.service_type || "general";
+  const config = service.type_config;
+  const npmPackage = config?.npm_package || `@${service.name.toLowerCase().replace(/\s+/g, "-")}`;
+  const serviceName = service.name.toLowerCase().replace(/\s+/g, "_");
+  const badgeUrl = `https://clarvia-api.onrender.com/api/badge/${service.id}`;
+
+  const cicdSnippet = `- uses: clarvia/aeo-check@v1
+  with:
+    url: ${service.url}
+    min-score: 70`;
+
+  let tabs: { id: string; label: string; content: string }[] = [];
+
+  if (serviceType === "mcp_server") {
+    const claudeDesktopSnippet = `{
+  "mcpServers": {
+    "${serviceName}": {
+      "command": "npx",
+      "args": ["${npmPackage}"]
+    }
+  }
+}`;
+    const langchainSnippet = `from langchain_mcp_adapters.client import MultiServerMCPClient
+
+client = MultiServerMCPClient({
+    "${serviceName}": {
+        "command": "npx",
+        "args": ["${npmPackage}"]
+    }
+})
+
+tools = await client.get_tools()`;
+    const badgeSnippet = `![AEO Score](${badgeUrl})`;
+
+    tabs = [
+      { id: "claude_desktop", label: "Claude Desktop", content: claudeDesktopSnippet },
+      { id: "langchain", label: "LangChain", content: langchainSnippet },
+      { id: "cicd", label: "CI/CD Gate", content: cicdSnippet },
+      { id: "badge", label: "Badge", content: badgeSnippet },
+    ];
+  } else if (serviceType === "api") {
+    const openaiToolsSnippet = `tools = [{
+  "type": "function",
+  "function": {
+    "name": "call_${serviceName}",
+    "description": "${service.description?.slice(0, 100) || `Call ${service.name} API`}",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "The query to send to ${service.name}"
+        }
+      },
+      "required": ["query"]
+    }
+  }
+}]`;
+    const badgeSnippet = `![AEO Score](${badgeUrl})`;
+
+    tabs = [
+      { id: "openai_tools", label: "OpenAI Tools", content: openaiToolsSnippet },
+      { id: "cicd", label: "CI/CD Gate", content: cicdSnippet },
+      { id: "badge", label: "Badge", content: badgeSnippet },
+    ];
+  } else {
+    tabs = [
+      { id: "cicd", label: "CI/CD Gate", content: cicdSnippet },
+    ];
+  }
+
+  if (tabs.length === 0) return null;
+
+  const activeTabData = tabs.find((t) => t.id === activeTab) || tabs[0];
+  const currentTab = activeTabData || tabs[0];
+
+  return (
+    <div className="glass-card rounded-2xl p-6">
+      <p className="text-xs text-muted uppercase tracking-wider font-medium mb-4">Integrate</p>
+
+      {/* Tab buttons */}
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+              (activeTab === tab.id || (activeTab === "primary" && tab.id === tabs[0].id))
+                ? "bg-accent/10 text-accent border-accent/30"
+                : "text-muted border-card-border hover:text-foreground hover:border-card-border/60"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Code block */}
+      <div className="relative group">
+        <pre className="bg-card-bg/80 rounded-xl p-4 text-xs font-mono text-foreground overflow-x-auto leading-relaxed">
+          {currentTab.content}
+        </pre>
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <CopyButton text={currentTab.content} />
+        </div>
+      </div>
+
+      {/* Badge preview */}
+      {currentTab.id === "badge" && (
+        <div className="mt-3 flex items-center gap-3">
+          <span className="text-xs text-muted">Preview:</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={badgeUrl}
+            alt="AEO Score Badge"
+            className="h-5"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ----- Main Page -----
 
 export default function ServiceDetailPage() {
@@ -602,6 +730,9 @@ export default function ServiceDetailPage() {
                 )}
               </div>
             )}
+
+            {/* Integrate Section */}
+            <IntegrateSection service={service} />
 
             {/* Scan History Sparkline */}
             {service.scan_history && service.scan_history.length > 1 && (

@@ -850,6 +850,34 @@ export default function GuidePage() {
           </Link>
         </div>
 
+        {/* Quick Start by Workflow */}
+        <div className="glass-card rounded-2xl p-6 space-y-3">
+          <p className="text-xs font-mono text-accent uppercase tracking-widest">Quick Start by Workflow</p>
+          <ul className="space-y-2">
+            {[
+              { icon: "🔍", label: "내 API 점수 알고 싶다", cta: "URL 스캔", href: "/" },
+              { icon: "🔄", label: "CI/CD에 게이팅 넣고 싶다", cta: "GitHub Actions 예제", href: "#quick-wins" },
+              { icon: "📛", label: "README 뱃지 달고 싶다", cta: "Badge 섹션", href: "/docs#badge" },
+              { icon: "🤖", label: "에이전트에 연결하고 싶다", cta: "LangChain/CrewAI 예제", href: "#agent-frameworks" },
+              { icon: "📋", label: "서비스 등록하고 싶다", cta: "등록하기", href: "/register" },
+            ].map(({ icon, label, cta, href }) => (
+              <li key={href}>
+                <Link
+                  href={href}
+                  className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-card-border/20 hover:border-accent/30 transition-all group"
+                >
+                  <span className="text-sm text-muted group-hover:text-foreground transition-colors">
+                    <span className="mr-2">{icon}</span>{label}
+                  </span>
+                  <span className="text-xs text-accent font-medium group-hover:translate-x-0.5 transition-transform shrink-0">
+                    {cta} &rarr;
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {/* Stack Selector */}
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-xs text-muted font-mono">Your stack:</span>
@@ -871,7 +899,7 @@ export default function GuidePage() {
         </div>
 
         {/* Agent Framework Integration */}
-        <div className="space-y-4">
+        <div id="agent-frameworks" className="space-y-4">
           <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
             Agent Framework Integration
           </h2>
@@ -964,7 +992,7 @@ api_evaluator = Agent(
         </div>
 
         {/* Quick Wins */}
-        <div className="space-y-4">
+        <div id="quick-wins" className="space-y-4">
           <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
             Quick Wins (Under 2 Hours)
           </h2>

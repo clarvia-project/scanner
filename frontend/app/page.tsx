@@ -624,6 +624,77 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ─── Use Cases ─── */}
+        <section className="relative px-6 py-16 bg-gradient-section">
+          <div className="divider-gradient absolute top-0 left-0 right-0" />
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10">
+              <p className="text-xs font-mono text-accent uppercase tracking-widest mb-3">Use Cases</p>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight">What do you want to do?</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Developer */}
+              <a
+                href="#scan"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const el = document.querySelector<HTMLInputElement>("input[type='text']");
+                  if (el) { el.focus(); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+                }}
+                className="glass-card rounded-2xl p-6 flex flex-col gap-4 hover:border-accent/40 transition-all group cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-lg">
+                  {"</>"}
+                </div>
+                <div>
+                  <p className="text-xs font-mono text-accent uppercase tracking-widest mb-1">Developer</p>
+                  <h3 className="text-base font-semibold mb-2">Check my API&apos;s AEO score</h3>
+                  <p className="text-xs text-muted leading-relaxed">See how agent-ready your service is and get actionable fixes in seconds.</p>
+                </div>
+                <span className="text-xs text-accent font-medium group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
+                  Start scanning &rarr;
+                </span>
+              </a>
+
+              {/* DevOps */}
+              <Link
+                href="/docs#badge"
+                className="glass-card rounded-2xl p-6 flex flex-col gap-4 hover:border-accent/40 transition-all group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 text-lg">
+                  {"[ ]"}
+                </div>
+                <div>
+                  <p className="text-xs font-mono text-accent uppercase tracking-widest mb-1">DevOps</p>
+                  <h3 className="text-base font-semibold mb-2">Add an AEO badge to README</h3>
+                  <p className="text-xs text-muted leading-relaxed">Show your agent-readiness score on every commit. CI/CD gate included.</p>
+                </div>
+                <span className="text-xs text-accent font-medium group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
+                  Get badge &rarr;
+                </span>
+              </Link>
+
+              {/* AI Builder */}
+              <Link
+                href="/leaderboard?type=mcp"
+                className="glass-card rounded-2xl p-6 flex flex-col gap-4 hover:border-accent/40 transition-all group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-lg">
+                  {"AI"}
+                </div>
+                <div>
+                  <p className="text-xs font-mono text-accent uppercase tracking-widest mb-1">AI Builder</p>
+                  <h3 className="text-base font-semibold mb-2">Connect MCP tools to agents</h3>
+                  <p className="text-xs text-muted leading-relaxed">Browse top-ranked MCP services ready to plug into LangChain, CrewAI, and more.</p>
+                </div>
+                <span className="text-xs text-accent font-medium group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
+                  Explore leaderboard &rarr;
+                </span>
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* ─── Why AEO Matters ─── */}
         <section className="relative px-6 py-24 bg-gradient-section">
           <div className="divider-gradient absolute top-0 left-0 right-0" />

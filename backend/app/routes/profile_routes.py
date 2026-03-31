@@ -411,8 +411,42 @@ async def list_profiles(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
-    """List registered profiles with optional filters."""
-    results = list(_profiles.values())
+    """List registered profiles with optional filters.
+
+    Merges directly registered profiles with the prebuilt services index so
+    that category/search filters work across all known tools (not just the
+    small set registered via POST /profiles).
+    """
+    # Start with directly registered profiles
+    registered = list(_profiles.values())
+
+    # Merge index services (leaderboard data) — deduplicate by URL
+    seen_urls: set[str] = {p.get("url", "") for p in registered}
+    try:
+        from .index_routes import _services, _ensure_loaded
+        _ensure_loaded()
+        for svc in _services:
+            url = svc.get("url", "")
+            if url and url not in seen_urls:
+                seen_urls.add(url)
+                registered.append({
+                    "profile_id": svc.get("scan_id", ""),
+                    "name": svc.get("service_name", ""),
+                    "url": url,
+                    "description": svc.get("description", ""),
+                    "category": svc.get("category", "other"),
+                    "service_type": svc.get("service_type", "general"),
+                    "type_config": None,
+                    "clarvia_score": svc.get("clarvia_score"),
+                    "status": "scanned",
+                    "tags": svc.get("tags", []),
+                    "agents_json_valid": None,
+                    "created_at": svc.get("scanned_at"),
+                })
+    except Exception as e:
+        logger.debug("Index merge skipped in list_profiles: %s", e)
+
+    results = registered
 
     if category:
         results = [p for p in results if p.get("category") == category]

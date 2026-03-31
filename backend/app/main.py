@@ -472,7 +472,9 @@ async def _api_v1_compat(request: Request, path: str):
     return _RedirectResponse(url=target, status_code=307)
 
 
-app.include_router(_compat_router)
+# NOTE: _compat_router is registered at the bottom of this file (after all
+# native /api/v1/* routes) so that FastAPI matches the direct routes first
+# and the catch-all redirect only fires for paths not natively handled.
 
 # MCP server (Streamable HTTP transport for Smithery / remote MCP clients)
 try:
@@ -4136,4 +4138,11 @@ async def _stop_monitor():
             await _monitor.stop()
     except Exception:
         pass
+
+
+# ---------------------------------------------------------------------------
+# Register compat router LAST so native /api/v1/* routes (keys, ci/check, etc.)
+# take precedence over the catch-all redirect to /v1/*.
+# ---------------------------------------------------------------------------
+app.include_router(_compat_router)
 
