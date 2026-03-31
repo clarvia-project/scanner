@@ -1,0 +1,58 @@
+name: 4개 사업 운영 모니터
+
+on:
+  schedule:
+    # 헬스체크 — 15분마다 (UTC)
+    - cron: '*/15 * * * *'
+    # 아침 브리핑 — 매일 08:00 KST = 23:00 UTC (전날)
+    - cron: '0 23 * * *'
+    # 저녁 요약 — 매일 22:00 KST = 13:00 UTC
+    - cron: '0 13 * * *'
+  # 수동 실행 가능
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '실행 모드 (health / morning / evening / test)'
+        required: true
+        default: 'health'
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 실행 모드 결정
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ github.event.inputs.mode }}" >> $GITHUB_OUTPUT
+          else
+            # cron 시각으로 모드 자동 결정
+            HOUR=$(date -u +%H)
+            MIN=$(date -u +%M)
+            if [ "$HOUR" = "23" ] && [ "$MIN" -lt "15" ]; then
+              echo "mode=morning" >> $GITHUB_OUTPUT
+            elif [ "$HOUR" = "13" ] && [ "$MIN" -lt "15" ]; then
+              echo "mode=evening" >> $GITHUB_OUTPUT
+            else
+              echo "mode=health" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: 모니터 실행
+        env:
+          TELEGRAM_TOKEN:  ${{ secrets.OPS_TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT:   ${{ secrets.OPS_TELEGRAM_CHAT }}
+          RENDER_API_KEY:  ${{ secrets.RENDER_API_KEY }}
+        run: |
+          cd tools/ops-monitor
+          python3 run.py ${{ steps.mode.outputs.mode }}
