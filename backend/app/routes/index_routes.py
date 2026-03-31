@@ -2749,6 +2749,18 @@ async def generate_report(scan_id: str, response: Response):
                 "high": osv.get("high", 0),
                 "status": "clean" if osv["total_vulns"] == 0 else "has_vulnerabilities"
             }
+        if enrichment.get("npm_quality"):
+            nq = enrichment["npm_quality"]
+            if nq.get("available"):
+                report["npm_quality"] = {
+                    "quality": nq.get("quality", 0),
+                    "popularity": nq.get("popularity", 0),
+                    "maintenance": nq.get("maintenance", 0),
+                    "final_score": nq.get("final_score", 0),
+                    "has_tests": nq.get("has_tests", False),
+                    "dependents_count": nq.get("dependents_count", 0),
+                    "downloads_count": nq.get("downloads_count", 0),
+                }
     except Exception as e:
         logger.debug("Report enrichment failed: %s", e)
 

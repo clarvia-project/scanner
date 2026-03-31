@@ -93,6 +93,37 @@ def score_mcp_server(entry: dict[str, Any]) -> dict[str, Any]:
 
     total = tq_score + ir_score + dd_score + te_score
 
+    # npm quality bonus: tools with strong npm ecosystem signals get a boost.
+    # npms.io scores (0-1 each) for quality, popularity, maintenance.
+    # This bonus is capped at 8 points and is additive to the base score.
+    npm_quality_data = entry.get("npm_quality", {})
+    npm_bonus = 0
+    if npm_quality_data.get("available"):
+        nq = npm_quality_data.get("quality", 0)
+        np = npm_quality_data.get("popularity", 0)
+        nm = npm_quality_data.get("maintenance", 0)
+        # Quality: well-tested, documented code (0-3)
+        if nq >= 0.8:
+            npm_bonus += 3
+        elif nq >= 0.6:
+            npm_bonus += 2
+        elif nq >= 0.4:
+            npm_bonus += 1
+        # Popularity: community adoption (0-3)
+        if np >= 0.5:
+            npm_bonus += 3
+        elif np >= 0.2:
+            npm_bonus += 2
+        elif np >= 0.05:
+            npm_bonus += 1
+        # Maintenance: actively maintained (0-2)
+        if nm >= 0.7:
+            npm_bonus += 2
+        elif nm >= 0.4:
+            npm_bonus += 1
+        npm_bonus = min(npm_bonus, 8)
+    total += npm_bonus
+
     # Completeness bonus: servers strong across multiple dimensions
     # deserve extra credit. This compensates for tool_quality being
     # structurally limited when registry data lacks tools metadata.

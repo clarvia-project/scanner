@@ -130,6 +130,65 @@ async def enrich_npm(package_name: str) -> dict[str, Any]:
     return result
 
 
+# --- npms.io quality scores ---------------------------------------------------
+
+async def enrich_npm_quality(package_name: str) -> dict[str, Any]:
+    """Fetch quality/popularity/maintenance scores from the npms.io API.
+
+    npms.io provides normalized 0-1 scores across three dimensions:
+    - quality: code quality, testing, documentation, dependency health
+    - popularity: download counts, dependents, community engagement
+    - maintenance: release frequency, commit recency, issue responsiveness
+
+    These are used to boost AEO scores for tools with strong npm presence.
+    """
+    cache_key = f"npms:{package_name}"
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
+
+    result: dict[str, Any] = {
+        "source": "npms.io",
+        "package": package_name,
+        "quality": 0.0,
+        "popularity": 0.0,
+        "maintenance": 0.0,
+        "final_score": 0.0,
+        "available": False,
+    }
+
+    data = await _fetch_json(f"https://api.npms.io/v2/package/{package_name}")
+    if data and "score" in data:
+        score_data = data["score"]
+        detail = score_data.get("detail", {})
+        result["quality"] = round(detail.get("quality", 0.0), 4)
+        result["popularity"] = round(detail.get("popularity", 0.0), 4)
+        result["maintenance"] = round(detail.get("maintenance", 0.0), 4)
+        result["final_score"] = round(score_data.get("final", 0.0), 4)
+        result["available"] = True
+
+        # Extract useful evaluation metadata
+        evaluation = data.get("evaluation", {})
+        if evaluation:
+            q = evaluation.get("quality", {})
+            result["has_tests"] = q.get("tests", 0) > 0
+            result["has_changelog"] = q.get("changelog", 0) > 0
+            result["carefulness"] = round(q.get("carefulness", 0), 3)
+            result["health"] = round(q.get("health", 0), 3)
+
+            p = evaluation.get("popularity", {})
+            result["downloads_count"] = p.get("downloadsCount", 0)
+            result["dependents_count"] = p.get("dependentsCount", 0)
+            result["community_interest"] = p.get("communityInterest", 0)
+
+            m = evaluation.get("maintenance", {})
+            result["releases_frequency"] = round(m.get("releasesFrequency", 0), 3)
+            result["commits_frequency"] = round(m.get("commitsFrequency", 0), 3)
+
+    _set_cache(cache_key, result)
+    return result
+
+
 # --- PyPI ---------------------------------------------------------------------
 
 async def enrich_pypi(package_name: str) -> dict[str, Any]:
@@ -300,6 +359,7 @@ async def enrich_tool(tool_data: dict[str, Any]) -> dict[str, Any]:
         npm_pkg = name.lower().replace(" ", "-")
     if npm_pkg:
         tasks.append(("npm", enrich_npm(npm_pkg)))
+        tasks.append(("npm_quality", enrich_npm_quality(npm_pkg)))
 
     # GitHub enrichment
     github_url = ""

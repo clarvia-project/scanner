@@ -82,21 +82,40 @@ def classify_agent(user_agent: str) -> Optional[str]:
 # ---------------------------------------------------------------------------
 
 def _traffic_file() -> Path:
-    """Find or create the agent-traffic JSONL file."""
-    candidates = [
-        Path("/app/data/agent-traffic.jsonl"),
-    ]
+    """Find or create the agent-traffic JSONL file.
+
+    Priority:
+    1. /app/data/ (Render production)
+    2. Project root data/ (scanner/data/ — where marketing_attribution.py reads)
+    3. Fallback to backend/data/
+    """
+    # Render production
+    render_path = Path("/app/data/agent-traffic.jsonl")
+    if render_path.parent.exists():
+        return render_path
+
+    # Project root data/ — consistent with marketing_attribution.py
     base = Path(__file__).resolve()
-    for i in range(2, 6):
-        try:
-            candidates.append(base.parents[i] / "data" / "agent-traffic.jsonl")
-        except IndexError:
-            break
-    for p in candidates:
-        if p.parent.exists():
-            p.parent.mkdir(parents=True, exist_ok=True)
-            return p
-    return candidates[0]
+    # base is .../scanner/backend/app/routes/agent_traffic_routes.py
+    # parents[3] = .../scanner/ (project root)
+    try:
+        project_root_data = base.parents[3] / "data" / "agent-traffic.jsonl"
+        if project_root_data.parent.exists():
+            project_root_data.parent.mkdir(parents=True, exist_ok=True)
+            return project_root_data
+    except IndexError:
+        pass
+
+    # Fallback: backend/data/
+    try:
+        backend_data = base.parents[2] / "data" / "agent-traffic.jsonl"
+        if backend_data.parent.exists():
+            backend_data.parent.mkdir(parents=True, exist_ok=True)
+            return backend_data
+    except IndexError:
+        pass
+
+    return render_path
 
 
 def _extract_tool_slug(path: str) -> Optional[str]:

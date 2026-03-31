@@ -93,4 +93,50 @@ def score_tool(tool: dict[str, Any]) -> dict[str, Any]:
         tool_type = "general"
 
     result["tool_type"] = tool_type
+
+    # ── npm quality bonus (applies to all tool types) ──
+    # If npm_quality enrichment data is present, boost the score.
+    # npms.io provides 0-1 normalized scores for quality, popularity, maintenance.
+    # This rewards tools with strong npm ecosystem presence regardless of type.
+    npm_quality_data = tool.get("npm_quality", {})
+    if npm_quality_data.get("available") and tool_type != "mcp_server":
+        # MCP servers handle npm bonus in their own scorer
+        nq = npm_quality_data.get("quality", 0)
+        np_ = npm_quality_data.get("popularity", 0)
+        nm = npm_quality_data.get("maintenance", 0)
+        bonus = 0
+        # Quality: well-tested, documented code (0-3)
+        if nq >= 0.8:
+            bonus += 3
+        elif nq >= 0.6:
+            bonus += 2
+        elif nq >= 0.4:
+            bonus += 1
+        # Popularity: community adoption (0-3)
+        if np_ >= 0.5:
+            bonus += 3
+        elif np_ >= 0.2:
+            bonus += 2
+        elif np_ >= 0.05:
+            bonus += 1
+        # Maintenance: actively maintained (0-2)
+        if nm >= 0.7:
+            bonus += 2
+        elif nm >= 0.4:
+            bonus += 1
+        bonus = min(bonus, 8)
+        result["clarvia_score"] = min(100, result["clarvia_score"] + bonus)
+        # Re-calculate rating after bonus
+        total = result["clarvia_score"]
+        if total >= 80:
+            result["rating"] = "Excellent"
+        elif total >= 60:
+            result["rating"] = "Strong"
+        elif total >= 35:
+            result["rating"] = "Moderate"
+        elif total >= 20:
+            result["rating"] = "Basic"
+        else:
+            result["rating"] = "Low"
+
     return result
