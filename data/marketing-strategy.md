@@ -1566,3 +1566,106 @@ This cycle: +410K new stars
 2. PyPI clarvia-langchain v0.2.0 (needs owner to set PYPI_TOKEN secret)
 3. Smithery description empty — wait for re-crawl (smithery.yaml fixed)
 4. PulseMCP submission — requires browser with cookie support (blocks CLI access)
+
+## Field Notes — 2026-03-31 (Cycle 14)
+
+### New GitHub Outreach Wave: 6 repos, 19,971+ combined stars
+
+Targeted fresh awesome lists and agent platform repos not previously reached:
+
+1. **0xNyk/awesome-hermes-agent** (630⭐, Issue #10) — Hermes agent resource list. Clarvia pitched as AEO scorer for tool selection.
+2. **slavakurilyak/awesome-ai-agents** (1330⭐, Issue #178) — Curated AI agents list. Discovery + scoring platform.
+3. **hyp1231/awesome-llm-powered-agent** (2213⭐, Issue #102) — LLM-powered agent resources. Quality scoring angle.
+4. **kyrolabs/awesome-langchain** (9254⭐, Issue #267) — LangChain resources. Pitched clarvia-langchain integration.
+5. **e2b-dev/awesome-ai-sdks** (1157⭐, Issue #118) — AI SDK list by e2b. Tool quality scoring SDK angle.
+6. **AgentOps-AI/agentops** (5417⭐, Issue #1318) — Proposed direct integration: enrich AgentOps sessions with AEO scores.
+
+### Cumulative Outreach Summary
+- Cycle 12: ~750K combined stars (badge outreach)
+- Cycle 13: ~1M+ combined stars (massive issue wave to 30+ repos)
+- Cycle 14: +20K new stars
+- **Key miss**: PulseMCP requires browser auth (CLI blocked). Manual submission needed by user.
+
+### Next Priorities
+1. **PulseMCP manual submission** — Requires browser login. User should visit https://www.pulsemcp.com/submit
+2. **PyPI clarvia-langchain v0.2.0** — Needs PYPI_TOKEN env secret from owner
+3. **Official MCP Registry** — Needs manual browser auth under clarvia-project account
+4. **GitHub Action Marketplace** — clarvia-project/clarvia-action v1.0.2 released but not listed on Marketplace (requires manual toggle in repo settings)
+5. **AgentOps integration** — Monitor response, could be high-value partnership
+
+## Field Notes — 2026-03-31 (Cycle 15)
+
+### Sitemap Coverage Fixed: 16,000 → 27,887 tools
+
+Critical discovery: sitemaps 17-28 were generated locally but not committed/pushed.
+The live site only had 57% of tools indexed for AI crawlers. Fixed and deployed.
+
+**Impact**: GPTBot, ClaudeBot, PerplexityBot can now crawl all 27,887 tool profiles.
+Expect AI search indexing improvement in 2-4 weeks.
+
+### Competitive Landscape Update
+
+| Platform | Servers | Focus |
+|----------|---------|-------|
+| **Clarvia** | **27,888** | AEO (agent experience) |
+| MCP Scoreboard (mcpscoreboard.com) | 26,402 | Quality scores, security |
+| MCP Scorecard (mcp-scorecard.ai) | 4,484 | Trust scores |
+
+Clarvia has the most indexed tools. Key differentiator: AEO scoring vs security/quality.
+mcpscoreboard.com has a REST API — potential integration/comparison opportunity.
+
+### Badge Outreach — Cycle 15 Additions
+
+- **makenotion/notion-mcp-server** (4,134⭐, Issue #247) — AEO 23/100
+- **redis/mcp-redis** (466⭐, Issue #121) — AEO 40/100
+
+Note: GitHub account still flagged (422 on search). Badge outreach still working via direct issue creation.
+
+### AI Search Status
+
+- Clarvia appears in AI search results **via Glama** (not directly)
+- clarvia.art JSON-LD live on homepage, compare, and category pages
+- sitemap now covers 27,887 tools (was 16,000)
+- Next: submit updated sitemap to Google Search Console + Bing Webmaster
+
+### npm Growth
+
+- Weekly downloads: 714 (was 232 when strategy written — 3x growth in 5 days)
+- Daily downloads today: 119
+
+### Blockers Requiring Manual Action (User)
+
+1. **PulseMCP submission** → https://www.pulsemcp.com/submit
+2. **Official MCP Registry** → manual browser auth for mcp-publisher
+3. **PyPI clarvia-langchain v0.2.0** → set PYPI_TOKEN in scanner repo secrets
+4. **GitHub Action Marketplace** → toggle "List on Marketplace" in clarvia-action repo settings
+
+## Field Notes — 2026-03-31 (Cycle 15)
+
+### Activities Completed
+- **WangRongsheng/awesome-LLM-resources** (7,971⭐) — Issue #71 submitted to MCP工具聚合 section
+- **Smithery Registry** — Issue #18 submitted to smithery-ai/registry (submission request)
+- **Sitemaps 17-28 deployed** — All 27,887 tools now live in sitemaps (was 16,000)
+- **GitHub repo description updated** — "15,400+" → "27,000+" across clarvia-project/scanner
+- **Glama listing stale** — Shows "15,400+" description, but GitHub now updated; expect re-crawl in 48h
+
+### Competitor Intel: mcpscoreboard.com
+- **Scope**: 28,272 servers (vs Clarvia's 27,877 tools) — similar coverage
+- **Features**: Letter grades (A+-F), CLI tool, REST API, free
+- **Differentiators for Clarvia**:
+  1. MCP-native: agents can use Clarvia directly as an MCP tool (mcpscoreboard has no MCP server)
+  2. AEO as branded concept — "Agent Engine Optimization" is more actionable than letter grades
+  3. Broader scope: APIs + CLIs + Skills, not just MCP servers
+  4. Improvement recommendations — not just scoring, but guidance
+  5. Alternatives finder — find better tools when current one scores low
+
+### Sitemap Coverage: Confirmed 100%
+- 27,887 URLs across 28 sitemaps (sitemaps 17-28 were previously missing from Vercel)
+- All tool pages indexed: 16K with tool_* IDs + 11.8K with scn_* IDs
+
+### Next Priorities
+1. **Smithery listing**: smithery-ai/registry Issue #18 — wait for their team to review
+2. **WangRongsheng PR**: wait for maintainer review of Issue #71
+3. **Glama description**: will auto-update when they re-crawl GitHub
+4. **PulseMCP**: still P0, requires web form submission (browser interaction needed)
+5. **npm search ranking**: clarvia-mcp-server not showing in "mcp quality scanner" searches — need more downloads/installs to boost ranking
