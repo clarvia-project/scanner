@@ -2,7 +2,7 @@
 
 # clarvia-mcp-server
 
-**MCP server for Clarvia — search, evaluate, and gate-check 15,400+ AI agent tools**
+**MCP server for Clarvia — search, evaluate, and gate-check 15,243+ AI agent tools**
 
 [![npm version](https://img.shields.io/npm/v/clarvia-mcp-server?color=cb3837)](https://www.npmjs.com/package/clarvia-mcp-server)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -107,7 +107,7 @@ Add to VS Code settings or `.cline/mcp.json`:
 
 | Tool | Description |
 |------|-------------|
-| `search_services` | Search 15,400+ indexed AI tools (MCP servers, APIs, CLIs) by keyword, category, or minimum AEO score |
+| `search_services` | Search 15,243+ indexed AI tools (MCP servers, APIs, CLIs) by keyword, category, or minimum AEO score |
 | `list_categories` | List all tool categories in the directory with service counts |
 | `get_stats` | Get platform-wide statistics — total services, average scores, distributions |
 
