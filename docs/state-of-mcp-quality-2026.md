@@ -1,14 +1,14 @@
 # State of MCP Quality: Q1 2026 Analysis
 
 > **Published**: March 2026 | **Last Updated**: April 1, 2026
-> **Source**: Clarvia AEO Scanner — 27,879 tools analyzed
+> **Source**: Clarvia AEO Scanner — 27,886+ tools analyzed
 > **Methodology**: AEO (Agent Engine Optimization) scoring across 5 dimensions
 
 ---
 
 ## Executive Summary
 
-Clarvia has analyzed **27,879 MCP servers and AI agent tools** indexed across major registries as of Q1 2026. The data reveals a stark quality gap: **only 0.3% of tools achieve Excellent AEO scores**, while **33% remain in the Weak tier** — meaning most AI agents fail to discover or effectively use the majority of available tools.
+Clarvia has analyzed **27,886+ MCP servers and AI agent tools** indexed across major registries as of Q1 2026. The data reveals a stark quality gap: **only 0.3% of tools achieve Excellent AEO scores**, while **33% remain in the Weak tier** — meaning most AI agents fail to discover or effectively use the majority of available tools.
 
 ---
 

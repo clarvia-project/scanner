@@ -304,7 +304,7 @@ app = FastAPI(
         "**Authentication:** Most read endpoints are public. Write operations require "
         "an API key via `X-API-Key` header."
     ),
-    version="1.2.0",
+    version="1.2.3",
     docs_url="/docs",
     redoc_url="/redoc",
     # Always expose OpenAPI spec — required for AEO discoverability
