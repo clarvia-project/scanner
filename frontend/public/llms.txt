@@ -86,3 +86,11 @@ GET /api/scan/{scan_id}/sarif
 - Trending: https://clarvia.art/trending
 - Methodology: https://clarvia.art/methodology
 - Guide: https://clarvia.art/guide
+
+## Research & Data
+
+### State of MCP Quality Q1 2026
+- Full report: https://raw.githubusercontent.com/clarvia-project/scanner/main/docs/state-of-mcp-quality-2026.md
+- Key finding: Only 0.3% of 27,852 MCP tools achieve Excellent AEO scores
+- Average score: 45.0/100 across all categories
+- Cloud tools lead (66.6/100); AI tools ironically lag (39.2/100)

@@ -10,7 +10,7 @@ MCP Server: npx clarvia-mcp-server
 
 ## 1. What is Clarvia?
 
-Clarvia indexes 15,400+ tools across the AI agent ecosystem and scores each one on a 0-100 scale (the "Clarvia Score") for agent readiness. Think of it as "Lighthouse for AI agents" — instead of measuring web performance, it measures how well a service can be found and used by autonomous AI agents.
+Clarvia indexes 27,000+ tools across the AI agent ecosystem and scores each one on a 0-100 scale (the "Clarvia Score") for agent readiness. Think of it as "Lighthouse for AI agents" — instead of measuring web performance, it measures how well a service can be found and used by autonomous AI agents.
 
 ### What is AEO?
 
@@ -688,3 +688,33 @@ All responses include:
 - Improvement Guide: https://clarvia.art/guide
 - llms.txt: https://clarvia.art/llms.txt
 - agents.json: https://clarvia-api.onrender.com/.well-known/agents.json
+- State of MCP Quality Report: https://raw.githubusercontent.com/clarvia-project/scanner/main/docs/state-of-mcp-quality-2026.md
+
+---
+
+## 8. Research Data (Q1 2026)
+
+### MCP Ecosystem Quality Analysis
+Total tools analyzed: 27,852
+Average AEO score: 45.0/100
+Score distribution:
+- Excellent (80-100): 91 tools (0.3%)
+- Strong (60-79): 4,739 tools (17.0%)
+- Moderate (40-59): 13,827 tools (49.6%)
+- Weak (0-39): 9,195 tools (33.0%)
+
+### Top Categories by AEO Score
+1. Cloud (AWS/GCP/Azure/Cloudflare): 66.6/100 avg — 1,084 tools
+2. Telecom: 62.7/100 avg — 59 tools
+3. Collaboration: 64.2/100 avg — 33 tools
+4. Analytics: 61.8/100 avg — 368 tools
+5. Location: 54.1/100 avg — 45 tools
+
+### Lowest Categories by AEO Score
+1. Storage: 33.7/100 avg — 33 tools
+2. Other/Uncategorized: 33.7/100 avg — 7,708 tools
+3. AI/ML Tools: 39.2/100 avg — 3,248 tools
+4. Design: 42.9/100 avg — 76 tools
+5. Education: 43.4/100 avg — 34 tools
+
+Key insight: AI-native tools have the second-lowest AEO score (39.2), meaning tools built for AI workflows are themselves poorly discoverable by AI agents.
