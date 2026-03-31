@@ -767,6 +767,12 @@ class SortOrder(str, Enum):
     recent = "recent"
 
 
+class FieldsLevel(str, Enum):
+    minimal = "minimal"    # name, url, score, category, type, scan_id only (~70% smaller)
+    standard = "standard"  # current _compact_service output (default, backward-compat)
+    full = "full"          # standard + dimensions sub_factors + recommendations
+
+
 # ---------------------------------------------------------------------------
 # Collected tools (loaded on demand when source=all)
 # ---------------------------------------------------------------------------
@@ -1107,6 +1113,22 @@ def _generate_install_hint(tool: dict) -> str | None:
     return None
 
 
+def _minimal_service(s: dict[str, Any]) -> dict[str, Any]:
+    """Return minimal representation — name, score, category only.
+
+    Inspired by Claude Code's Deferred Discovery pattern: send lightweight
+    references first, load full details on demand via /v1/services/{id}.
+    """
+    return {
+        "name": s["service_name"],
+        "url": s.get("url", ""),
+        "clarvia_score": s["clarvia_score"],
+        "category": s.get("category", "other"),
+        "service_type": s.get("service_type", "general"),
+        "scan_id": s["scan_id"],
+    }
+
+
 def _compact_service(s: dict[str, Any]) -> dict[str, Any]:
     """Return a compact representation (no sub_factors)."""
     dims = s.get("dimensions", {})
@@ -1180,17 +1202,14 @@ def _build_connection_info(service_type: str, type_config: dict) -> dict[str, An
 
 
 def _full_service(s: dict[str, Any]) -> dict[str, Any]:
-    """Return a full representation with sub_factors."""
-    return {
-        "name": s["service_name"],
-        "url": s["url"],
-        "category": s.get("category", "other"),
-        "clarvia_score": s["clarvia_score"],
-        "rating": s["rating"],
-        "dimensions": s.get("dimensions", {}),
-        "scan_id": s["scan_id"],
-        "last_scanned": s.get("scanned_at"),
-    }
+    """Return a full representation with sub_factors and recommendations."""
+    result = _compact_service(s)
+    # Override dimensions with full sub_factors (compact only has scores)
+    result["dimensions"] = s.get("dimensions", {})
+    result["recommendations"] = s.get("recommendations", [])
+    result["tags"] = s.get("tags", [])
+    result["methodology"] = s.get("methodology")
+    return result
 
 
 def _total_tool_count() -> int:
@@ -1222,6 +1241,7 @@ async def list_services(
     source: str | None = Query("all", description="'all' (default) includes 27k+ tools, 'scanned' for prebuilt only, 'collected' for collected only"),
     added_after: str | None = Query(None, description="ISO date filter, e.g. 2026-03-20"),
     similar_to: str | None = Query(None, description="Find tools similar to this scan_id"),
+    fields: FieldsLevel = Query(FieldsLevel.standard, description="Response detail level: minimal (6 fields, ~70%% smaller), standard (default), full (with sub_factors)"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
@@ -1347,7 +1367,15 @@ async def list_services(
 
     page = filtered[offset : offset + limit]
 
-    services_out = [_compact_service(s) for s in page]
+    # Deferred Discovery: serialize based on fields level
+    if fields == FieldsLevel.minimal:
+        serializer = _minimal_service
+    elif fields == FieldsLevel.full:
+        serializer = _full_service
+    else:
+        serializer = _compact_service
+
+    services_out = [serializer(s) for s in page]
     # Inject rank for score_desc ordering
     if sort == SortOrder.score_desc:
         for i, svc in enumerate(services_out):
@@ -1381,6 +1409,7 @@ async def search_alias(
     source: str | None = Query(None),
     added_after: str | None = Query(None),
     similar_to: str | None = Query(None),
+    fields: FieldsLevel = Query(FieldsLevel.standard),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
@@ -1390,7 +1419,7 @@ async def search_alias(
         response=response, category=category, service_type=service_type,
         q=effective_q, min_score=min_score, max_score=None, sort=sort,
         source=source, added_after=added_after, similar_to=similar_to,
-        limit=limit, offset=offset,
+        fields=fields, limit=limit, offset=offset,
     )
 
 

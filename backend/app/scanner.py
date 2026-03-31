@@ -1,9 +1,16 @@
-"""Main scan orchestrator — async 5-phase pipeline."""
+"""Main scan orchestrator — async 5-phase pipeline.
+
+Hook System (inspired by Claude Code's PreToolUse/PostToolUse pattern):
+    Register callbacks for PreScan, PostScan, ScanFailed events.
+    Hooks can modify scan config, block scans, or process results.
+"""
 
 import asyncio
 import hashlib
 import time
 from datetime import datetime, timezone
+from enum import Enum
+from typing import Any, Callable, Awaitable
 from urllib.parse import urlparse
 
 import aiohttp
@@ -18,6 +25,66 @@ import logging
 from .config import settings
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Hook System — PreScan / PostScan / ScanFailed
+# ---------------------------------------------------------------------------
+
+class ScanEvent(str, Enum):
+    PRE_SCAN = "PreScan"
+    POST_SCAN = "PostScan"
+    SCAN_FAILED = "ScanFailed"
+
+
+# Hook function signature: async (event, data) -> data | None
+# Return modified data to override, None to pass through.
+# Raise ValueError to block (PreScan only).
+ScanHookFn = Callable[[ScanEvent, dict[str, Any]], Awaitable[dict[str, Any] | None]]
+
+_hooks: dict[ScanEvent, list[ScanHookFn]] = {
+    ScanEvent.PRE_SCAN: [],
+    ScanEvent.POST_SCAN: [],
+    ScanEvent.SCAN_FAILED: [],
+}
+
+
+def register_hook(event: ScanEvent, fn: ScanHookFn) -> None:
+    """Register a hook for a scan event."""
+    _hooks[event].append(fn)
+    logger.info("Registered %s hook: %s", event.value, fn.__name__)
+
+
+def unregister_hook(event: ScanEvent, fn: ScanHookFn) -> None:
+    """Remove a previously registered hook."""
+    try:
+        _hooks[event].remove(fn)
+    except ValueError:
+        pass
+
+
+async def _fire_hooks(event: ScanEvent, data: dict[str, Any]) -> dict[str, Any]:
+    """Execute all hooks for an event.
+
+    Priority rules (Claude Code pattern: deny > ask > allow):
+    - PreScan: any hook raising ValueError blocks the scan
+    - PostScan/ScanFailed: hooks process results, errors are non-blocking
+    """
+    for hook_fn in _hooks[event]:
+        try:
+            result = await asyncio.wait_for(hook_fn(event, data), timeout=10.0)
+            if result is not None:
+                data = result  # Hook modified the data
+        except ValueError:
+            # PreScan blocking — re-raise to caller
+            if event == ScanEvent.PRE_SCAN:
+                raise
+            logger.warning("Hook %s raised ValueError on %s (non-blocking)", hook_fn.__name__, event.value)
+        except asyncio.TimeoutError:
+            logger.warning("Hook %s timed out on %s", hook_fn.__name__, event.value)
+        except Exception as e:
+            logger.warning("Hook %s failed on %s: %s", hook_fn.__name__, event.value, e)
+    return data
 from .models import (
     DimensionResult,
     OnchainBonusResult,
@@ -466,9 +533,19 @@ async def run_scan(
                       Never stored or logged.
 
     Concurrency is limited to MAX_CONCURRENT_SCANS via a semaphore.
+    Hook events: PreScan (before), PostScan (after), ScanFailed (on error).
     """
     async with _scan_semaphore:
-        return await _run_scan_inner(url, auth_headers)
+        try:
+            return await _run_scan_inner(url, auth_headers)
+        except Exception as e:
+            # --- ScanFailed hooks (non-blocking) ---
+            await _fire_hooks(ScanEvent.SCAN_FAILED, {
+                "url": url,
+                "error": str(e),
+                "error_type": type(e).__name__,
+            })
+            raise
 
 
 async def _run_scan_inner(
@@ -483,6 +560,22 @@ async def _run_scan_inner(
     url = _normalize_url(url)
     _validate_scan_url(url)
     scan_id = _generate_scan_id(url)
+
+    # --- PreScan hooks ---
+    # Hooks can modify scan config or block the scan (raise ValueError)
+    try:
+        pre_data = await _fire_hooks(ScanEvent.PRE_SCAN, {
+            "url": url,
+            "scan_id": scan_id,
+            "auth_headers": auth_headers,
+            "authenticated": authenticated,
+        })
+        # Allow hooks to modify URL (e.g. rewrite, add params)
+        url = pre_data.get("url", url)
+        auth_headers = pre_data.get("auth_headers", auth_headers)
+    except ValueError as e:
+        logger.info("Scan blocked by PreScan hook: %s", e)
+        raise
     service_name = _extract_service_name(url)
 
     # Build session headers — include auth headers if provided
@@ -672,6 +765,17 @@ async def _run_scan_inner(
         scan_duration_ms=elapsed_ms,
         authenticated_scan=authenticated,
     )
+
+    # --- PostScan hooks ---
+    elapsed_ms_hook = int((time.monotonic() - start_time) * 1000)
+    await _fire_hooks(ScanEvent.POST_SCAN, {
+        "url": url,
+        "scan_id": scan_id,
+        "clarvia_score": clarvia_score,
+        "rating": _get_rating(clarvia_score),
+        "elapsed_ms": elapsed_ms_hook,
+        "response": response,
+    })
 
     # Cache result (evict oldest entries if at capacity)
     if len(_scan_cache) >= CACHE_MAX_SIZE:
