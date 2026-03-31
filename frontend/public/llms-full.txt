@@ -10,7 +10,7 @@ MCP Server: npx clarvia-mcp-server
 
 ## 1. What is Clarvia?
 
-Clarvia indexes 27,000+ tools across the AI agent ecosystem and scores each one on a 0-100 scale (the "Clarvia Score") for agent readiness. Think of it as "Lighthouse for AI agents" — instead of measuring web performance, it measures how well a service can be found and used by autonomous AI agents.
+Clarvia indexes 27,871+ tools across the AI agent ecosystem and scores each one on a 0-100 scale (the "Clarvia Score") for agent readiness. Think of it as "Lighthouse for AI agents" — instead of measuring web performance, it measures how well a service can be found and used by autonomous AI agents.
 
 ### What is AEO?
 

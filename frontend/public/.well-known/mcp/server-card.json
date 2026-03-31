@@ -1,7 +1,7 @@
 {
   "name": "clarvia",
   "version": "1.1.1",
-  "description": "AI Agent Tool Directory & AEO Scanner — Search 15,400+ tools scored for agent readiness. 16 tools for searching, scanning, gate-checking, comparing, trending, and AEO optimization.",
+  "description": "AI Agent Tool Directory & AEO Scanner — Search 27,871+ tools scored for agent readiness. 16 tools for searching, scanning, gate-checking, comparing, trending, and AEO optimization.",
   "homepage": "https://clarvia.art",
   "logo": "https://clarvia.art/logos/clarvia-icon.svg",
   "publisher": {
@@ -22,7 +22,7 @@
   "tools": [
     {
       "name": "search_services",
-      "description": "Search 15,400+ AI agent tools by keyword, category, or AEO score"
+      "description": "Search 27,871+ AI agent tools by keyword, category, or AEO score"
     },
     {
       "name": "scan_service",
