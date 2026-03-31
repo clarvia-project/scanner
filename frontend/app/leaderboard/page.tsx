@@ -150,6 +150,80 @@ const SUB_FACTOR_FILTERS: SubFactorFilter[] = [
   },
 ];
 
+// ----- API response normalizer -----
+// The /v1/services API returns a different shape than local prebuilt-scans.json.
+// Normalize API items so the rest of the page can treat them as ScanEntry.
+
+interface ApiServiceItem {
+  name?: string;
+  service_name?: string;
+  url: string;
+  clarvia_score: number;
+  rating: string;
+  scan_id: string;
+  profile_id?: string;
+  service_type?: string;
+  dimensions?: Record<string, number | Dimension>;
+}
+
+// Map from API flat dimension keys to ScanEntry nested dimension keys
+const DIM_KEY_MAP: Record<string, keyof ScanEntry["dimensions"]> = {
+  tool_quality: "api_accessibility",
+  integration_readiness: "data_structuring",
+  documentation_discovery: "agent_compatibility",
+  trust_ecosystem: "trust_signals",
+};
+
+const DIM_MAX: Record<keyof ScanEntry["dimensions"], number> = {
+  api_accessibility: 30,
+  data_structuring: 25,
+  agent_compatibility: 25,
+  trust_signals: 20,
+};
+
+function normalizeToScanEntry(item: ApiServiceItem): ScanEntry {
+  const dims = item.dimensions ?? {};
+
+  // Check if dimensions are already in the nested ScanEntry format
+  const firstVal = Object.values(dims)[0];
+  if (firstVal && typeof firstVal === "object" && "score" in firstVal) {
+    // Already ScanEntry-shaped
+    return {
+      ...item,
+      service_name: item.service_name || item.name || "",
+      scanned_at: "",
+      dimensions: item.dimensions as ScanEntry["dimensions"],
+    } as ScanEntry;
+  }
+
+  // Flat format from API — convert to nested
+  const normalized: Record<string, Dimension> = {
+    api_accessibility: { score: 0, max: DIM_MAX.api_accessibility },
+    data_structuring: { score: 0, max: DIM_MAX.data_structuring },
+    agent_compatibility: { score: 0, max: DIM_MAX.agent_compatibility },
+    trust_signals: { score: 0, max: DIM_MAX.trust_signals },
+  };
+
+  for (const [apiKey, scanKey] of Object.entries(DIM_KEY_MAP)) {
+    const val = dims[apiKey];
+    if (typeof val === "number") {
+      normalized[scanKey] = { score: val, max: DIM_MAX[scanKey] };
+    }
+  }
+
+  return {
+    scan_id: item.scan_id,
+    profile_id: item.profile_id,
+    url: item.url,
+    service_name: item.service_name || item.name || "",
+    service_type: item.service_type,
+    clarvia_score: item.clarvia_score,
+    rating: item.rating,
+    scanned_at: "",
+    dimensions: normalized as ScanEntry["dimensions"],
+  };
+}
+
 // ----- Helpers -----
 
 function scoreColor(score: number): string {
@@ -427,7 +501,9 @@ export default function LeaderboardPage() {
       .then((res) => (res.ok ? res.json() : { services: [] }))
       .then((json) => {
         // API returns {services: [...], pagination: {...}}, not a raw array
-        const items = Array.isArray(json) ? json : (json.services || json.items || []);
+        const raw = Array.isArray(json) ? json : (json.services || json.items || []);
+        // Normalize API shape to ScanEntry (different dimension format, name vs service_name)
+        const items: ScanEntry[] = raw.map(normalizeToScanEntry);
         setTypeFilteredData(items);
       })
       .catch(() => setTypeFilteredData([]))
