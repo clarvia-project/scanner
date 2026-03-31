@@ -1,6 +1,6 @@
 {
   "name": "clarvia-mcp-server",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "mcpName": "io.github.digitamaz/clarvia",
   "description": "Before calling any external API or MCP, use Clarvia to check if it's agent-ready. Search 15,000+ indexed tools, gate-check compatibility scores, find alternatives, and audit dependencies \u2014 the standard tool-validation layer for autonomous agents.",
   "type": "module",
@@ -68,7 +68,15 @@
     "cursor-mcp",
     "langchain",
     "autogpt",
-    "babyagi"
+    "babyagi",
+    "mcp-scanner",
+    "api-quality",
+    "tool-quality",
+    "agent-readiness",
+    "mcp-quality",
+    "mcp-discovery",
+    "api-readiness",
+    "ai-tool-scoring"
   ],
   "author": "Clarvia",
   "homepage": "https://clarvia.art",
