@@ -1,6 +1,6 @@
 {
   "name": "Clarvia",
-  "description": "AI agent tool discovery and AEO (AI Engine Optimization) scoring platform. Discover, score, and validate 27,886+ MCP servers and AI tools for agent readiness.",
+  "description": "AI agent tool discovery and AEO (AI Engine Optimization) scoring platform. Discover, score, and validate 27,894+ MCP servers and AI tools for agent readiness.",
   "url": "https://clarvia-api.onrender.com",
   "version": "2.0.0",
   "documentationUrl": "https://clarvia-api.onrender.com/docs",
@@ -15,7 +15,7 @@
     {
       "id": "tool-discovery",
       "name": "Tool Discovery",
-      "description": "Search and discover 27,886+ indexed MCP servers and AI tools by name, category, or capability. Returns compatibility scores and metadata.",
+      "description": "Search and discover 27,894+ indexed MCP servers and AI tools by name, category, or capability. Returns compatibility scores and metadata.",
       "tags": ["mcp", "tool-discovery", "search", "ai-tools"],
       "inputModes": ["text", "application/json"],
       "outputModes": ["application/json"]

@@ -2,7 +2,7 @@
   "schema_version": "v1",
   "name_for_human": "Clarvia",
   "name_for_model": "clarvia",
-  "description_for_human": "Find the best tools for your AI agent — 27,886+ MCP servers, APIs, and CLIs scored for agent readiness.",
+  "description_for_human": "Find the best tools for your AI agent — 27,894+ MCP servers, APIs, and CLIs scored for agent readiness.",
   "description_for_model": "Search and discover AI agent tools. Use this to find MCP servers, APIs, CLI tools, and skills. Supports intent-based search (describe what you want to do) and keyword search. Returns tools with Clarvia scores (0-100) indicating agent readiness.",
   "auth": {
     "type": "none"
