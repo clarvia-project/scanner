@@ -221,7 +221,7 @@ export default function LandingPage() {
   >("idle");
   const [topScores, setTopScores] = useState<TopScore[]>(FALLBACK_SCORES);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [stats, setStats] = useState({ totalTools: 15000, totalScored: 15000, avgScore: 48, categories: 20, excellentCount: 83 });
+  const [stats, setStats] = useState({ totalTools: 27886, totalScored: 27886, avgScore: 45, categories: 20, excellentCount: 91 });
   const [altQuery, setAltQuery] = useState("");
   const [altLoading, setAltLoading] = useState(false);
   const [altResults, setAltResults] = useState<{
