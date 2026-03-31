@@ -1,6 +1,6 @@
 # clarvia-langchain
 
-LangChain integration for [Clarvia](https://clarvia.com) AEO (Agent Experience Optimization) scoring. Gate your LangChain tool calls based on how agent-friendly the target service is.
+LangChain integration for [Clarvia](https://clarvia.art) AEO (Agent Experience Optimization) scoring. Gate your LangChain tool calls based on how agent-friendly the target service is.
 
 ## Installation
 
