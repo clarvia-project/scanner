@@ -1,14 +1,14 @@
 # State of MCP Quality: Q1 2026 Analysis
 
-> **Published**: March 2026  
-> **Source**: Clarvia AEO Scanner — 27,852 tools analyzed  
+> **Published**: March 2026 | **Last Updated**: April 1, 2026
+> **Source**: Clarvia AEO Scanner — 27,879 tools analyzed
 > **Methodology**: AEO (Agent Engine Optimization) scoring across 5 dimensions
 
 ---
 
 ## Executive Summary
 
-Clarvia has analyzed **27,852 MCP servers and AI agent tools** indexed across major registries as of Q1 2026. The data reveals a stark quality gap: **only 0.3% of tools achieve Excellent AEO scores**, while **33% remain in the Weak tier** — meaning most AI agents fail to discover or effectively use the majority of available tools.
+Clarvia has analyzed **27,879 MCP servers and AI agent tools** indexed across major registries as of Q1 2026. The data reveals a stark quality gap: **only 0.3% of tools achieve Excellent AEO scores**, while **33% remain in the Weak tier** — meaning most AI agents fail to discover or effectively use the majority of available tools.
 
 ---
 
@@ -89,7 +89,7 @@ The **MCP category** itself (1,258 tools explicitly classified as MCP servers) a
 
 ## Key Benchmarks: Developer Tools Category
 
-With 9,626 tools, **Developer Tools** is the largest category (34.5% of all indexed tools). Average score: 49.8/100.
+With 9,630 tools, **Developer Tools** is the largest category (34.5% of all indexed tools). Average score: 49.8/100.
 
 **What the best developer tool MCP servers have in common:**
 1. Published OpenAPI 3.1 specification at `/openapi.json`
