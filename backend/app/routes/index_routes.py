@@ -1568,6 +1568,7 @@ async def score_quick(
 async def leaderboard(
     response: Response,
     category: str | None = Query(None),
+    type: str | None = Query(None, description="Filter by service_type, e.g. 'mcp' or 'api'"),
     limit: int = Query(20, ge=1, le=100),
 ):
     """Top-scoring services leaderboard."""
@@ -1581,6 +1582,8 @@ async def leaderboard(
     filtered = pool
     if category:
         filtered = _filter_by_category(filtered, category)
+    if type:
+        filtered = [s for s in filtered if s.get("service_type", "").lower() == type.lower()]
     filtered = sorted(filtered, key=lambda s: s.get("clarvia_score", 0), reverse=True)[:limit]
     return {
         "leaderboard": [

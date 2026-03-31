@@ -990,16 +990,26 @@ async def api_v1_score(url: str):
 
 
 @app.get("/api/v1/leaderboard", tags=["index"])
-async def api_v1_leaderboard(category: str | None = None, limit: int = 50, offset: int = 0):
+async def api_v1_leaderboard(category: str | None = None, type: str | None = None, limit: int = 50, offset: int = 0):
     """Get the Clarvia leaderboard.
 
     Usage: GET /api/v1/leaderboard?category=ai_llm&limit=10
+           GET /api/v1/leaderboard?type=mcp&limit=5
+           GET /api/v1/leaderboard?type=api&limit=5
     """
     from .routes import index_routes as _idx
     _idx._ensure_loaded()
     scans = list(_idx._services)  # Copy to avoid mutating shared data
     if not scans:
         return {"services": [], "total": 0}
+
+    # Filter by category
+    if category:
+        scans = [s for s in scans if s.get("category", "").lower() == category.lower()]
+
+    # Filter by service_type (e.g. "mcp", "api")
+    if type:
+        scans = [s for s in scans if s.get("service_type", "").lower() == type.lower()]
 
     # Sort by score descending
     scans.sort(key=lambda s: s.get("clarvia_score", 0), reverse=True)
@@ -1195,6 +1205,13 @@ async def api_v1_compare(urls: str):
                 summary += f" Key advantage: better {dim_label} ({top_dim_score} vs {second_dim_score})."
             if loser_label:
                 summary += f" {second['name']} leads in {loser_label}."
+
+    # If no service could be scored at all, return 400
+    if not scored:
+        raise HTTPException(
+            status_code=400,
+            detail="Both services failed to scan. Please verify the URLs are accessible.",
+        )
 
     # Strip internal "source" field from final output
     output_services = []
@@ -4263,6 +4280,53 @@ async def _stop_monitor():
     except Exception:
         pass
 
+
+# ---------------------------------------------------------------------------
+# Native /api/v1/* aliases — must be registered BEFORE compat_router catch-all
+# so these return 200 directly instead of 307 redirecting to /v1/*.
+# ---------------------------------------------------------------------------
+
+# Bug fix A: GET/POST /api/v1/recommend — was 307 → /v1/recommend
+from .routes.recommend_routes import (
+    recommend_tools as _recommend_post,
+    recommend_tools_get as _recommend_get,
+)
+
+_alias_router = _APIRouter(prefix="/api/v1", tags=["alias"])
+_alias_router.add_api_route(
+    "/recommend",
+    _recommend_get,
+    methods=["GET"],
+    include_in_schema=False,
+)
+_alias_router.add_api_route(
+    "/recommend",
+    _recommend_post,
+    methods=["POST"],
+    include_in_schema=False,
+)
+
+# Bug fix B: GET /api/v1/scan/{scan_id} — was 307 → /v1/scan/{scan_id} (404)
+# Actual route lives at /api/scan/{scan_id}; add /api/v1/ alias here.
+from .scanner import get_cached_scan as _get_cached_scan
+
+@_alias_router.get("/scan/{scan_id}", include_in_schema=False)
+async def _api_v1_get_scan(scan_id: str):
+    """Alias: /api/v1/scan/{scan_id} → same logic as /api/scan/{scan_id}."""
+    result = _get_cached_scan(scan_id)
+    if result is None:
+        if _supabase_client:
+            try:
+                from .services.supabase_client import get_scan_from_db
+                result = await get_scan_from_db(scan_id)
+                if result:
+                    return result
+            except Exception as e:
+                logger.warning("Supabase lookup failed: %s", e)
+        raise HTTPException(status_code=404, detail="Scan not found or expired")
+    return result
+
+app.include_router(_alias_router)
 
 # ---------------------------------------------------------------------------
 # Register compat router LAST so native /api/v1/* routes (keys, ci/check, etc.)

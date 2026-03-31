@@ -510,9 +510,13 @@ async def _run_scan_inner(
                 url,
                 timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
                 allow_redirects=True,
+                max_redirects=20,
                 ssl=ssl_ctx,
             ):
                 pass
+        except aiohttp.TooManyRedirects:
+            # Site uses many redirects (e.g. Airtable, Notion) — treat as reachable
+            logger.info("TooManyRedirects for %s — treating as reachable and continuing scan", url)
         except aiohttp.ClientConnectorSSLError:
             logger.warning("SSL verification failed for %s, retrying without SSL verification", url)
             ssl_ctx = False  # fall back for remaining requests
@@ -521,9 +525,12 @@ async def _run_scan_inner(
                     url,
                     timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
                     allow_redirects=True,
+                    max_redirects=20,
                     ssl=ssl_ctx,
                 ):
                     pass
+            except aiohttp.TooManyRedirects:
+                logger.info("TooManyRedirects (SSL fallback) for %s — treating as reachable", url)
             except Exception as e:
                 raise ValueError(f"URL unreachable: {url} — {type(e).__name__}")
         except Exception:
@@ -532,9 +539,12 @@ async def _run_scan_inner(
                     url,
                     timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
                     allow_redirects=True,
+                    max_redirects=20,
                     ssl=ssl_ctx,
                 ):
                     pass
+            except aiohttp.TooManyRedirects:
+                logger.info("TooManyRedirects (GET fallback) for %s — treating as reachable", url)
             except aiohttp.ClientConnectorSSLError:
                 logger.warning("SSL verification failed for %s, retrying without SSL verification", url)
                 ssl_ctx = False
@@ -543,9 +553,12 @@ async def _run_scan_inner(
                         url,
                         timeout=aiohttp.ClientTimeout(total=settings.http_timeout),
                         allow_redirects=True,
+                        max_redirects=20,
                         ssl=ssl_ctx,
                     ):
                         pass
+                except aiohttp.TooManyRedirects:
+                    logger.info("TooManyRedirects (GET+SSL fallback) for %s — treating as reachable", url)
                 except Exception as e:
                     raise ValueError(f"URL unreachable: {url} — {type(e).__name__}")
             except Exception as e:
