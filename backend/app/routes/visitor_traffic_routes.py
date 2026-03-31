@@ -292,18 +292,10 @@ def cleanup_old_visitor_traffic(max_age_days: int = 90) -> int:
 # Middleware
 # ---------------------------------------------------------------------------
 
-# Render.com proxy IPs — reuse the same logic as middleware.py
-_TRUSTED_PROXY_PREFIXES = ("10.", "172.16.", "192.168.", "127.")
-
-
 def _get_client_ip(request: Request) -> str:
-    """Extract client IP, trusting X-Forwarded-For only from known proxies."""
-    real_ip = request.client.host if request.client else "unknown"
-    if any(real_ip.startswith(p) for p in _TRUSTED_PROXY_PREFIXES) or real_ip == "::1":
-        forwarded = request.headers.get("x-forwarded-for")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-    return real_ip
+    """Extract client IP using the centralized proxy-safe implementation."""
+    from ..middleware import get_client_ip
+    return get_client_ip(request)
 
 
 class VisitorTrafficMiddleware(BaseHTTPMiddleware):

@@ -70,14 +70,9 @@ _webhook_reg_store: dict[str, _WebhookRateLimitEntry] = defaultdict(_WebhookRate
 
 
 def _get_request_ip(request: Request) -> str:
-    """Extract client IP, respecting trusted proxy headers."""
-    real_ip = request.client.host if request.client else "unknown"
-    trusted_prefixes = ("10.", "172.16.", "192.168.", "127.")
-    if any(real_ip.startswith(p) for p in trusted_prefixes) or real_ip == "::1":
-        forwarded = request.headers.get("x-forwarded-for")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-    return real_ip
+    """Extract client IP using the centralized proxy-safe implementation."""
+    from ..middleware import get_client_ip
+    return get_client_ip(request)
 
 
 def _check_webhook_rate_limit(request: Request) -> None:

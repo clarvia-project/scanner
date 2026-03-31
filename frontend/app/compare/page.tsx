@@ -565,11 +565,10 @@ function CompareContent() {
       return null;
     })();
 
-    const legacyQuery = paramIds
-      ? `ids=${encodeURIComponent(paramIds)}`
-      : paramNames
-      ? `names=${encodeURIComponent(paramNames)}`
-      : "";
+    // Parse ids into an array for individual fetching
+    const idList = paramIds
+      ? paramIds.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
 
     if (urlPair) {
       // New URL-scan mode
@@ -593,14 +592,57 @@ function CompareContent() {
           setErrorMsg(`Failed to compare: ${msg}`);
           setMode("error");
         });
-    } else if (legacyQuery) {
-      // Legacy DB mode
+    } else if (idList.length > 0) {
+      // Fetch each tool individually by ID via /v1/services/{id}
       setMode("loading");
       setCompareResult(null);
       setLegacyTools([]);
       setErrorMsg("");
 
-      fetch(`${API_BASE}/v1/compare?${legacyQuery}`)
+      Promise.all(
+        idList.map((id) =>
+          fetch(`${API_BASE}/v1/services/${encodeURIComponent(id)}`)
+            .then((r) => {
+              if (!r.ok) throw new Error(`Failed to fetch tool ${id}`);
+              return r.json();
+            })
+            .then((tool): ComparedTool => ({
+              name: tool.name ?? "",
+              url: tool.url ?? "",
+              description: tool.description,
+              category: tool.category ?? "",
+              service_type: tool.service_type ?? "general",
+              clarvia_score: tool.clarvia_score ?? 0,
+              rating: tool.rating ?? scoreRating(tool.clarvia_score ?? 0),
+              dimensions: Object.fromEntries(
+                Object.entries(tool.dimensions ?? {}).map(([k, v]) => [
+                  k,
+                  typeof v === "number" ? v : (v as { score: number }).score ?? 0,
+                ])
+              ),
+              scan_id: tool.scan_id ?? id,
+              connection_info: tool.connection_info ?? tool.type_config,
+              last_scanned: tool.last_scanned,
+            }))
+        )
+      )
+        .then((tools) => {
+          setLegacyTools(tools);
+          setMode("legacy-result");
+        })
+        .catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : "Unknown error";
+          setErrorMsg(`Failed to load tools: ${msg}`);
+          setMode("error");
+        });
+    } else if (paramNames) {
+      // Legacy DB mode by names
+      setMode("loading");
+      setCompareResult(null);
+      setLegacyTools([]);
+      setErrorMsg("");
+
+      fetch(`${API_BASE}/v1/compare?names=${encodeURIComponent(paramNames)}`)
         .then((r) => r.json())
         .then((data) => {
           setLegacyTools((data.services as ComparedTool[]) || []);

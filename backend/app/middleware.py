@@ -54,21 +54,53 @@ class RateLimitEntry:
 _rate_store: TTLCache = TTLCache(maxsize=5_000, ttl=WINDOW_SECONDS * 2)
 
 
-# Render.com proxy IPs — only trust X-Forwarded-For from known proxies
-_TRUSTED_PROXY_PREFIXES = ("10.", "172.16.", "192.168.", "127.")
+# Private IP prefixes — used to identify proxy hops vs real clients
+_PRIVATE_IP_PREFIXES = ("10.", "172.16.", "172.17.", "172.18.", "172.19.",
+                        "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
+                        "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
+                        "172.30.", "172.31.", "192.168.", "127.", "::1")
 
 
-def _get_client_ip(request: Request) -> str:
-    """Extract client IP. Only trust X-Forwarded-For from known proxy IPs."""
+def _is_private_ip(ip: str) -> bool:
+    """Check if an IP address is private/loopback."""
+    return any(ip.startswith(p) for p in _PRIVATE_IP_PREFIXES) or ip in ("::1", "localhost", "unknown")
+
+
+def get_client_ip(request: Request) -> str:
+    """Extract client IP from a request behind Render.com's proxy.
+
+    Security: On Render, request.client.host is always a private IP (10.x.x.x)
+    because requests come through their load balancer. The load balancer APPENDS
+    the real client IP to X-Forwarded-For, so the rightmost non-private IP is
+    the one set by the trusted proxy — NOT the leftmost, which is attacker-controlled.
+
+    Chain example: X-Forwarded-For: <spoofed>, <real-client-ip>
+    An attacker can prepend arbitrary IPs, but cannot control what Render appends.
+
+    Algorithm: walk X-Forwarded-For from RIGHT to LEFT, return the first
+    non-private IP. This is the IP that Render's proxy observed as the
+    connecting client.
+    """
     real_ip = request.client.host if request.client else "unknown"
 
-    # Only trust forwarded header if request comes from a known proxy
-    if any(real_ip.startswith(p) for p in _TRUSTED_PROXY_PREFIXES) or real_ip == "::1":
+    # Only consult X-Forwarded-For if the direct connection is from a known proxy
+    if _is_private_ip(real_ip):
         forwarded = request.headers.get("x-forwarded-for")
         if forwarded:
-            return forwarded.split(",")[0].strip()
+            # Walk from right (proxy-appended) to left (client-prepended)
+            parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+            for ip in reversed(parts):
+                if not _is_private_ip(ip):
+                    return ip
+            # All IPs are private (e.g., internal-only traffic) — use leftmost
+            if parts:
+                return parts[0]
 
     return real_ip
+
+
+# Backwards-compatible alias used internally
+_get_client_ip = get_client_ip
 
 
 ENTERPRISE_LIMIT = 999999  # effectively unlimited
