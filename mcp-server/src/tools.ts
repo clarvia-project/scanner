@@ -24,7 +24,7 @@ export function registerTools(server: McpServer): void {
   // 1. search_services
   server.tool(
     "search_services",
-    "Search 15,400+ AI agent tools (MCP servers, APIs, CLIs) by keyword, category, or score. Use when you need to find the best tool for a specific task, compare alternatives, or check agent readiness. Returns Clarvia AEO scores (0-100) indicating how easily AI agents can discover and use each service.",
+    "Search 27,886+ AI agent tools (MCP servers, APIs, CLIs) by keyword, category, or score. Use when you need to find the best tool for a specific task, compare alternatives, or check agent readiness. Returns Clarvia AEO scores (0-100) indicating how easily AI agents can discover and use each service.",
     {
       query: z.string().optional().describe("Search keyword"),
       category: z.string().optional().describe("Filter by category"),
@@ -455,7 +455,7 @@ export function registerTools(server: McpServer): void {
   // clarvia_top_picks
   server.tool(
     "clarvia_top_picks",
-    "Get agent-verified top picks — only tools that scored Excellent (80+) out of 15,400+ scanned. These are the most agent-ready services in the ecosystem, curated by Clarvia's AEO scoring. Use when an agent asks 'what are the best tools?' or 'recommend verified tools'.",
+    "Get agent-verified top picks — only tools that scored Excellent (80+) out of 27,886+ scanned. These are the most agent-ready services in the ecosystem, curated by Clarvia's AEO scoring. Use when an agent asks 'what are the best tools?' or 'recommend verified tools'.",
     {
       category: z.string().optional().describe("Filter by category (e.g. 'ai', 'developer_tools', 'data')"),
       limit: z.number().min(1).max(100).optional().describe("Max results (default 50)"),
@@ -471,7 +471,7 @@ export function registerTools(server: McpServer): void {
                 ...result,
                 _meta: {
                   threshold: "Only tools scoring 80+ (Excellent) are included",
-                  total_scanned: "15,400+",
+                  total_scanned: "27,886+",
                   scoring: "Clarvia AEO Score — measures how easily AI agents can discover, connect, and use a service",
                 },
               }, null, 2),
