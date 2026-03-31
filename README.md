@@ -6,14 +6,14 @@
 
 **The AEO (Agent Engine Optimization) Standard for AI Agent Tools**
 
-Score, discover, and validate **15,400+ AI agent tools** for quality, accessibility, and agent-readiness.
+Score, discover, and validate **27,800+ AI agent tools** for quality, accessibility, and agent-readiness.
 
 [![npm version](https://img.shields.io/npm/v/clarvia-mcp-server?color=cb3837&label=npm)](https://www.npmjs.com/package/clarvia-mcp-server)
 [![npm downloads](https://img.shields.io/npm/dm/clarvia-mcp-server?color=blue)](https://www.npmjs.com/package/clarvia-mcp-server)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![MCP Tools](https://img.shields.io/badge/MCP_tools-16-6366f1)](https://clarvia.art)
 [![Python Tools](https://img.shields.io/badge/Python_tools-24-3776AB)](#python-mcp-server)
-[![Services Indexed](https://img.shields.io/badge/services_indexed-15%2C400%2B-22c55e)](#)
+[![Services Indexed](https://img.shields.io/badge/services_indexed-27%2C800%2B-22c55e)](#)
 [![API Endpoints](https://img.shields.io/badge/API_endpoints-110%2B-orange)](#rest-api)
 [![Website](https://img.shields.io/badge/web-clarvia.art-000?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0id2hpdGUiIHZpZXdCb3g9IjAgMCAxNiAxNiI+PGNpcmNsZSBjeD0iOCIgY3k9IjgiIHI9IjgiLz48L3N2Zz4=)](https://clarvia.art)
 
@@ -220,7 +220,7 @@ See [examples/](examples/) for ready-to-copy config files.
 
 | Tool | Description |
 |------|-------------|
-| `search_services` | Search 15,400+ indexed AI tools by keyword, category, or minimum AEO score |
+| `search_services` | Search 27,800+ indexed AI tools by keyword, category, or minimum AEO score |
 | `list_categories` | List all tool categories with service counts |
 | `get_stats` | Platform-wide statistics — total services, score distributions |
 
