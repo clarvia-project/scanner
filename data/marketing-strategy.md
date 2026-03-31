@@ -1669,3 +1669,46 @@ Note: GitHub account still flagged (422 on search). Badge outreach still working
 3. **Glama description**: will auto-update when they re-crawl GitHub
 4. **PulseMCP**: still P0, requires web form submission (browser interaction needed)
 5. **npm search ranking**: clarvia-mcp-server not showing in "mcp quality scanner" searches — need more downloads/installs to boost ranking
+
+
+## Field Notes — 2026-03-31 (Cycle 16)
+
+### New Directory Submissions
+
+| Directory | Format | Status | Notes |
+|-----------|--------|--------|-------|
+| **AlexMili/Awesome-MCP** | PR #63 | Open | Tools/Community section |
+| **pathintegral-institute/mcpm.sh** | PR #317 | Open | Added clarvia-aeo-scanner.json to registry |
+| **metorial/metorial-index** | Issue #16 | Open | server.yaml format submission |
+| **Ultimate-Agent-Directory** | Issue #69 | Open | ST Specialized Tools section |
+
+### mcpm.sh — Key Opportunity
+
+MCPM is an actively-used MCP package manager (Homebrew, pip installable). Adding Clarvia to their registry means:
+- `mcpm search aeo` → finds Clarvia
+- `mcpm install clarvia-mcp-server` works directly
+- Discovery via CLI, not just web — reaches developers who use CLI tooling
+
+### npm Downloads Stable at 714/week
+
+3x growth from baseline (232) confirmed. Sustained not spiked.
+Daily download rate: ~119/day. No regression despite no new npm publish today.
+
+### Directory Coverage Map (Updated)
+
+Done:
+- ✅ mcp.so — listed
+- ✅ Glama.ai — listed (stale description, auto-update pending)
+- ✅ LobeHub — listed (5 installs)
+- ✅ Smithery — issue submitted
+- ✅ toolsdk-ai/toolsdk — issue submitted
+- ✅ AlexMili/Awesome-MCP — PR submitted
+- ✅ pathintegral-institute/mcpm.sh — PR submitted
+- ✅ metorial-index — issue submitted
+- ✅ Ultimate-Agent-Directory — issue submitted
+
+Pending (requires manual/browser):
+- ❌ PulseMCP — web-only submission form
+- ❌ Official MCP Registry — browser auth needed
+- ❌ cursor.directory — Vercel security blocks automation
+
