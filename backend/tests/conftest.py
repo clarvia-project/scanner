@@ -19,3 +19,11 @@ os.environ.setdefault("SCANNER_STRIPE_SECRET_KEY", "")
 # pydantic-settings reads from .env file, not just os.environ
 from app.config import settings as _settings
 TEST_ADMIN_API_KEY = _settings.admin_api_key
+
+
+# ---------------------------------------------------------------------------
+# Markers
+# ---------------------------------------------------------------------------
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "slow: marks tests that load large data files (deselect with -m 'not slow')")
