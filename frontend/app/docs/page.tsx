@@ -660,9 +660,6 @@ function SideNav({ sections, activeSection }: { sections: Section[]; activeSecti
       <a href="#versioning" className={`block text-xs px-3 py-1.5 rounded transition-colors ${activeSection === "versioning" ? "text-foreground bg-white/5" : "text-muted hover:text-foreground"}`}>
         API Versioning
       </a>
-      <a href="#cicd" className={`block text-xs px-3 py-1.5 rounded transition-colors ${activeSection === "cicd" ? "text-foreground bg-white/5" : "text-muted hover:text-foreground"}`}>
-        CI/CD Integration
-      </a>
       <a href="#errors" className={`block text-xs px-3 py-1.5 rounded transition-colors ${activeSection === "errors" ? "text-foreground bg-white/5" : "text-muted hover:text-foreground"}`}>
         Error Handling
       </a>
