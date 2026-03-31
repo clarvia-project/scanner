@@ -86,6 +86,8 @@ from .routes.analytics_routes import router as analytics_router  # noqa: E402
 from .routes.scan_history_routes import router as scan_history_router  # noqa: E402
 from .routes.agent_traffic_routes import router as agent_traffic_router  # noqa: E402
 from .routes.agent_traffic_routes import AgentTrafficMiddleware  # noqa: E402
+from .routes.visitor_traffic_routes import router as visitor_traffic_router  # noqa: E402
+from .routes.visitor_traffic_routes import VisitorTrafficMiddleware  # noqa: E402
 from .keepalive import keepalive_loop  # noqa: E402
 from .scanner import cleanup_cache, get_cached_scan, run_scan  # noqa: E402
 
@@ -107,8 +109,10 @@ async def _periodic_cache_cleanup():
             removed = cleanup_cache()
             from .middleware import cleanup_rate_store
             rate_removed = cleanup_rate_store()
-            if removed or rate_removed:
-                logger.info("Background cleanup: %d cache + %d rate-limit entries removed", removed, rate_removed)
+            from .routes.visitor_traffic_routes import cleanup_old_visitor_traffic
+            visitor_removed = cleanup_old_visitor_traffic(max_age_days=90)
+            if removed or rate_removed or visitor_removed:
+                logger.info("Background cleanup: %d cache + %d rate-limit + %d visitor-traffic entries removed", removed, rate_removed, visitor_removed)
         except Exception as e:
             logger.warning("Background cleanup error: %s", e)
 
@@ -310,6 +314,9 @@ app.add_middleware(
 # Analytics (outermost — sees all requests)
 app.add_middleware(AnalyticsMiddleware)
 
+# Visitor traffic (privacy-first: hashed IP + country only, 90-day retention)
+app.add_middleware(VisitorTrafficMiddleware)
+
 # Agent traffic measurement (detects AI agent user-agents, logs to JSONL)
 app.add_middleware(AgentTrafficMiddleware)
 
@@ -398,6 +405,7 @@ app.include_router(team_router)
 app.include_router(analytics_router)
 app.include_router(scan_history_router)
 app.include_router(agent_traffic_router)
+app.include_router(visitor_traffic_router)
 
 # ---------------------------------------------------------------------------
 # Compatibility: /api/v1/* → /v1/* (DESIGN.md specifies /api/v1/*)

@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     # Frontend URL (for Stripe redirects)
     frontend_url: str = "http://localhost:3000"
 
+    # IP hashing secret (for visitor traffic privacy — daily salt generation)
+    # If empty, a random ephemeral key is used (hashes won't persist across restarts)
+    ip_hash_secret: str = ""
+
     model_config = {
         "env_prefix": "SCANNER_",
         "env_file": ".env",

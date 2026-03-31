@@ -21,6 +21,22 @@ const SECTIONS = [
   {
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+      </svg>
+    ),
+    title: "Network & usage data",
+    items: [
+      "Hashed IP addresses only \u2014 original IPs are never stored (SHA-256 with daily rotating salt, preventing long-term tracking)",
+      "Country code derived from IP for regional analytics \u2014 no city or coordinate data",
+      "User-Agent string for compatibility and abuse detection",
+      "Request endpoint and timestamp for security monitoring",
+      "All network data is automatically deleted after 90 days",
+      "Purpose: service security, abuse prevention, anonymous usage statistics, and internal/external traffic classification",
+    ],
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
       </svg>
     ),
@@ -72,6 +88,39 @@ const SECTIONS = [
       "No third-party analytics (Google Analytics, etc.)",
       "No fingerprinting or cross-site tracking",
       "We respect Do Not Track headers",
+    ],
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    title: "Data retention",
+    items: [
+      "Hashed IP addresses and network logs: automatically deleted after 90 days",
+      "Scan results and reports: retained while the service is active",
+      "No data is kept longer than necessary for the stated purposes",
+      "You may request deletion of your data at any time by contacting us",
+    ],
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z" />
+      </svg>
+    ),
+    title: "Your rights (GDPR, CCPA & PIPA)",
+    items: [
+      "Right to access: request a copy of any data we hold about you",
+      "Right to deletion: request erasure of your data at any time",
+      "Right to rectification: correct inaccurate data we may hold",
+      "Right to data portability: receive your data in a machine-readable format",
+      "Right to opt-out of sale: we never sell personal data \u2014 this right is automatically satisfied",
+      "GDPR (EU/EEA): we process data under legitimate interest for service security; no consent required for non-PII hashed data",
+      "CCPA (California): we do not sell or share personal information as defined under CCPA",
+      "PIPA (South Korea): we comply with Korea\u2019s Personal Information Protection Act; hashed IPs are processed as pseudonymized data with minimal retention",
+      "To exercise any right, contact privacy@clarvia.art",
     ],
   },
 ];
@@ -153,6 +202,9 @@ export default function PrivacyPage() {
             </h1>
             <p className="text-lg text-muted max-w-xl mx-auto leading-relaxed">
               Clarvia is designed to scan public endpoints without collecting personal data. Here is exactly what we do and don&apos;t do.
+            </p>
+            <p className="text-xs text-muted/60 mt-4">
+              Last updated: March 31, 2026 &middot; Effective: March 31, 2026
             </p>
           </div>
         </section>
