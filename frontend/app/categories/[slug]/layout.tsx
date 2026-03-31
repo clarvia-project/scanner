@@ -15,7 +15,7 @@ interface CategoryData {
 
 async function fetchCategory(slug: string): Promise<CategoryData | null> {
   try {
-    const res = await fetch(`${API_BASE}/v1/categories/${slug}?limit=0`, {
+    const res = await fetch(`${API_BASE}/v1/categories/${slug}?limit=1`, {
       next: { revalidate: 3600 },
     });
     if (res.ok) return res.json();
