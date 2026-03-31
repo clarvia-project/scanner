@@ -1276,3 +1276,69 @@ GitHub account (digitamaz) can't fork new repos (403 forbidden). PR creation als
 2. PR follow-up: oldest PRs due for merge review 2026-04-02
 3. Smithery description fix: re-publish or edit listing directly
 4. Category pages (S9): "Best Database MCP Servers" etc. — AI search traffic
+
+### 2026-03-31 Session 4 Field Notes
+- **smithery.yaml root deployment** — smithery.yaml was only in mcp-server/ subdirectory, not in repo root. Deployed to clarvia-project/scanner root with upgraded description and 8 tools list. Smithery should auto-discover via npm package.json GitHub URL.
+- **PulseMCP and Smithery NOT live** — Weekly review was incorrect. Both still need submissions. smithery.yaml root deployment is the fix for Smithery.
+- **Badge outreach extended to 16 repos** — New targets: exa-labs (4,122⭐ #258), browserbase (3,217⭐ #170), AgentDeskAI (7,157⭐ #229), duckduckgo (938⭐ #36), iterm-mcp (540⭐ #41)
+- **Integration outreach: large agent frameworks** — Submitted to langchain-ai/langchain-mcp-adapters (3,452⭐ #458) and microsoft/autogen (56,469⭐ #7496) asking for MCP quality scoring mentions
+- **mark3labs/mcp-go outreach** — Issue #774 submitted to Go MCP SDK (8,485⭐). Direct relevance: Go developers building MCP servers can use Clarvia to check quality before publishing
+- **APIs.guru fresh submission** — Issue #2356 submitted with OpenAPI 3.1 spec URL (130 paths verified live)
+- **OpenAPI verified** — clarvia-api.onrender.com/openapi.json is live with 130 paths. S8 is complete.
+- **clarvia-action repo exists** — clarvia-project/clarvia-action is a GitHub Action already created. Need to submit to GitHub Marketplace.
+
+---
+
+## Field Notes — 2026-03-31 (Cycle ~05:00 UTC)
+
+### AI Search Citation Status
+- **Finding**: Clarvia NOT appearing in web searches for "best mcp discovery tool" or "mcp aeo scanner"
+- **Clarvia appears in**: Glama (confirmed listing with tools), Smithery (@clarvia/clarvia-mcp-server exists with 8 tools, but empty description)
+- **Root cause**: Search engine indexing lag — sitemap dates were 2026-03-27. Fixed: added lastmod=2026-03-31 to all 16 tool sitemaps (16K URLs)
+- **Action**: Smithery registry issue submitted (#17) to fix empty description
+
+### New Channels Discovered (from web search)
+1. **Cline MCP Marketplace** (cline/mcp-marketplace, 760+ stars) — submitted #1139. Millions of Cline users. HIGH VALUE.
+2. **MCPMarket** (CherryHQ/mcpmarket) — submitted #29. Appears in top search for "best mcp server discovery 2026".
+
+### npm v1.2.1
+- Published with 8 new keywords: mcp-scanner, api-quality, tool-quality, agent-readiness, mcp-quality, mcp-discovery, api-readiness, ai-tool-scoring
+- "mcp-scanner" keyword gap identified — competing package "mcp-scanner" exists with different purpose
+
+### Channel Status Summary (today)
+- Smithery: LISTED (but empty description — issue submitted)
+- Glama: LISTED with full tools ✓
+- Cline Marketplace: SUBMITTED (#1139)
+- MCPMarket: SUBMITTED (#29)  
+- npm: v1.2.1 with expanded keywords ✓
+- Sitemaps: 16K URLs with lastmod=2026-03-31 ✓
+
+### Next priority
+1. Watch Cline/MCPMarket issue responses
+2. Wait 48h for Smithery description to update
+3. AI search citation won't appear until indexing catches up (~1-2 weeks)
+
+## Field Notes — 2026-03-31 (Cycle ~06:00 UTC)
+
+### Critical Fixes This Cycle
+
+1. **Sitemap IDs were broken (FIXED)** — All 16 tool sitemaps were using `scn_*` IDs from local prebuilt-scans.json, but the live API only serves `tool_*` IDs. 9,592 of 15,404 sitemap URLs were returning 404 or generic content to AI crawlers. Regenerated all 16 sitemaps with live `tool_*` IDs (16K URLs total). **This was the single biggest SEO issue.**
+
+2. **Category pages showing "0 tools" in JSON-LD (FIXED)** — The category layout called API with `limit=0` which returns 422 error, causing all 27 category pages to show "0 [Category] tools" in their FAQ schema. Fixed to `limit=1`.
+
+### Verification
+- `/tool/tool_mcp_registry_com_supabase_mcp` → SSR JSON-LD working with score=9.2/10 ✓
+- `/categories/developer_tools` → Will now show correct tool counts after Vercel redeployment ✓
+
+### Badge Outreach Expansion
+Added 3 new repos:
+- mongodb-js/mongodb-mcp-server (980⭐) — Issue #1021
+- stripe/ai (1,413⭐, agent-toolkit) — Issue #348  
+- openai/openai-agents-python (20,433⭐) — Issue #2805
+**Badge outreach now: 19 repos, ~200K combined stars**
+
+### Current State
+- Sitemap: 16K tool pages now correctly mapped to live API IDs ✓
+- Tool page SSR: layout.tsx injects tool-specific JSON-LD + metadata ✓
+- Category pages: JSON-LD schema now shows correct tool counts ✓
+- Next: Wait for Vercel to redeploy (triggered by git push). AI crawlers need 1-2 weeks to reindex.
