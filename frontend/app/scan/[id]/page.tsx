@@ -1994,8 +1994,27 @@ export default function ScanResultPage() {
           return;
         }
 
+        // Fallback 1: Try /v1/services/{scan_id} (lightweight, for collected tools)
+        try {
+          const svcRes = await fetch(`${API_BASE}/v1/services/${scanId}`);
+          if (svcRes.ok) {
+            const svc = await svcRes.json();
+            // Normalize collected tool data to match ScanResult shape
+            if (!svc.dimensions && svc.scoring) svc.dimensions = svc.scoring;
+            if (!svc.service_name && svc.name) svc.service_name = svc.name;
+            if (!svc.clarvia_score && svc.score) svc.clarvia_score = svc.score;
+            if (!svc.top_recommendations) svc.top_recommendations = [];
+            if (!svc.scan_duration_ms) svc.scan_duration_ms = 0;
+            if (!svc.onchain_bonus) svc.onchain_bonus = { score: 0, max: 10, applicable: false, sub_factors: {} };
+            setResult(svc);
+            requestAnimationFrame(() => setAppeared(true));
+            return;
+          }
+        } catch { /* continue to next fallback */ }
+
+        // Fallback 2: prebuilt-scans.json (large file, last resort)
         const fallbackRes = await fetch("/data/prebuilt-scans.json");
-        if (!fallbackRes.ok) throw new Error(`Failed to load scan (${res.status})`);
+        if (!fallbackRes.ok) throw new Error(`Scan not found (${scanId})`);
         const scans: ScanResult[] = await fallbackRes.json();
         const match = scans.find((s) => s.scan_id === scanId);
         if (!match) throw new Error(`Scan not found (${scanId})`);
