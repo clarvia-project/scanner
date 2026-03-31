@@ -1240,3 +1240,39 @@ GitHub account (digitamaz) can't fork new repos (403 forbidden). PR creation als
 - Weekly downloads: 595 (was 232 at strategy creation — +156%)
 - Today: 10 downloads
 - Target: 1,000/week by end of April
+
+## Field Notes (2026-03-31 Run 4 - ~04:00 UTC)
+
+### Key Activities This Cycle
+1. **Sitemap freshness (R4)** — Updated sitemap.xml lastmod from 2026-03-27 to 2026-03-31. Committed + pushed to GitHub. AI crawlers (Perplexity, GPTBot) check lastmod for freshness signals.
+2. **Badge outreach (S14)** — 2 new high-star repos:
+   - wonderwhy-er/DesktopCommanderMCP (5,815⭐) — Issue #407
+   - tavily-ai/tavily-mcp (1,603⭐) — Issue #140
+3. **Awesome-LLM-resources submission (R5)** — Issue #70 to WangRongsheng/awesome-LLM-resources (7,963⭐). Repo has a dedicated MCP tools aggregator section — high fit.
+4. **Weekly growth review (R8)** — Created data/weekly-review-2026-03-31.md covering full week 1 metrics.
+5. **API analytics verified** — 6 searches in 7 days (weather, mcp quality scanner, aeo, clarvia). Low but expected at this stage.
+
+### Badge Outreach Cumulative (now 11 repos, ~63K combined stars)
+- exa-labs/exa-mcp-server (4,118⭐) — Issue #254
+- mendableai/firecrawl-mcp-server (5,902⭐) — Issue #198
+- AgentDeskAI/browser-tools-mcp (7,156⭐) — Issue #227
+- blazickjp/arxiv-mcp-server (2,448⭐) — Issue #75
+- github/github-mcp-server (28,401⭐) — Issue #2274
+- supabase-community/supabase-mcp (2,566⭐) — Issue #248
+- cloudflare/mcp-server-cloudflare (3,576⭐) — Issue #338
+- modelcontextprotocol/servers (82,000⭐) — Issue #3763
+- microsoft/playwright-mcp (30,000⭐) — Issue #1501 
+- wonderwhy-er/DesktopCommanderMCP (5,815⭐) — Issue #407
+- tavily-ai/tavily-mcp (1,603⭐) — Issue #140
+- **Total: 11 repos, ~173K combined stars**
+
+### Discoveries This Cycle
+- Smithery registry API shows `"description":""` — smithery.yaml has description but it's not being picked up. May need re-publish via `smithery mcp publish` again.
+- MCPHub.tools domain returning 404 — likely down permanently (no alternative found)
+- WangRongsheng/awesome-LLM-resources has explicit MCP tools aggregator section listing smithery, mcp.so, pulsemcp, glama — high-value listing opportunity
+
+### Next Cycle Priorities
+1. Follow up on badge outreach acceptance (check issue #254, #198, #227 after 7 days from submission)
+2. PR follow-up: oldest PRs due for merge review 2026-04-02
+3. Smithery description fix: re-publish or edit listing directly
+4. Category pages (S9): "Best Database MCP Servers" etc. — AI search traffic
