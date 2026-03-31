@@ -1580,6 +1580,7 @@ async def leaderboard(
     category: str | None = Query(None),
     type: str | None = Query(None, description="Filter by service_type, e.g. 'mcp' or 'api'"),
     limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
 ):
     """Top-scoring services leaderboard."""
     _ensure_loaded()
@@ -1625,11 +1626,12 @@ async def leaderboard(
 
     # BUG-02 fix: total은 필터 적용 후, 정렬 전 개수로 계산
     filtered_total = len(filtered)
-    filtered = sorted(filtered, key=lambda s: s.get("clarvia_score", 0), reverse=True)[:limit]
+    filtered = sorted(filtered, key=lambda s: s.get("clarvia_score", 0), reverse=True)
+    filtered = filtered[offset : offset + limit]
     return {
         "leaderboard": [
             {
-                "rank": i + 1,
+                "rank": offset + i + 1,
                 "name": s.get("service_name", "Unknown"),
                 "url": s.get("url", ""),
                 "score": s.get("clarvia_score", 0),
@@ -1961,6 +1963,13 @@ async def compare_services(
                 results.append(_compact_service(found))
     else:
         raise HTTPException(status_code=400, detail="Provide 'ids' (scan_ids) or 'names'/'services' (tool names) to compare")
+
+    # If only 1 result found (need at least 2 for meaningful comparison), return 400
+    if len(results) == 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Compare requires at least 2 services. Only 1 match found. Check spelling or try different names.",
+        )
 
     return {"services": results, "count": len(results)}
 
