@@ -11,7 +11,7 @@ startCommand:
     })
 
 name: Clarvia MCP Server
-description: "Before calling any external API or MCP, use Clarvia to check if it's agent-ready. Search 15,000+ indexed tools, gate-check compatibility scores, find alternatives, and audit dependencies — the standard tool-validation layer for autonomous agents."
+description: "Before calling any external API or MCP, use Clarvia to check if it's agent-ready. Search 27,000+ indexed tools, gate-check compatibility scores, find alternatives, and audit dependencies — the standard tool-validation layer for autonomous agents."
 homepage: https://clarvia.art
 repository: https://github.com/digitamaz/scanner
 icon: https://clarvia.art/favicon.ico
