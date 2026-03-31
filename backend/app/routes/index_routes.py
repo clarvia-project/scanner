@@ -1488,11 +1488,17 @@ async def get_alternatives(
     target_category = target.get("category", "other")
     target_desc = (target.get("description") or "").lower()
     target_scan_id = target["scan_id"]
+    target_url_lower = target.get("url", "").lower().rstrip("/")
+    target_name_lower = target_name.lower().strip()
 
     # --- Step 2: Find alternatives in the same category ---
+    # Exclude by scan_id AND by url/name to prevent self-referential results
     same_category = [
         s for s in pool
-        if s.get("category") == target_category and s["scan_id"] != target_scan_id
+        if s.get("category") == target_category
+        and s["scan_id"] != target_scan_id
+        and s.get("url", "").lower().rstrip("/") != target_url_lower
+        and s.get("service_name", "").lower().strip() != target_name_lower
     ]
 
     # --- Step 3: Score by description keyword overlap ---

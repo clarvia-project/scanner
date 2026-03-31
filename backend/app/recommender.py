@@ -154,9 +154,9 @@ class RecommendationEngine:
             # Apply filters
             if tool["clarvia_score"] < min_score:
                 continue
-            if service_type and tool.get("service_type") != service_type:
+            if service_type and tool.get("service_type", "").lower().replace(" ", "_") != service_type.lower().replace(" ", "_"):
                 continue
-            if category and tool.get("category") != category:
+            if category and tool.get("category", "").lower() != category.lower():
                 continue
 
             # --- Scoring ---

@@ -860,6 +860,14 @@ async def get_scan_sarif(scan_id: str):
             raise HTTPException(status_code=404, detail="Scan not found or expired")
 
     from .sarif import scan_to_sarif
+    from .models import ScanResponse
+    # Supabase returns a plain dict; parse into ScanResponse so scan_to_sarif works
+    if isinstance(result, dict):
+        try:
+            result = ScanResponse.model_validate(result)
+        except Exception as e:
+            logger.warning("Failed to parse scan dict to ScanResponse: %s", e)
+            raise HTTPException(status_code=500, detail="Scan data format error")
     sarif_doc = scan_to_sarif(result)
     return JSONResponse(
         content=sarif_doc,
@@ -929,22 +937,24 @@ async def api_v1_score(url: str):
     _idx._ensure_loaded()
     scans = _idx._services
     if scans:
-        for s in scans:
-            if _domain_match(clean_url, s.get("url", "")):
-                return {
-                    "url": s["url"],
-                    "service_name": s["service_name"],
-                    "clarvia_score": s["clarvia_score"],
-                    "rating": s.get("rating", ""),
-                    "dimensions": {
-                        k: {"score": v["score"], "max": v["max"]}
-                        for k, v in s.get("dimensions", {}).items()
-                    },
-                    "scan_id": s["scan_id"],
-                    "source": "prebuilt",
-                    "scored_by": "Clarvia AEO",
-                    "clarvia_profile_url": f"https://clarvia.art/tool/{s['scan_id']}",
-                }
+        # Collect all domain matches, pick the highest-scoring one
+        matches = [s for s in scans if _domain_match(clean_url, s.get("url", ""))]
+        if matches:
+            s = max(matches, key=lambda x: x.get("clarvia_score", 0))
+            return {
+                "url": s["url"],
+                "service_name": s["service_name"],
+                "clarvia_score": s["clarvia_score"],
+                "rating": s.get("rating", ""),
+                "dimensions": {
+                    k: {"score": v["score"], "max": v["max"]}
+                    for k, v in s.get("dimensions", {}).items()
+                },
+                "scan_id": s["scan_id"],
+                "source": "prebuilt",
+                "scored_by": "Clarvia AEO",
+                "clarvia_profile_url": f"https://clarvia.art/tool/{s['scan_id']}",
+            }
 
     # Run live scan
     try:
