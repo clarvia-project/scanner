@@ -4316,6 +4316,18 @@ _alias_router.add_api_route(
     include_in_schema=False,
 )
 
+# Bug fix C: GET /api/v1/ci/check — POST only was causing 307→404 chain for GET requests.
+# Return 405 Method Not Allowed with a clear message.
+@_alias_router.get("/ci/check", include_in_schema=False)
+async def _ci_check_get_alias():
+    """CI check requires POST with a JSON body. GET is not supported."""
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=405,
+        content={"detail": "Method Not Allowed. Use POST /api/v1/ci/check with a JSON body containing 'url'."},
+        headers={"Allow": "POST"},
+    )
+
 # Bug fix B: GET /api/v1/scan/{scan_id} — was 307 → /v1/scan/{scan_id} (404)
 # Actual route lives at /api/scan/{scan_id}; add /api/v1/ alias here.
 from .scanner import get_cached_scan as _get_cached_scan

@@ -24,6 +24,9 @@ def _get_all_tools() -> list[dict[str, Any]]:
 
 def _compact(t: dict[str, Any]) -> dict[str, Any]:
     """Compact tool representation for trending."""
+    # BUG-05 fix: score가 null이면 clarvia_score를 fallback으로 사용
+    clarvia_score = t.get("clarvia_score", 0)
+    score = t.get("score") or clarvia_score
     return {
         "name": t.get("service_name", t.get("name", "")),
         "scan_id": t.get("scan_id", ""),
@@ -31,7 +34,8 @@ def _compact(t: dict[str, Any]) -> dict[str, Any]:
         "description": (t.get("description", "") or "")[:150],
         "category": t.get("category", "other"),
         "service_type": t.get("service_type", "general"),
-        "clarvia_score": t.get("clarvia_score", 0),
+        "score": score,
+        "clarvia_score": clarvia_score,
         "rating": t.get("rating", "Low"),
     }
 

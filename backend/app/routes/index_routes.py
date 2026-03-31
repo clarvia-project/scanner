@@ -1544,17 +1544,27 @@ async def score_quick(
     """Quick score lookup by URL — returns cached score or 'not_found'."""
     _ensure_loaded()
     _add_headers(response)
-    url_lower = url.lower().rstrip("/")
-    for s in _services:
-        if s.get("url", "").lower().rstrip("/") == url_lower:
-            return {
-                "url": url,
-                "score": s["clarvia_score"],
-                "rating": s["rating"],
-                "category": s.get("category", "other"),
-                "scan_id": s["scan_id"],
-                "found": True,
-            }
+
+    # BUG-04 fix: URL에 스킴이 없으면 https:// 붙여서 정규화
+    def _normalize(u: str) -> str:
+        return u.lower().rstrip("/")
+
+    candidates = [url]
+    if not url.startswith(("http://", "https://")):
+        candidates = [f"https://{url}", f"http://{url}"]
+
+    for candidate in candidates:
+        candidate_lower = _normalize(candidate)
+        for s in _services:
+            if _normalize(s.get("url", "")) == candidate_lower:
+                return {
+                    "url": url,
+                    "score": s["clarvia_score"],
+                    "rating": s["rating"],
+                    "category": s.get("category", "other"),
+                    "scan_id": s["scan_id"],
+                    "found": True,
+                }
     return {
         "url": url,
         "score": None,
@@ -1583,7 +1593,23 @@ async def leaderboard(
     if category:
         filtered = _filter_by_category(filtered, category)
     if type:
-        filtered = [s for s in filtered if s.get("service_type", "").lower() == type.lower()]
+        # BUG-01 fix: service_type이 null인 항목은 URL/name 기반으로 추론
+        type_lower = type.lower()
+        def _infer_service_type(s: dict) -> str:
+            st = (s.get("service_type") or "").lower()
+            if st:
+                return st
+            url = (s.get("url") or "").lower()
+            name = (s.get("service_name") or "").lower()
+            if "mcp" in url or "-mcp" in name:
+                return "mcp_server"
+            return "api"
+
+        mcp_aliases = {"mcp", "mcp_server"}
+        if type_lower in mcp_aliases:
+            filtered = [s for s in filtered if _infer_service_type(s) in mcp_aliases]
+        else:
+            filtered = [s for s in filtered if _infer_service_type(s) == type_lower]
 
     # Deduplicate by URL (keep highest-scoring entry for each URL)
     seen_urls: dict[str, dict] = {}
@@ -1594,6 +1620,8 @@ async def leaderboard(
             seen_urls[url_key] = s
     filtered = list(seen_urls.values())
 
+    # BUG-02 fix: total은 필터 적용 후, 정렬 전 개수로 계산
+    filtered_total = len(filtered)
     filtered = sorted(filtered, key=lambda s: s.get("clarvia_score", 0), reverse=True)[:limit]
     return {
         "leaderboard": [
@@ -1609,7 +1637,7 @@ async def leaderboard(
             }
             for i, s in enumerate(filtered)
         ],
-        "total": _total_tool_count(),
+        "total": filtered_total if (category or type) else _total_tool_count(),
     }
 
 
