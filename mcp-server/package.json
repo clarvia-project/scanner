@@ -1,8 +1,8 @@
 {
   "name": "clarvia-mcp-server",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "mcpName": "io.github.digitamaz/clarvia",
-  "description": "Before calling any external API or MCP, use Clarvia to check if it's agent-ready. Search 27,886+ indexed tools, gate-check compatibility scores, find alternatives, and audit dependencies \u2014 the standard tool-validation layer for autonomous agents.",
+  "description": "Before calling any external API or MCP, use Clarvia to check if it's agent-ready. Search 27,900+ indexed tools, gate-check compatibility scores, find alternatives, and audit dependencies — the standard tool-validation layer for autonomous agents.",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
@@ -87,6 +87,7 @@
     "@modelcontextprotocol/sdk": "^1.12.1"
   },
   "devDependencies": {
+    "@smithery/cli": "^4.7.4",
     "@types/node": "^22.0.0",
     "esbuild": "^0.27.4",
     "typescript": "^5.7.0"
