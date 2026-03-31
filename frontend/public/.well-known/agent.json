@@ -1,11 +1,69 @@
 {
   "name": "Clarvia",
-  "description": "AI agent tool discovery and AEO scoring platform. 15,400+ indexed tools.",
-  "url": "https://clarvia.art",
-  "api": {
-    "base_url": "https://clarvia-api.onrender.com",
-    "openapi": "https://clarvia-api.onrender.com/openapi.json",
-    "docs": "https://clarvia-api.onrender.com/docs"
+  "description": "AI agent tool discovery and AEO (AI Engine Optimization) scoring platform. Discover, score, and validate 15,400+ MCP servers and AI tools for agent readiness.",
+  "url": "https://clarvia-api.onrender.com",
+  "version": "2.0.0",
+  "documentationUrl": "https://clarvia-api.onrender.com/docs",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": false
+  },
+  "defaultInputModes": ["text", "application/json"],
+  "defaultOutputModes": ["text", "application/json"],
+  "skills": [
+    {
+      "id": "tool-discovery",
+      "name": "Tool Discovery",
+      "description": "Search and discover 15,400+ indexed MCP servers and AI tools by name, category, or capability. Returns compatibility scores and metadata.",
+      "tags": ["mcp", "tool-discovery", "search", "ai-tools"],
+      "inputModes": ["text", "application/json"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "aeo-scoring",
+      "name": "AEO Score Analysis",
+      "description": "Analyze any MCP server or API endpoint for AI Engine Optimization (AEO) readiness. Returns a 0-100 score with detailed breakdown across documentation, schema compliance, response quality, and agent compatibility dimensions.",
+      "tags": ["aeo", "quality", "scoring", "mcp-analysis"],
+      "inputModes": ["text", "application/json"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "vulnerability-check",
+      "name": "Vulnerability Check",
+      "description": "Audit MCP server configurations and npm dependencies for known security vulnerabilities. Returns CVE matches and severity ratings.",
+      "tags": ["security", "vulnerability", "audit", "dependencies"],
+      "inputModes": ["text", "application/json"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "tool-comparison",
+      "name": "Tool Comparison",
+      "description": "Compare multiple MCP servers or AI tools head-to-head with AEO scores, feature matrices, and agent compatibility metrics.",
+      "tags": ["comparison", "benchmarking", "evaluation"],
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "alternatives",
+      "name": "Find Alternatives",
+      "description": "Find alternative MCP servers and AI tools for a given tool. Returns ranked alternatives by AEO score and feature similarity.",
+      "tags": ["alternatives", "recommendations", "discovery"],
+      "inputModes": ["text"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "demand-intelligence",
+      "name": "Demand Intelligence",
+      "description": "Track trending AI tools and MCP servers. Monitor search trends, adoption rates, and emerging tools in the ecosystem.",
+      "tags": ["trends", "analytics", "demand", "market-intelligence"],
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    }
+  ],
+  "provider": {
+    "organization": "Clarvia",
+    "url": "https://clarvia.art"
   },
   "mcp": {
     "npm_package": "clarvia-mcp-server",
@@ -13,17 +71,6 @@
     "tools_count": 24,
     "transport": "stdio"
   },
-  "capabilities": [
-    "tool_discovery",
-    "tool_scoring",
-    "vulnerability_check",
-    "dependency_audit",
-    "compliance_checklist",
-    "tool_comparison",
-    "trend_analysis",
-    "demand_intelligence",
-    "tool_enrichment"
-  ],
-  "pricing": "free",
-  "version": "2.0"
+  "openapi": "https://clarvia-api.onrender.com/openapi.json",
+  "pricing": "free"
 }
