@@ -1027,13 +1027,11 @@ async def api_v1_leaderboard(category: str | None = None, limit: int = 50, offse
 
 @app.get("/api/v1/compare", tags=["index"])
 async def api_v1_compare(urls: str):
-    """Compare 2-3 services side by side.
+    """Compare 2-5 services side by side with live scan fallback.
 
-    Usage: GET /api/v1/compare?urls=stripe.com,replicate.com
+    Usage: GET /api/v1/compare?urls=stripe.com,plaid.com
+    Returns detailed dimension-level comparison with winner analysis.
     """
-    import json
-    from pathlib import Path
-
     url_list = [u.strip() for u in urls.split(",") if u.strip()]
     if len(url_list) < 2:
         raise HTTPException(status_code=400, detail="Provide at least 2 comma-separated URLs")
@@ -1052,39 +1050,165 @@ async def api_v1_compare(urls: str):
         host_b = (_up(url_b).hostname or "").lower().removeprefix("www.")
         return host_a == host_b and host_a != ""
 
-    results = []
-    for url in url_list:
-        clean = url.lower().strip()
+    def _normalize_compare_url(raw: str) -> str:
+        clean = raw.lower().strip()
         if not clean.startswith("http"):
             clean = f"https://{clean}"
+        return clean
 
-        # Check prebuilt (domain-level match, not substring)
+    def _extract_name(url: str) -> str:
+        return url.replace("https://", "").replace("http://", "").split("/")[0]
+
+    services = []
+    for url in url_list:
+        clean = _normalize_compare_url(url)
+        name = _extract_name(clean)
+
+        # 1) Check prebuilt index first (fast path)
         match = next(
             (s for s in prebuilt if _domain_match_compare(clean, s.get("url", ""))),
             None
         )
         if match:
-            results.append({
+            services.append({
                 "url": match["url"],
-                "service_name": match["service_name"],
-                "clarvia_score": match["clarvia_score"],
+                "name": match.get("service_name", name),
+                "score": match["clarvia_score"],
                 "rating": match.get("rating", ""),
                 "dimensions": {
                     k: {"score": v["score"], "max": v["max"]}
                     for k, v in match.get("dimensions", {}).items()
                 },
+                "source": "prebuilt",
             })
-        else:
-            results.append({
+            continue
+
+        # 2) Check live scan cache
+        from .scanner import _scan_cache, _normalize_url as _norm_url
+        try:
+            normalized = _norm_url(clean)
+        except Exception:
+            normalized = clean
+        cached_entry = next(
+            (entry for sid, (entry, _ts) in _scan_cache.items()
+             if _domain_match_compare(normalized, entry.url)),
+            None
+        )
+        if cached_entry is not None:
+            services.append({
+                "url": cached_entry.url,
+                "name": cached_entry.service_name,
+                "score": cached_entry.clarvia_score,
+                "rating": cached_entry.rating,
+                "dimensions": {
+                    k: {"score": v.score, "max": v.max}
+                    for k, v in cached_entry.dimensions.items()
+                },
+                "source": "cache",
+            })
+            continue
+
+        # 3) Run live scan
+        try:
+            result = await run_scan(clean)
+            services.append({
+                "url": result.url,
+                "name": result.service_name,
+                "score": result.clarvia_score,
+                "rating": result.rating,
+                "dimensions": {
+                    k: {"score": v.score, "max": v.max}
+                    for k, v in result.dimensions.items()
+                },
+                "source": "live",
+            })
+        except Exception as e:
+            logger.warning("Compare scan failed for %s: %s", clean, e)
+            services.append({
                 "url": clean,
-                "service_name": clean.replace("https://", "").replace("http://", "").split("/")[0],
-                "clarvia_score": None,
-                "rating": "Not scanned",
+                "name": name,
+                "score": None,
+                "rating": None,
                 "dimensions": {},
-                "note": "Run a scan first at clarvia.art",
+                "error": "scan_failed",
+                "source": "error",
             })
 
-    return {"comparison": results}
+    # --- Build comparison analysis ---
+    scored = [s for s in services if s.get("score") is not None]
+
+    winner = None
+    winner_score_diff = None
+    dimension_winners: dict[str, str] = {}
+    summary = ""
+
+    if len(scored) >= 2:
+        # Overall winner
+        top = max(scored, key=lambda s: s["score"])
+        second = max((s for s in scored if s is not top), key=lambda s: s["score"])
+        winner = top["name"]
+        winner_score_diff = top["score"] - second["score"]
+
+        # Dimension-level winners (only dimensions present in all scored services)
+        all_dims: set[str] = set()
+        for s in scored:
+            all_dims.update(s["dimensions"].keys())
+
+        for dim in all_dims:
+            best = max(
+                (s for s in scored if dim in s["dimensions"]),
+                key=lambda s: s["dimensions"][dim]["score"],
+                default=None,
+            )
+            if best:
+                dimension_winners[dim] = best["name"]
+
+        # Build summary string
+        if winner_score_diff == 0:
+            summary = f"{top['name']} and {second['name']} are tied with equal overall scores."
+        else:
+            # Find biggest advantage dimension
+            advantage_dim = None
+            advantage_gap = 0
+            for dim, winner_name in dimension_winners.items():
+                if winner_name == top["name"]:
+                    top_dim_score = top["dimensions"].get(dim, {}).get("score", 0)
+                    second_dim_score = second["dimensions"].get(dim, {}).get("score", 0)
+                    gap = top_dim_score - second_dim_score
+                    if gap > advantage_gap:
+                        advantage_gap = gap
+                        advantage_dim = dim
+
+            # Find where top loses (if any)
+            loser_dims = [
+                dim for dim, winner_name in dimension_winners.items()
+                if winner_name != top["name"] and len(scored) == 2
+            ]
+
+            dim_label = (advantage_dim or "").replace("_", " ").title() if advantage_dim else ""
+            loser_label = loser_dims[0].replace("_", " ").title() if loser_dims else ""
+
+            summary = f"{top['name']} scores {winner_score_diff} point{'s' if winner_score_diff != 1 else ''} higher overall."
+            if advantage_dim and advantage_gap > 0:
+                top_dim_score = top["dimensions"].get(advantage_dim, {}).get("score", 0)
+                second_dim_score = second["dimensions"].get(advantage_dim, {}).get("score", 0)
+                summary += f" Key advantage: better {dim_label} ({top_dim_score} vs {second_dim_score})."
+            if loser_label:
+                summary += f" {second['name']} leads in {loser_label}."
+
+    # Strip internal "source" field from final output
+    output_services = []
+    for s in services:
+        svc = {k: v for k, v in s.items() if k != "source"}
+        output_services.append(svc)
+
+    return {
+        "services": output_services,
+        "winner": winner,
+        "winner_score_diff": winner_score_diff,
+        "dimension_winners": dimension_winners,
+        "summary": summary,
+    }
 
 
 @app.get("/api/v1/pricing", tags=["keys"])
