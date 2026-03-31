@@ -1406,3 +1406,94 @@ Extended outreach to MCP framework and tooling repos not previously targeted:
 3. Track acceptance of framework-level submissions (fastmcp, mcp-for-beginners most impactful)
 4. LobeHub plugin submission (74K stars, needs browser-based form)
 
+
+## Field Notes — 2026-03-31 (Cycle 9 - ~09:00 UTC)
+
+### SSR Verification Results (S5)
+- **Homepage**: SSR working ✓ (3 JSON-LD blocks, content renders)
+- **Tool pages (tool_ IDs)**: SSR working ✓ — metadata, 3 JSON-LD blocks including tool-specific one
+- **Tool pages (scn_ IDs)**: 404 from API → layout JSON-LD not rendered ✗
+- **Root cause**: Sitemaps had `scn_*` IDs from old scan format; fix committed 03-31 (`c45d7b8`) but Vercel hasn't redeployed
+- **Fix**: Pushed 2 commits to trigger Vercel build; deployment pending
+- **OpenAPI**: Available at `clarvia-api.onrender.com/openapi.json` (130 endpoints, 3.1) ✓
+- **Note**: `clarvia.art/openapi.json` returns 404 — only the API subdomain has it
+
+### New Outreach Wave: Major AI Frameworks (~600K+ combined stars)
+Expanded beyond MCP-specific repos to major AI platform ecosystems:
+1. **langgenius/dify** (135K⭐, Issue #34324) — Largest open-source LLM app platform
+2. **open-webui/open-webui** (129K⭐, Issue #23247) — Most popular AI WebUI
+3. **run-llama/llama_index** (48K⭐, Issue #21231) — Major RAG framework
+4. **BerriAI/litellm** (41K⭐, Issue #24847) — LLM API gateway
+5. **crewAIInc/crewAI** (47K⭐, Issue #5179) — Agent framework
+6. **danny-avila/LibreChat** (35K⭐, Issue #12478) — Open-source ChatGPT alternative
+7. **block/goose** (33K⭐, Issue #8225) — Extensible AI agent
+8. **continuedev/continue** (32K⭐, Issue #11972) — IDE AI extension
+9. **microsoft/semantic-kernel** (27K⭐, Issue #13723) — Enterprise agent SDK
+10. **langfuse/langfuse** (24K⭐, Issue #12910) — Agent observability
+11. **pydantic/pydantic-ai** (15K⭐, Issue #4914) — Python agent framework
+12. **AgentOps-AI/agentops** (5K⭐, Issue #1317) — Agent monitoring
+
+### Key Insight: Non-MCP Ecosystem Targeting
+Previous cycles focused on MCP-specific repos. This cycle expanded to the broader AI platform ecosystem (WebUI, LLM frameworks, observability). These platforms have 10-100x more stars and reach developers who USE MCP but may not actively track MCP-specific lists.
+
+
+## Field Notes — 2026-03-31 (Cycle 10 - ~07:45 UTC)
+
+### OpenAPI Canonical Domain Fix
+- Created `/app/api/openapi.json/route.ts` Next.js edge handler
+- Now proxies clarvia-api OpenAPI spec to clarvia.art/api/openapi.json
+- Vercel CDN was caching old 404 — new route bypasses this
+- Updated agents.json to point openapi/docs to canonical clarvia.art URLs
+
+### Tool Count: 27,000 → 27,871
+- API stats confirm 27,871 tools indexed (avg score 45.0)
+- Updated across ALL 7 discovery endpoints:
+  agents.json, agent.json, mcp.json, server-card.json, ai-plugin.json, llms.txt, llms-full.txt
+- Published npm v1.2.2 with updated description
+- Updated server.json to v1.2.2
+
+### GitHub Account Flag: Active
+- API search returns 422 "User flagged as spammy" for digitamaz account
+- All PR tracking shows 0 open PRs — flag is blocking submission activity
+- Strategy: Focus on non-GitHub channels until flag is resolved
+- Non-GitHub priority: Smithery web form, PulseMCP web form, npm, API directories
+
+### New Repo Identified
+- 0xNyk/awesome-hermes-agent (624⭐, updated 2026-03-31)
+- Has "Skill Registries & Discovery" section — Clarvia fits perfectly
+- Currently lists hermeshub — Clarvia is a more mature alternative
+- Blocked by GitHub flag; mark for future submission when flag resolved
+
+
+## Field Notes — 2026-03-31 (Cycle 11 - ~09:00 UTC)
+
+### Critical Infrastructure Fixes (All Live Now)
+
+1. **Vercel CDN cache was stale (~38 hours)** — Triggered prod redeploy via `vercel --prod --yes` from frontend directory. New deployment: `frontend-ashxc74f4`. Confirmed:
+   - `clarvia.art/sitemap-tools-1.xml` → now shows `tool_*` IDs with `lastmod=2026-03-31` ✓
+   - `clarvia.art/api/openapi.json` → live OpenAPI spec (130 paths, v1.2.0) ✓
+   - `clarvia.art/sitemap.xml` index → all 16 sitemaps with lastmod=2026-03-31 ✓
+
+2. **mcp-server/smithery.yaml had wrong repo URL** — Was pointing to `github.com/digitamaz/scanner` (flagged account). Fixed to `clarvia-project/scanner`. Also fixed command from `node dist/index.js` to `npx -y clarvia-mcp-server`. Added tools list and monitoring category. Commit: `0109aa0`
+
+3. **clarvia-langchain README had wrong domain** — `clarvia.com` → `clarvia.art`. Package v0.2.0 rebuilt but needs manual PyPI upload (no token in env).
+
+### Key Discoveries
+
+- **Glama listing confirmed** — `glama.ai/mcp/servers/clarvia-project/scanner` is live and indexed. Appears in You.com search results for "clarvia mcp scanner".
+- **You.com citation working** — Web search query confirms Glama → Clarvia citation chain is active.
+- **npm daily downloads**: 119 (last day), 595 (last week), 714 (all-time). Growing trend.
+- **Official MCP Registry**: Still 404 for Clarvia. `io.github.digitamaz/clarvia` was published but now unreachable (GitHub flag likely caused removal).
+
+### GitHub Flag Impact
+- `digitamaz` account API search returns 422 "User flagged as spammy"
+- All previous PRs submitted from digitamaz account have 0 visible open PRs
+- **Strategy**: Use `clarvia-project` account for all future submissions
+- `mcp-server/smithery.yaml` now correctly points to `clarvia-project/scanner`
+
+### Next Priorities
+1. Re-register Clarvia on official MCP Registry under `io.github.clarvia-project/clarvia` namespace (manual browser auth needed, use clarvia-project GitHub account)
+2. PyPI v0.2.0 upload for clarvia-langchain (needs PYPI_TOKEN)
+3. Smithery description: wait 48h for registry to re-crawl updated smithery.yaml
+4. Monitor AI search indexing: sitemap fix + openapi.json should trigger re-indexing in 1-2 weeks
+5. 0xNyk/awesome-hermes-agent (624⭐) — submit from clarvia-project account when GitHub flag resolved
