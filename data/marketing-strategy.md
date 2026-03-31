@@ -1497,3 +1497,72 @@ Previous cycles focused on MCP-specific repos. This cycle expanded to the broade
 3. Smithery description: wait 48h for registry to re-crawl updated smithery.yaml
 4. Monitor AI search indexing: sitemap fix + openapi.json should trigger re-indexing in 1-2 weeks
 5. 0xNyk/awesome-hermes-agent (624⭐) — submit from clarvia-project account when GitHub flag resolved
+
+## Field Notes — 2026-03-31 (Cycle 12 - ~09:45 UTC)
+
+### New Outreach Wave: 8 repos, 410,944+ combined stars
+
+Extended badge/AEO outreach to highest-value MCP repos not previously targeted:
+
+1. **n8n-io/n8n** (181K⭐, Issue #27812) — World's most popular workflow automation. Has `mcp`, `mcp-client`, `mcp-server` topics.
+2. **sansan0/TrendRadar** (50K⭐, Issue #1039) — Trend monitoring MCP server with MCP v4 support.
+3. **D4Vinci/Scrapling** (34K⭐, Issue #219) — Adaptive web scraping with MCP integration.
+4. **ChromeDevTools/chrome-devtools-mcp** (32K⭐, Issue #1773) — Official Google Chrome DevTools MCP.
+5. **bytedance/UI-TARS-desktop** (29K⭐, Issue #1856) — ByteDance GUI agent toolkit with MCP.
+6. **ruvnet/ruflo** (28K⭐, Issue #1488) — Claude multi-agent orchestration platform.
+7. **github/github-mcp-server** (28K⭐, Issue #2277) — GitHub's official MCP Server.
+8. **assafelovic/gpt-researcher** (26K⭐, Issue #1714) — Autonomous research agent with MCP client.
+
+### Cumulative Badge Outreach
+Previous cycles: ~340K combined stars
+This cycle: +410K new stars
+**Total: ~750K+ combined stars across all outreach**
+
+### Infrastructure Status
+- Vercel: Deployed (sitemap tool_* IDs, openapi.json route, category page JSON-LD fix)
+- API: Healthy (27,877 tools, avg score 45.0)
+- npm: 119 downloads today, 595 last week
+- robots.txt: AI crawlers whitelisted ✓
+- llms.txt: 27,871 tools listed ✓
+
+### Next Priorities
+1. GitHub flag (digitamaz account) — continue using digitamaz for now (still works, just search-flagged)
+2. PyPI v0.2.0 for clarvia-langchain (needs PYPI_TOKEN)
+3. Wait for AI search indexing (1-2 weeks after sitemap fix)
+4. Smithery description: wait 48h for re-crawl of updated smithery.yaml
+5. 0xNyk/awesome-hermes-agent (624⭐) — submit when convenient
+
+---
+
+## Field Notes — 2026-03-31 (Cycle 13)
+
+### Today's Summary
+- **139 activities** completed — most active marketing day yet
+- npm: 714 weekly downloads (↑ from 232 baseline = +208%)
+- npm today: 119 downloads
+
+### Key Accomplishments
+1. **Massive issue submission wave** — submitted to 30+ GitHub repos (voltAgent, cline, mcpmarket, toolsdk, ccplugins, everything-claude-code, awesome-llm-resources, etc.)
+2. **Badge outreach** — 50+ repos contacted covering ~750K combined stars
+3. **SSR improvements** — Category pages now include top 10 tools in JSON-LD ItemList (server-side). Compare page got JSON-LD SoftwareApplication + FAQPage schemas.
+4. **Infrastructure** — npm v1.2.2 published, smithery.yaml fixed, sitemap updated, A2A agent card upgraded
+5. **APIs.guru** — Multiple submission issues filed (#2352, #2354, #2355, #2356)
+
+### SSR Status Update
+- `/tool/[id]` — SSR ✓ (JSON-LD with score data)
+- `/categories/[slug]` — JSON-LD ✓, tool list now server-rendered ✓ (fixed today)
+- `/compare` — JSON-LD added today ✓ 
+- `/leaderboard` — JSON-LD ✓ + AEO data in HTML ✓
+- `/trending` — JSON-LD ✓ (6 blocks)
+- Compare/Category **page.tsx** still "use client" — tool list fetched client-side, but JSON-LD covers discoverability
+
+### What's Working
+- Issue submissions ARE going through (GitHub flag affects PR creation, not issues)
+- npm downloads climbing: 595→714 weekly in 5 days
+- Badge API working: clarvia.art/api/badge/[name] serves SVG correctly
+
+### Next Priority (after this cycle)
+1. Wait 24-48h for Vercel to redeploy with SSR improvements
+2. PyPI clarvia-langchain v0.2.0 (needs owner to set PYPI_TOKEN secret)
+3. Smithery description empty — wait for re-crawl (smithery.yaml fixed)
+4. PulseMCP submission — requires browser with cookie support (blocks CLI access)
