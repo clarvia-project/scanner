@@ -3,6 +3,15 @@ import type { Metadata } from "next";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL || "https://clarvia-api.onrender.com";
 
+interface Tool {
+  name: string;
+  url?: string;
+  description?: string;
+  clarvia_score?: number;
+  service_type?: string;
+  scan_id?: string;
+}
+
 interface CategoryData {
   slug: string;
   label: string;
@@ -11,11 +20,12 @@ interface CategoryData {
   avg_score: number;
   max_score: number;
   by_type: Record<string, number>;
+  tools?: Tool[];
 }
 
 async function fetchCategory(slug: string): Promise<CategoryData | null> {
   try {
-    const res = await fetch(`${API_BASE}/v1/categories/${slug}?limit=1`, {
+    const res = await fetch(`${API_BASE}/v1/categories/${slug}?limit=10`, {
       next: { revalidate: 3600 },
     });
     if (res.ok) return res.json();
@@ -118,6 +128,26 @@ export default async function CategoryLayout({
           description: `${total} ${label} tools analyzed and ranked by AI Engine Optimization score.`,
           numberOfItems: total,
           itemListOrder: "https://schema.org/ItemListOrderDescending",
+          itemListElement: (category?.tools ?? []).slice(0, 10).map((tool, idx) => ({
+            "@type": "ListItem",
+            position: idx + 1,
+            item: {
+              "@type": "SoftwareApplication",
+              name: tool.name,
+              description: tool.description ?? `${tool.name} — AEO score ${tool.clarvia_score ?? "N/A"}/100`,
+              url: tool.scan_id ? `https://clarvia.art/tool/${tool.scan_id}` : (tool.url ?? "#"),
+              applicationCategory: "DeveloperApplication",
+              ...(tool.clarvia_score != null && {
+                aggregateRating: {
+                  "@type": "AggregateRating",
+                  ratingValue: (tool.clarvia_score / 10).toFixed(1),
+                  bestRating: "10",
+                  worstRating: "0",
+                  ratingCount: "1",
+                },
+              }),
+            },
+          })),
         },
         breadcrumb: {
           "@type": "BreadcrumbList",
@@ -188,6 +218,21 @@ export default async function CategoryLayout({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
+      {/* Server-rendered content for AI crawlers — hidden visually, indexed by bots */}
+      {category && (category.tools ?? []).length > 0 && (
+        <div aria-hidden="true" style={{ position: "absolute", width: "1px", height: "1px", overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>
+          <h2>Top {label} Tools for AI Agents — AEO Ranked</h2>
+          <p>{category.description || `Clarvia ranks ${total} ${label} tools by AEO score. Average score: ${category.avg_score?.toFixed(0) ?? "N/A"}/100.`}</p>
+          <ol>
+            {(category.tools ?? []).slice(0, 10).map((tool, idx) => (
+              <li key={idx}>
+                <strong>{tool.name}</strong> — AEO Score: {tool.clarvia_score?.toFixed(0) ?? "N/A"}/100.{" "}
+                {tool.description ? tool.description.slice(0, 120) : ""}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
       {children}
     </>
   );
