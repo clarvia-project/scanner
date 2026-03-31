@@ -346,6 +346,14 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    import html
+    # Sanitize error details to prevent XSS via reflected input
+    sanitized_errors = []
+    for err in exc.errors():
+        sanitized = {k: html.escape(str(v)) if isinstance(v, str) else v for k, v in err.items()}
+        if "input" in sanitized:
+            sanitized["input"] = "[redacted]"
+        sanitized_errors.append(sanitized)
     return JSONResponse(
         status_code=422,
         content={
@@ -353,7 +361,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
                 "type": "validation_error",
                 "code": 422,
                 "message": "Invalid request parameters",
-                "details": str(exc.errors())[:500],
+                "details": str(sanitized_errors)[:500],
             }
         },
     )
@@ -616,11 +624,14 @@ async def health():
 
 
 @app.post("/api/scan", response_model=ScanResponse, tags=["scan"])
-async def scan_url(req: ScanRequest):
+async def scan_url(req: ScanRequest, request: Request):
     """Run a full AEO scan on the provided URL.
 
     Returns detailed AEO scoring with dimension breakdowns, recommendations,
     and a unique scan_id for retrieval. Rate limited per IP or API key.
+
+    Free tier: 10 scans/day, top 3 recommendations, evidence blurred.
+    Starter+: higher limits, full evidence, more recommendations.
     """
     if not req.url or not req.url.strip():
         raise HTTPException(status_code=400, detail="URL is required")
@@ -637,8 +648,58 @@ async def scan_url(req: ScanRequest):
         raise HTTPException(status_code=422, detail=reason)
     req.url = url_clean
 
+    # --- Tier-based daily scan limit ---
+    from .services.tier_gate import (
+        check_daily_scan_limit, increment_daily_scan, gate_response,
+        RECOMMENDATION_LIMITS, has_feature, Feature,
+    )
+
+    # Determine user plan from Clarvia API key
+    user_plan = "free"
+    clarvia_key = request.headers.get("x-clarvia-key") or request.headers.get("x-api-key")
+    rate_key = request.client.host if request.client else "unknown"
+
+    if clarvia_key:
+        try:
+            from .services.auth_service import validate_api_key
+            meta = await validate_api_key(clarvia_key)
+            if meta:
+                user_plan = meta.get("plan", "free")
+                rate_key = f"apikey:{meta.get('key_id', clarvia_key[:12])}"
+        except Exception:
+            pass
+
+    # Check daily scan limit
+    allowed, current, limit = check_daily_scan_limit(rate_key, user_plan)
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "Daily scan limit reached",
+                "current": current,
+                "limit": limit,
+                "plan": user_plan,
+                "upgrade_url": "https://clarvia.art/pricing",
+                "message": f"Free tier allows {limit} scans/day. Upgrade for more.",
+            },
+        )
+
+    # Block auth_headers for free tier (authenticated scan is paid feature)
+    if req.auth_headers and not has_feature(user_plan, Feature.AUTHENTICATED_SCAN):
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": "Authenticated scanning requires a starter or higher plan.",
+                "upgrade_url": "https://clarvia.art/pricing",
+                "current_plan": user_plan,
+            },
+        )
+
     try:
         result = await run_scan(req.url, auth_headers=req.auth_headers)
+
+        # Increment daily scan counter on success
+        increment_daily_scan(rate_key)
 
         # Add to in-memory index for immediate discoverability (compare, badge-data, score)
         try:
@@ -823,6 +884,25 @@ async def api_v1_score(url: str):
     # Run live scan
     try:
         result = await run_scan(clean_url)
+
+        # Persist to scan history (Supabase + JSONL fallback)
+        try:
+            dim_scores = {}
+            if result.dimensions:
+                for k, v in result.dimensions.items():
+                    dim_scores[k] = v.score if hasattr(v, "score") else (v.get("score", 0) if isinstance(v, dict) else 0)
+            from .routes.scan_history_routes import persist_scan_result
+            await persist_scan_result(
+                url=result.url,
+                scan_id=result.scan_id,
+                score=result.clarvia_score,
+                rating=result.rating,
+                service_name=result.service_name,
+                dimensions=dim_scores or None,
+            )
+        except Exception as e:
+            logger.warning("Failed to save scan history from /v1/score: %s", e)
+
         return {
             "url": result.url,
             "service_name": result.service_name,
@@ -942,6 +1022,26 @@ async def api_v1_compare(urls: str):
     return {"comparison": results}
 
 
+@app.get("/api/v1/pricing", tags=["keys"])
+async def api_v1_pricing():
+    """Return pricing tiers and feature comparison.
+
+    This is the canonical pricing endpoint — frontend and docs link here.
+    """
+    from .routes.payment_routes import get_pricing
+    return await get_pricing()
+
+
+@app.get("/api/v1/my-plan", tags=["keys"])
+async def api_v1_my_plan(request: Request):
+    """Get the authenticated user's plan and usage.
+
+    Requires X-Clarvia-Key header.
+    """
+    from .routes.payment_routes import get_my_plan
+    return await get_my_plan(request)
+
+
 @app.get("/api/v1/methodology", tags=["scan"])
 async def api_v1_methodology():
     """Return the scoring methodology as structured JSON."""
@@ -1028,18 +1128,57 @@ async def api_v1_methodology():
 
 @app.post("/api/scan/authenticated", tags=["scan"])
 async def authenticated_scan(request: Request):
-    """Run an authenticated probe against an API using user-supplied credentials.
+    """Run a deep authenticated scan against an API using user-supplied credentials.
 
-    Body: { "url": "https://...", "api_key": "Bearer sk-xxx", "header_name": "Authorization" }
-    The API key is used only for 3 test requests and is never logged or stored.
+    Body: {
+        "url": "https://api.example.com",
+        "api_key": "Bearer sk-xxx",
+        "header_name": "Authorization",
+        "run_full_scan": true  // optional: also run full AEO scan with auth
+    }
+
+    The API key is used only during the scan and is never logged or stored.
+    This is a PAID feature — requires a valid Clarvia API key (starter+ plan).
+
+    Deep scan includes:
+    - Response structure analysis
+    - Error response pattern analysis (404, 401, 403, 405, 422 responses)
+    - Rate limit header detection and budget estimation
+    - Protected endpoint discovery (common API patterns)
+    - Pagination pattern detection
+    - Optional full AEO scan with auth headers forwarded
     """
     import aiohttp
+    import json as _json
     from .scanner import _validate_scan_url
+
+    # --- Tier gate: authenticated scan requires starter+ plan ---
+    clarvia_key = request.headers.get("x-clarvia-key")
+    user_plan = "free"
+    if clarvia_key:
+        try:
+            from .services.auth_service import validate_api_key
+            meta = await validate_api_key(clarvia_key)
+            if meta:
+                user_plan = meta.get("plan", "free")
+        except Exception:
+            pass
+
+    if user_plan == "free":
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": "Authenticated scan requires a starter or higher plan.",
+                "upgrade_url": "https://clarvia.art/pricing",
+                "current_plan": user_plan,
+            },
+        )
 
     body = await request.json()
     url: str = (body.get("url") or "").strip()
     api_key: str = (body.get("api_key") or "").strip()
     header_name: str = (body.get("header_name") or "Authorization").strip()
+    run_full_scan: bool = body.get("run_full_scan", False)
 
     if not url:
         raise HTTPException(status_code=400, detail="url is required")
@@ -1057,10 +1196,13 @@ async def authenticated_scan(request: Request):
         raise HTTPException(status_code=422, detail=str(e))
 
     auth_headers = {header_name: api_key}
-    timeout = aiohttp.ClientTimeout(total=10)
+    timeout = aiohttp.ClientTimeout(total=15)
 
     response_structure: dict = {}
-    error_quality: dict = {}
+    error_patterns: dict = {}
+    rate_limit_analysis: dict = {}
+    protected_endpoints: list[dict] = []
+    pagination_analysis: dict = {}
     headers_found: list[str] = []
     auth_method: str = "unknown"
 
@@ -1081,30 +1223,47 @@ async def authenticated_scan(request: Request):
         "access-control-allow-origin", "access-control-allow-methods",
         "x-powered-by", "server", "strict-transport-security",
         "x-content-type-options", "x-frame-options",
+        "x-total-count", "x-page", "x-per-page", "link",
     }
+
+    # Common API endpoint patterns to probe
+    _ENDPOINT_PATTERNS = [
+        ("/users", "GET", "User management"),
+        ("/me", "GET", "Current user profile"),
+        ("/account", "GET", "Account info"),
+        ("/v1", "GET", "API v1 root"),
+        ("/v2", "GET", "API v2 root"),
+        ("/api", "GET", "API root"),
+        ("/graphql", "POST", "GraphQL endpoint"),
+        ("/health", "GET", "Health check"),
+        ("/status", "GET", "Status endpoint"),
+        ("/docs", "GET", "API documentation"),
+        ("/openapi.json", "GET", "OpenAPI spec"),
+        ("/swagger.json", "GET", "Swagger spec"),
+    ]
 
     try:
         # ssl=False is intentional for authenticated scan probing — targets may
-        # use self-signed certs. This only applies to user-initiated scans
-        # against external URLs, not internal API calls.
+        # use self-signed certs. This only applies to user-initiated scans.
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            # --- Request 1: GET base URL ---
+            # --- Phase 1: Base response structure ---
             try:
                 async with session.get(url, headers=auth_headers, ssl=False) as resp:
                     ct = resp.headers.get("Content-Type", "")
                     body_text = await resp.text()
                     is_json = False
                     has_typed_fields = False
+                    response_keys: list[str] = []
                     try:
-                        import json
-                        parsed = json.loads(body_text)
+                        parsed = _json.loads(body_text)
                         is_json = True
                         if isinstance(parsed, dict):
                             has_typed_fields = any(
                                 isinstance(v, (int, float, bool, list, dict))
                                 for v in parsed.values()
                             )
-                    except (json.JSONDecodeError, ValueError):
+                            response_keys = list(parsed.keys())[:20]
+                    except (ValueError, _json.JSONDecodeError):
                         pass
 
                     response_structure = {
@@ -1112,9 +1271,9 @@ async def authenticated_scan(request: Request):
                         "content_type": ct.split(";")[0].strip(),
                         "is_json": is_json,
                         "has_typed_fields": has_typed_fields,
+                        "top_level_keys": response_keys,
                     }
 
-                    # Collect useful headers from this response
                     for h in resp.headers:
                         if h.lower() in USEFUL_HEADERS:
                             headers_found.append(h)
@@ -1123,58 +1282,262 @@ async def authenticated_scan(request: Request):
             except Exception as e:
                 response_structure = {"error": f"Request failed: {type(e).__name__}"}
 
-            # --- Request 2: GET non-existent path (error format check) ---
+            # --- Phase 2: Error pattern analysis (404, 401 without auth, 405) ---
+            error_codes_tested: dict[str, dict] = {}
+
+            async def _test_error(test_url: str, method: str, label: str, use_auth: bool = True) -> dict | None:
+                hdrs = dict(auth_headers) if use_auth else {}
+                try:
+                    req_method = getattr(session, method.lower(), session.get)
+                    async with req_method(test_url, headers=hdrs, ssl=False) as resp:
+                        err_text = await resp.text()
+                        structured = False
+                        has_code = False
+                        has_message = False
+                        has_docs_link = False
+                        try:
+                            err_json = _json.loads(err_text)
+                            structured = True
+                            if isinstance(err_json, dict):
+                                keys_lower = {k.lower() for k in err_json.keys()}
+                                has_code = bool(keys_lower & {"code", "error_code", "status", "status_code"})
+                                has_message = bool(keys_lower & {"message", "error", "detail", "description"})
+                                # Check for documentation link in error
+                                err_str = str(err_json).lower()
+                                has_docs_link = any(w in err_str for w in ("docs.", "documentation", "help.", "support."))
+                        except (ValueError, _json.JSONDecodeError):
+                            pass
+                        return {
+                            "status_code": resp.status,
+                            "is_structured_json": structured,
+                            "has_error_code": has_code,
+                            "has_error_message": has_message,
+                            "has_docs_link": has_docs_link,
+                        }
+                except Exception:
+                    return None
+
+            # Test 404
+            result_404 = await _test_error(f"{url}/clarvia-test-nonexistent-path-404", "GET", "not_found")
+            if result_404:
+                error_codes_tested["404_not_found"] = result_404
+
+            # Test 405 (wrong method)
+            result_405 = await _test_error(url, "DELETE", "method_not_allowed")
+            if result_405:
+                error_codes_tested["405_method_not_allowed"] = result_405
+
+            # Test 401 (no auth)
+            result_401 = await _test_error(url, "GET", "unauthorized", use_auth=False)
+            if result_401:
+                error_codes_tested["401_unauthorized"] = result_401
+
+            # Test 422 (bad input)
             try:
-                test_404_url = f"{url}/clarvia-test-404"
-                async with session.get(test_404_url, headers=auth_headers, ssl=False) as resp:
+                async with session.post(
+                    url, headers=auth_headers,
+                    json={"clarvia_test": True}, ssl=False,
+                ) as resp:
                     err_text = await resp.text()
-                    structured_error = False
-                    error_has_code = False
-                    error_has_message = False
+                    structured = False
                     try:
-                        import json
-                        err_json = json.loads(err_text)
-                        structured_error = True
-                        if isinstance(err_json, dict):
-                            keys_lower = {k.lower() for k in err_json.keys()}
-                            error_has_code = bool(keys_lower & {"code", "error_code", "status", "status_code"})
-                            error_has_message = bool(keys_lower & {"message", "error", "detail", "description"})
-                    except (json.JSONDecodeError, ValueError):
+                        _json.loads(err_text)
+                        structured = True
+                    except (ValueError, _json.JSONDecodeError):
+                        pass
+                    error_codes_tested["422_validation"] = {
+                        "status_code": resp.status,
+                        "is_structured_json": structured,
+                    }
+            except Exception:
+                pass
+
+            # Summarize error quality
+            structured_count = sum(1 for v in error_codes_tested.values() if v.get("is_structured_json"))
+            total_tested = len(error_codes_tested)
+            has_docs = any(v.get("has_docs_link") for v in error_codes_tested.values())
+            error_patterns = {
+                "error_codes_tested": error_codes_tested,
+                "consistency_score": f"{structured_count}/{total_tested} structured",
+                "quality": (
+                    "excellent" if structured_count == total_tested and has_docs
+                    else "good" if structured_count == total_tested
+                    else "partial" if structured_count > 0
+                    else "poor"
+                ),
+                "has_documentation_links": has_docs,
+            }
+
+            # --- Phase 3: Rate limit analysis ---
+            rl_limit = None
+            rl_remaining = None
+            rl_reset = None
+            has_retry_after = False
+
+            for h_name in headers_found:
+                h_lower = h_name.lower()
+                if h_lower == "x-ratelimit-limit":
+                    try:
+                        async with session.head(url, headers=auth_headers, ssl=False) as resp:
+                            rl_limit = resp.headers.get("X-RateLimit-Limit")
+                            rl_remaining = resp.headers.get("X-RateLimit-Remaining")
+                            rl_reset = resp.headers.get("X-RateLimit-Reset")
+                            has_retry_after = "Retry-After" in resp.headers
+                    except Exception:
+                        pass
+                    break
+
+            # If no rate limit headers found from first pass, do a dedicated check
+            if rl_limit is None:
+                try:
+                    async with session.head(url, headers=auth_headers, ssl=False) as resp:
+                        rl_limit = resp.headers.get("X-RateLimit-Limit") or resp.headers.get("x-ratelimit-limit")
+                        rl_remaining = resp.headers.get("X-RateLimit-Remaining") or resp.headers.get("x-ratelimit-remaining")
+                        rl_reset = resp.headers.get("X-RateLimit-Reset") or resp.headers.get("x-ratelimit-reset")
+                        has_retry_after = any(
+                            h.lower() == "retry-after" for h in resp.headers
+                        )
+                        # Also collect any headers we missed
+                        for h in resp.headers:
+                            if h.lower() in USEFUL_HEADERS and h not in headers_found:
+                                headers_found.append(h)
+                except Exception:
+                    pass
+
+            rate_limit_analysis = {
+                "limit": rl_limit,
+                "remaining": rl_remaining,
+                "reset": rl_reset,
+                "has_retry_after": has_retry_after,
+                "completeness": (
+                    "full" if all([rl_limit, rl_remaining, rl_reset, has_retry_after])
+                    else "good" if all([rl_limit, rl_remaining])
+                    else "partial" if rl_limit
+                    else "none"
+                ),
+                "agent_safety_note": (
+                    "Agents can self-throttle safely" if rl_limit and rl_remaining
+                    else "Agents cannot detect rate limits — high risk of 429 errors"
+                ),
+            }
+
+            # --- Phase 4: Protected endpoint discovery ---
+            async def _probe_endpoint(path: str, method: str, label: str) -> dict | None:
+                probe_url = f"{url.rstrip('/')}{path}"
+                try:
+                    req_method = getattr(session, method.lower(), session.get)
+                    kwargs = {"headers": auth_headers, "ssl": False}
+                    if method.upper() == "POST":
+                        kwargs["json"] = {}
+                    async with req_method(probe_url, **kwargs) as resp:
+                        if resp.status < 500:  # Any non-server-error means endpoint exists
+                            ct = resp.headers.get("Content-Type", "")
+                            return {
+                                "path": path,
+                                "method": method.upper(),
+                                "label": label,
+                                "status_code": resp.status,
+                                "content_type": ct.split(";")[0].strip(),
+                                "accessible": resp.status < 400,
+                                "auth_required": resp.status in (401, 403),
+                            }
+                except Exception:
+                    pass
+                return None
+
+            # Probe endpoints concurrently (with limit)
+            probe_tasks = [
+                _probe_endpoint(path, method, label)
+                for path, method, label in _ENDPOINT_PATTERNS
+            ]
+            probe_results = await asyncio.gather(*probe_tasks, return_exceptions=True)
+            protected_endpoints = [
+                r for r in probe_results
+                if isinstance(r, dict) and r is not None
+            ]
+
+            # --- Phase 5: Pagination detection ---
+            try:
+                async with session.get(url, headers=auth_headers, ssl=False) as resp:
+                    body_text = await resp.text()
+                    link_header = resp.headers.get("Link", "")
+                    has_link_pagination = "rel=" in link_header
+
+                    has_cursor = False
+                    has_offset = False
+                    has_total_count = False
+                    try:
+                        data = _json.loads(body_text)
+                        if isinstance(data, dict):
+                            keys_lower = {k.lower() for k in data.keys()}
+                            has_cursor = bool(keys_lower & {"cursor", "next_cursor", "next_page_token", "page_token", "after"})
+                            has_offset = bool(keys_lower & {"offset", "page", "per_page", "page_size", "limit"})
+                            has_total_count = bool(keys_lower & {"total", "total_count", "count", "total_results"})
+                    except (ValueError, _json.JSONDecodeError):
                         pass
 
-                    error_quality = {
-                        "status_code": resp.status,
-                        "is_structured_json": structured_error,
-                        "has_error_code": error_has_code,
-                        "has_error_message": error_has_message,
-                        "quality": "structured" if (structured_error and error_has_code and error_has_message) else "partial" if structured_error else "generic",
+                    # Check X-Total-Count style headers
+                    has_total_header = any(
+                        h.lower() in ("x-total-count", "x-total", "x-page")
+                        for h in resp.headers
+                    )
+
+                    pagination_analysis = {
+                        "has_link_header": has_link_pagination,
+                        "has_cursor_pagination": has_cursor,
+                        "has_offset_pagination": has_offset,
+                        "has_total_count": has_total_count or has_total_header,
+                        "pattern": (
+                            "cursor" if has_cursor
+                            else "link_header" if has_link_pagination
+                            else "offset" if has_offset
+                            else "none_detected"
+                        ),
                     }
-            except asyncio.TimeoutError:
-                error_quality = {"error": "Timeout on 404 test request"}
-            except Exception as e:
-                error_quality = {"error": f"Request failed: {type(e).__name__}"}
+            except Exception:
+                pagination_analysis = {"error": "Could not analyze pagination"}
 
-            # --- Request 3: HEAD base URL (header inspection) ---
-            try:
-                async with session.head(url, headers=auth_headers, ssl=False) as resp:
-                    for h in resp.headers:
-                        if h.lower() in USEFUL_HEADERS and h not in headers_found:
-                            headers_found.append(h)
-            except (asyncio.TimeoutError, Exception):
-                pass  # Non-critical, we already have headers from request 1
+            # --- Phase 6 (optional): Full AEO scan with auth ---
+            full_scan_result = None
+            if run_full_scan:
+                try:
+                    scan_result = await run_scan(url, auth_headers=auth_headers)
+                    full_scan_result = {
+                        "scan_id": scan_result.scan_id,
+                        "clarvia_score": scan_result.clarvia_score,
+                        "rating": scan_result.rating,
+                        "agent_grade": scan_result.agent_grade,
+                        "authenticated_scan": True,
+                        "dimensions": {
+                            k: {"score": v.score, "max": v.max}
+                            for k, v in scan_result.dimensions.items()
+                        },
+                        "top_recommendations": scan_result.top_recommendations[:5],
+                    }
+                except Exception as e:
+                    full_scan_result = {"error": f"Full scan failed: {type(e).__name__}"}
 
+    except HTTPException:
+        raise
     except Exception:
+        logger.exception("Authenticated scan failed for %s", url)
         raise HTTPException(status_code=500, detail="Authenticated scan failed due to an internal error. Please try again later.")
 
-    return {
-        "auth_scan_report": {
-            "url": url,
-            "auth_method": auth_method,
-            "response_structure": response_structure,
-            "error_quality": error_quality,
-            "headers_found": sorted(set(headers_found)),
-        }
+    report = {
+        "url": url,
+        "auth_method": auth_method,
+        "scan_type": "authenticated_deep",
+        "response_structure": response_structure,
+        "error_patterns": error_patterns,
+        "rate_limit_analysis": rate_limit_analysis,
+        "protected_endpoints": protected_endpoints,
+        "pagination_analysis": pagination_analysis,
+        "headers_found": sorted(set(headers_found)),
     }
+    if full_scan_result:
+        report["full_aeo_scan"] = full_scan_result
+
+    return {"auth_scan_report": report}
 
 
 # ---------------------------------------------------------------------------
@@ -3091,12 +3454,39 @@ async def batch_score(req: BatchScanRequest, request: Request):
     """Run AEO scans on multiple URLs in parallel (max 5, 10s timeout each).
 
     Returns partial results — URLs that timeout get status="timeout".
+    Batch scanning requires a paid plan (starter+).
     """
+    # --- Tier gate: batch scan requires starter+ ---
+    from .services.tier_gate import has_feature, Feature, BATCH_LIMITS
+
+    user_plan = "free"
+    clarvia_key = request.headers.get("x-clarvia-key") or request.headers.get("x-api-key")
+    if clarvia_key:
+        try:
+            from .services.auth_service import validate_api_key
+            meta = await validate_api_key(clarvia_key)
+            if meta:
+                user_plan = meta.get("plan", "free")
+        except Exception:
+            pass
+
+    if not has_feature(user_plan, Feature.BATCH_SCAN):
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": "Batch scanning requires a pro or higher plan.",
+                "upgrade_url": "https://clarvia.art/pricing",
+                "current_plan": user_plan,
+            },
+        )
+
+    batch_limit = BATCH_LIMITS.get(user_plan, 5)
+
     # Validate
     if not req.urls:
         raise HTTPException(status_code=400, detail="urls array must not be empty")
-    if len(req.urls) > 5:
-        raise HTTPException(status_code=400, detail="Maximum 5 URLs per batch request")
+    if len(req.urls) > batch_limit:
+        raise HTTPException(status_code=400, detail=f"Maximum {batch_limit} URLs per batch request for {user_plan} plan")
 
     # Rate limit check
     client_ip = request.client.host if request.client else "unknown"
@@ -3111,6 +3501,25 @@ async def batch_score(req: BatchScanRequest, request: Request):
     async def _scan_one(url: str) -> BatchScanResultItem:
         try:
             result = await asyncio.wait_for(run_scan(url), timeout=_SCAN_TIMEOUT)
+
+            # Persist to scan history
+            try:
+                dim_scores = {}
+                if result.dimensions:
+                    for k, v in result.dimensions.items():
+                        dim_scores[k] = v.score if hasattr(v, "score") else (v.get("score", 0) if isinstance(v, dict) else 0)
+                from .routes.scan_history_routes import persist_scan_result
+                await persist_scan_result(
+                    url=result.url,
+                    scan_id=result.scan_id,
+                    score=result.clarvia_score,
+                    rating=result.rating,
+                    service_name=result.service_name,
+                    dimensions=dim_scores or None,
+                )
+            except Exception:
+                pass  # Non-critical for batch scans
+
             return BatchScanResultItem(
                 url=url,
                 score=result.clarvia_score,
@@ -3178,7 +3587,7 @@ class CICheckResponse(BaseModel):
 async def ci_check(req: CICheckRequest, request: Request):
     """CI/CD gate: scan a URL and check if it meets minimum AEO thresholds.
 
-    Requires X-Clarvia-Key header.
+    Requires X-Clarvia-Key header with pro+ plan.
     Returns passed=true only when overall score >= min_score
     AND every required_dimension meets its minimum.
     """
@@ -3192,6 +3601,19 @@ async def ci_check(req: CICheckRequest, request: Request):
     meta = await validate_api_key(key)
     if not meta:
         raise HTTPException(status_code=401, detail="Invalid API key")
+
+    # --- Tier gate: CI/CD requires pro+ ---
+    from .services.tier_gate import has_feature, Feature
+    user_plan = meta.get("plan", "free")
+    if not has_feature(user_plan, Feature.CI_CD_CHECK):
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": "CI/CD integration requires a pro or higher plan.",
+                "upgrade_url": "https://clarvia.art/pricing",
+                "current_plan": user_plan,
+            },
+        )
 
     allowed = await check_rate_limit(meta["key_hash"], meta.get("rate_limit", 10))
     if not allowed:
@@ -3208,6 +3630,24 @@ async def ci_check(req: CICheckRequest, request: Request):
     except Exception:
         logger.exception("CI check scan failed for URL: %s", req.url)
         raise HTTPException(status_code=500, detail="Scan failed due to an internal error. Please try again later.")
+
+    # Persist to scan history
+    try:
+        dim_scores = {}
+        if result.dimensions:
+            for k, v in result.dimensions.items():
+                dim_scores[k] = v.score if hasattr(v, "score") else (v.get("score", 0) if isinstance(v, dict) else 0)
+        from .routes.scan_history_routes import persist_scan_result
+        await persist_scan_result(
+            url=result.url,
+            scan_id=result.scan_id,
+            score=result.clarvia_score,
+            rating=result.rating,
+            service_name=result.service_name,
+            dimensions=dim_scores or None,
+        )
+    except Exception as e:
+        logger.warning("Failed to save scan history from CI check: %s", e)
 
     # --- Evaluate thresholds ---
     overall_score = result.clarvia_score
@@ -3260,6 +3700,7 @@ async def ci_check(req: CICheckRequest, request: Request):
 
 @app.get("/api/v1/export/pdf", tags=["scan"])
 async def export_pdf(
+    request: Request,
     scan_id: str,
     brand_name: str = "Clarvia",
     brand_logo_url: str | None = None,
@@ -3267,12 +3708,34 @@ async def export_pdf(
     """Export a scan result as a branded PDF report.
 
     Supports white-labeling: pass brand_name to replace default Clarvia branding.
+    Requires starter+ plan.
 
     Args:
         scan_id: The scan identifier to export.
         brand_name: Brand name shown on the report (default: "Clarvia").
         brand_logo_url: Optional brand logo URL (reserved for future use).
     """
+    # --- Tier gate: PDF export requires starter+ ---
+    from .services.tier_gate import has_feature, Feature
+    user_plan = "free"
+    clarvia_key = request.headers.get("x-clarvia-key") or request.headers.get("x-api-key")
+    if clarvia_key:
+        try:
+            from .services.auth_service import validate_api_key
+            meta = await validate_api_key(clarvia_key)
+            if meta:
+                user_plan = meta.get("plan", "free")
+        except Exception:
+            pass
+    if not has_feature(user_plan, Feature.PDF_EXPORT):
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": "PDF export requires a starter or higher plan.",
+                "upgrade_url": "https://clarvia.art/pricing",
+                "current_plan": user_plan,
+            },
+        )
     import io
     from fastapi.responses import StreamingResponse
 

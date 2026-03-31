@@ -105,6 +105,7 @@ def filter_eligible(
     scans: list[dict],
     threshold: int,
     limit: int,
+    github_only: bool = True,
 ) -> list[dict]:
     """Filter and sort scans by score, returning top eligible tools."""
     eligible = [
@@ -112,6 +113,7 @@ def filter_eligible(
         if s.get("clarvia_score", 0) >= threshold
         and s.get("service_name")
         and s.get("scan_id")
+        and (not github_only or "github.com" in s.get("url", ""))
     ]
     eligible.sort(key=lambda s: s["clarvia_score"], reverse=True)
     return eligible[:limit]

@@ -26,6 +26,127 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+# ---------------------------------------------------------------------------
+# Pricing & tier information
+# ---------------------------------------------------------------------------
+
+@router.get("/pricing")
+async def get_pricing():
+    """Return current pricing tiers with features and limits.
+
+    This is the source of truth for free/paid boundary.
+    """
+    from ..services.tier_gate import get_plan_info, DAILY_SCAN_LIMITS, BATCH_LIMITS
+
+    return {
+        "plans": [
+            {
+                **get_plan_info("free"),
+                "price": "$0",
+                "price_monthly": 0,
+                "description": "Basic AEO scanning for individual developers",
+                "highlights": [
+                    "10 scans/day",
+                    "Top 3 recommendations",
+                    "Leaderboard & search",
+                    "MCP tool access",
+                ],
+            },
+            {
+                **get_plan_info("starter"),
+                "price": "$14/mo",
+                "price_monthly": 14,
+                "description": "For developers improving their APIs",
+                "highlights": [
+                    "50 scans/day",
+                    "Full sub-factor evidence",
+                    "Authenticated deep scan",
+                    "Scan history & comparison",
+                    "PDF report export",
+                ],
+            },
+            {
+                **get_plan_info("pro"),
+                "price": "$29/mo",
+                "price_monthly": 29,
+                "description": "For teams and power users",
+                "highlights": [
+                    "Unlimited scans",
+                    "Batch scan (20 URLs)",
+                    "CI/CD integration",
+                    "Competitive benchmarks",
+                    "Code fix generation",
+                    "All starter features",
+                ],
+            },
+            {
+                **get_plan_info("enterprise"),
+                "price": "Contact us",
+                "price_monthly": None,
+                "description": "Custom solutions for organizations",
+                "highlights": [
+                    "Unlimited everything",
+                    "Batch scan (50 URLs)",
+                    "Custom scoring weights",
+                    "Team dashboard",
+                    "Priority support",
+                    "SLA guarantee",
+                ],
+            },
+        ],
+        "feature_comparison": {
+            "basic_scan": {"free": True, "starter": True, "pro": True, "enterprise": True},
+            "authenticated_scan": {"free": False, "starter": True, "pro": True, "enterprise": True},
+            "detailed_report": {"free": False, "starter": True, "pro": True, "enterprise": True},
+            "scan_history": {"free": False, "starter": True, "pro": True, "enterprise": True},
+            "batch_scan": {"free": False, "starter": False, "pro": True, "enterprise": True},
+            "pdf_export": {"free": False, "starter": True, "pro": True, "enterprise": True},
+            "ci_cd_check": {"free": False, "starter": False, "pro": True, "enterprise": True},
+            "competitive_benchmark": {"free": False, "starter": False, "pro": True, "enterprise": True},
+            "code_fix": {"free": False, "starter": False, "pro": True, "enterprise": True},
+        },
+    }
+
+
+@router.get("/my-plan")
+async def get_my_plan(request: Request):
+    """Get the current user's plan based on their API key.
+
+    Requires X-Clarvia-Key header.
+    """
+    key = request.headers.get("x-clarvia-key")
+    if not key:
+        return {
+            "plan": "free",
+            "authenticated": False,
+            "message": "No API key provided. Using free tier.",
+            "upgrade_url": "https://clarvia.art/pricing",
+        }
+
+    from ..services.auth_service import validate_api_key
+    meta = await validate_api_key(key)
+    if not meta:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    from ..services.tier_gate import get_plan_info, check_daily_scan_limit
+
+    plan = meta.get("plan", "free")
+    rate_key = f"apikey:{meta.get('key_id', key[:12])}"
+    _, current_scans, limit = check_daily_scan_limit(rate_key, plan)
+
+    return {
+        "plan": plan,
+        "authenticated": True,
+        "key_id": meta.get("key_id"),
+        **get_plan_info(plan),
+        "usage_today": {
+            "scans_used": current_scans,
+            "scans_limit": limit,
+            "scans_remaining": max(0, limit - current_scans) if limit > 0 else "unlimited",
+        },
+    }
+
+
 @router.post("/create-checkout")
 async def create_checkout(request: Request):
     """Create a Lemon Squeezy checkout URL for a detailed report.
@@ -136,6 +257,43 @@ async def lemonsqueezy_webhook(request: Request):
 
             customer_email = attrs.get("user_email", "")
             order_id = str(data.get("id", ""))
+
+            # Determine plan from product variant/amount
+            total_cents = attrs.get("total", 0)
+            purchased_plan = "starter" if total_cents <= 1400 else "pro"
+
+            # Auto-upgrade API key for the customer if they have one
+            if customer_email:
+                try:
+                    from ..services.supabase_client import get_supabase
+                    client = get_supabase()
+                    if client:
+                        # Find existing API key for this email and upgrade plan
+                        result = client.table("api_keys").select("key_hash").eq(
+                            "user_email", customer_email
+                        ).execute()
+                        if result.data:
+                            for row in result.data:
+                                client.table("api_keys").update({
+                                    "plan": purchased_plan,
+                                }).eq("key_hash", row["key_hash"]).execute()
+                            logger.info(
+                                "Upgraded %d API key(s) to %s for %s",
+                                len(result.data), purchased_plan, customer_email,
+                            )
+                        else:
+                            # Create a new API key for the customer
+                            from ..services.auth_service import create_api_key
+                            import asyncio
+                            new_key = asyncio.ensure_future(
+                                create_api_key(customer_email, purchased_plan)
+                            )
+                            logger.info(
+                                "Created new %s API key for %s",
+                                purchased_plan, customer_email,
+                            )
+                except Exception as e:
+                    logger.error("Failed to upgrade API key after payment: %s", e)
 
             # Generate full report
             from ..scanner import get_cached_scan

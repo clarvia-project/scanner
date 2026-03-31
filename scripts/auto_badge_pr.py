@@ -126,6 +126,12 @@ def load_badge_outreach() -> list[dict]:
     return tools
 
 
+def normalize_repo(repo: str) -> str:
+    """Normalize repo string: strip fragments, lowercase."""
+    repo = re.sub(r"[#?].*$", "", repo)  # strip #readme, ?tab=... etc.
+    return repo.strip("/").lower()
+
+
 def load_submitted_repos() -> set[str]:
     """Load set of repo owner/name that already have PR submissions."""
     submitted = set()
@@ -141,7 +147,7 @@ def load_submitted_repos() -> set[str]:
                 entry = json.loads(line)
                 repo = entry.get("repo", "")
                 if repo:
-                    submitted.add(repo.lower())
+                    submitted.add(normalize_repo(repo))
             except json.JSONDecodeError:
                 continue
     return submitted
@@ -165,8 +171,8 @@ def extract_github_repo(url: str) -> Optional[str]:
         return None
 
     patterns = [
-        r"github\.com/([^/]+/[^/]+?)(?:\.git)?(?:/|$)",
-        r"github\.com/([^/]+/[^/]+)",
+        r"github\.com/([^/]+/[^/]+?)(?:\.git)?(?:[/#?]|$)",
+        r"github\.com/([^/#?\s]+/[^/#?\s]+)",
     ]
     for pattern in patterns:
         match = re.search(pattern, url)
@@ -247,7 +253,64 @@ def insert_badge_into_readme(readme: str, badge_md: str) -> str:
     return "\n".join(lines)
 
 
-def create_badge_pr(repo: str, tool: dict, dry_run: bool = False) -> dict:
+def create_badge_issue(repo: str, tool: dict, log_entry: dict) -> dict:
+    """Fallback: create a GitHub Issue suggesting badge addition (no fork needed)."""
+    score = tool.get("score", 0)
+    tool_name = tool.get("service_name", repo.split("/")[-1])
+    scan_id = tool.get("scan_id", "")
+    badge_md = tool.get("badge_snippets", {}).get("markdown_linked", "")
+    if not badge_md and scan_id:
+        badge_md = f"[![Clarvia AEO Score](https://clarvia.art/api/badge/{scan_id}.svg)](https://clarvia.art/tool/{scan_id})"
+
+    title = f"Add Clarvia AEO Score badge ({score}/100) to README"
+    body = (
+        f"Hi! 👋\n\n"
+        f"I wanted to let you know that **{tool_name}** has been reviewed on "
+        f"[Clarvia](https://clarvia.art) and scored **{score}/100** for agent-readiness "
+        f"(MCP compatibility, structured output, documentation quality, etc.).\n\n"
+        f"You can add the badge to your README with this one-liner:\n\n"
+        f"```markdown\n{badge_md}\n```\n\n"
+        f"It dynamically updates as your score improves. Feel free to close if you're not interested — no hard feelings!\n\n"
+        f"[View full report →](https://clarvia.art/tool/{scan_id})"
+    )
+
+    # Check if repo has issues enabled
+    repo_info = run_gh(["api", f"repos/{repo}", "--jq", ".has_issues"], timeout=10)
+    if repo_info != "true":
+        log_entry["status"] = "skipped"
+        log_entry["error"] = "Issues disabled on repo"
+        return log_entry
+
+    # Check for existing Clarvia issue
+    existing = run_gh([
+        "issue", "list", "--repo", repo,
+        "--search", "Clarvia AEO", "--json", "number", "--jq", "length"
+    ], timeout=15)
+    if existing and existing.strip() != "0":
+        log_entry["status"] = "skipped"
+        log_entry["error"] = "Clarvia issue already exists"
+        return log_entry
+
+    result = run_gh([
+        "issue", "create",
+        "--repo", repo,
+        "--title", title,
+        "--body", body,
+    ], timeout=30)
+
+    if result and ("github.com" in result or "issues" in result):
+        log_entry["status"] = "issue_submitted"
+        log_entry["pr_url"] = result.strip()
+        log_entry["type"] = "issue"
+        logger.info("Issue created: %s", result.strip())
+    else:
+        log_entry["status"] = "failed"
+        log_entry["error"] = f"Issue creation returned: {result}"
+
+    return log_entry
+
+
+def create_badge_pr(repo: str, tool: dict, dry_run: bool = False, issue_only: bool = False) -> dict:
     """Fork repo, add badge to README, create PR. Returns log entry."""
     ts = datetime.now(timezone.utc).isoformat()
     log_entry = {
@@ -266,13 +329,19 @@ def create_badge_pr(repo: str, tool: dict, dry_run: bool = False) -> dict:
         logger.info("[DRY RUN] Would create badge PR for %s", repo)
         return log_entry
 
+    if issue_only:
+        logger.info("Issue-only mode: creating Issue for %s", repo)
+        return create_badge_issue(repo, tool, log_entry)
+
     try:
-        # Step 1: Fork the repo
+        # Step 1: Fork the repo (with issue fallback)
         logger.info("Forking %s...", repo)
         fork_result = run_gh(["repo", "fork", repo, "--clone=false"], timeout=30)
-        if fork_result is None:
-            # Fork might already exist, that's OK
-            logger.info("Fork may already exist for %s, continuing...", repo)
+        fork_blocked = fork_result is None
+
+        if fork_blocked:
+            logger.info("Fork blocked for %s — falling back to Issue outreach", repo)
+            return create_badge_issue(repo, tool, log_entry)
 
         time.sleep(2)  # Give GitHub time to process the fork
 
@@ -404,6 +473,7 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=3, help="Max PRs per run (default: 3)")
     parser.add_argument("--min-score", type=int, default=70, help="Minimum score threshold (default: 70)")
     parser.add_argument("--dry-run", action="store_true", help="Preview only, don't create PRs")
+    parser.add_argument("--issue-only", action="store_true", help="Skip fork/PR, go straight to Issue outreach")
     args = parser.parse_args()
 
     logger.info("=== Auto Badge PR Submission ===")
@@ -432,7 +502,7 @@ def main() -> None:
         if not repo:
             continue
 
-        if repo.lower() in submitted:
+        if normalize_repo(repo) in submitted:
             logger.debug("Skipping %s (already submitted)", repo)
             continue
 
@@ -450,19 +520,22 @@ def main() -> None:
 
     # Process up to limit
     submitted_count = 0
+    issue_count = 0
     for repo, tool in candidates[:args.limit]:
         logger.info("Processing: %s (score: %d)", repo, tool.get("score", 0))
 
-        log_entry = create_badge_pr(repo, tool, dry_run=args.dry_run)
+        log_entry = create_badge_pr(repo, tool, dry_run=args.dry_run, issue_only=args.issue_only)
         append_pr_log(log_entry)
 
         if log_entry["status"] == "submitted":
             submitted_count += 1
+        elif log_entry["status"] == "issue_submitted":
+            issue_count += 1
 
-        if log_entry["status"] in ("submitted", "dry_run") and submitted_count < args.limit:
+        if log_entry["status"] in ("submitted", "issue_submitted", "dry_run"):
             time.sleep(PR_DELAY_SECONDS)
 
-    logger.info("=== Done: %d PRs submitted ===", submitted_count)
+    logger.info("=== Done: %d PRs + %d Issues submitted ===", submitted_count, issue_count)
 
 
 if __name__ == "__main__":

@@ -50,6 +50,9 @@ export const metadata: Metadata = {
     images: ["/api/og"],
   },
   metadataBase: new URL("https://clarvia.art"),
+  alternates: {
+    canonical: "./",
+  },
   robots: {
     index: true,
     follow: true,

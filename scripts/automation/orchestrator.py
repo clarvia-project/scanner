@@ -10,6 +10,8 @@ Features:
   - Logging to data/automation.log
   - Telegram alerts on task failures
   - Graceful shutdown on SIGTERM/SIGINT
+  - Retry with backoff for critical tasks
+  - Cascade failure protection (circuit breaker for the run loop)
 
 Usage:
   python scripts/automation/orchestrator.py              # start scheduler
@@ -37,6 +39,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 CONFIG_PATH = SCRIPT_DIR / "config.yaml"
 LOG_PATH = DATA_DIR / "automation.log"
 STATE_PATH = DATA_DIR / "orchestrator_state.json"
+FAILURE_HISTORY_PATH = DATA_DIR / "task_failure_history.json"
 
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 from telegram_notifier import send_alert
@@ -49,6 +52,23 @@ logger = logging.getLogger(__name__)
 
 # Graceful shutdown flag
 _shutdown = False
+
+# ---------------------------------------------------------------------------
+# Retry & cascade protection configuration
+# ---------------------------------------------------------------------------
+
+# Critical tasks get automatic retry on failure (max_retries, backoff_seconds)
+CRITICAL_TASKS: dict[str, dict] = {
+    "healthcheck":   {"max_retries": 2, "backoff": 10},
+    "harvester":     {"max_retries": 2, "backoff": 30},
+    "data_auditor":  {"max_retries": 2, "backoff": 15},
+    "self_healer":   {"max_retries": 1, "backoff": 15},
+    "backup":        {"max_retries": 1, "backoff": 20},
+    "auto_merge":    {"max_retries": 1, "backoff": 20},
+}
+
+# If this many tasks fail in a single tick, skip remaining and alert
+CASCADE_FAILURE_THRESHOLD = 5
 
 
 def _handle_signal(signum: int, frame: Any) -> None:
@@ -84,6 +104,48 @@ def load_config() -> list[dict]:
 
     # Already a list (legacy format)
     return raw_tasks
+
+
+def load_failure_history() -> dict[str, list]:
+    """Load per-task failure history for tracking consecutive failures.
+
+    Returns:
+        Dict mapping task name to list of recent failure timestamps.
+    """
+    if FAILURE_HISTORY_PATH.exists():
+        try:
+            with open(FAILURE_HISTORY_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, ValueError):
+            pass
+    return {}
+
+
+def save_failure_history(history: dict[str, list]) -> None:
+    """Persist failure history, keeping only last 10 entries per task."""
+    trimmed = {k: v[-10:] for k, v in history.items()}
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with open(FAILURE_HISTORY_PATH, "w", encoding="utf-8") as f:
+        json.dump(trimmed, f, indent=2)
+
+
+def record_task_failure(history: dict[str, list], task_name: str, detail: str) -> int:
+    """Record a failure and return the consecutive failure count."""
+    if task_name not in history:
+        history[task_name] = []
+    history[task_name].append({
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "detail": detail[:200],
+    })
+    save_failure_history(history)
+    return len(history[task_name])
+
+
+def record_task_success(history: dict[str, list], task_name: str) -> None:
+    """Clear failure streak on success."""
+    if task_name in history:
+        history[task_name] = []
+        save_failure_history(history)
 
 
 def load_state() -> dict[str, str]:
@@ -256,13 +318,59 @@ def run_task(task: dict) -> tuple[bool, str]:
         return False, f"Execution error: {exc}"
 
 
+def run_task_with_retry(task: dict) -> tuple[bool, str]:
+    """Execute a task, retrying if it's a critical task and the first attempt fails.
+
+    Returns:
+        (success, output_or_error)
+    """
+    name = task["name"]
+    retry_cfg = CRITICAL_TASKS.get(name)
+
+    success, detail = run_task(task)
+    if success or retry_cfg is None:
+        return success, detail
+
+    # Critical task failed — retry with backoff
+    max_retries = retry_cfg["max_retries"]
+    backoff = retry_cfg["backoff"]
+
+    for attempt in range(1, max_retries + 1):
+        logger.warning(
+            "Task '%s' failed, retrying (%d/%d) after %ds...",
+            name, attempt, max_retries, backoff,
+        )
+        log_task_event(name, "retry", f"attempt {attempt}/{max_retries}, backoff {backoff}s")
+
+        # Interruptible sleep
+        for _ in range(backoff):
+            if _shutdown:
+                return False, f"Shutdown during retry (attempt {attempt})"
+            time.sleep(1)
+
+        success, detail = run_task(task)
+        if success:
+            logger.info("Task '%s' succeeded on retry %d/%d", name, attempt, max_retries)
+            log_task_event(name, "retry_success", f"attempt {attempt}/{max_retries}")
+            return True, detail
+
+        backoff = min(backoff * 2, 120)  # exponential backoff, cap at 2 min
+
+    return False, detail
+
+
 def process_tasks(tasks: list[dict], state: dict[str, str], *, dry_run: bool = False) -> int:
     """Check and run all due tasks.
+
+    Includes cascade failure protection: if too many tasks fail in one tick,
+    remaining tasks are skipped and an alert is sent.
 
     Returns:
         Number of tasks executed.
     """
     executed = 0
+    failures_this_tick = 0
+    failure_history = load_failure_history()
 
     for task in tasks:
         if _shutdown:
@@ -273,25 +381,65 @@ def process_tasks(tasks: list[dict], state: dict[str, str], *, dry_run: bool = F
 
         name = task["name"]
 
+        # Cascade failure protection
+        if failures_this_tick >= CASCADE_FAILURE_THRESHOLD:
+            logger.error(
+                "Cascade protection: %d failures this tick — skipping '%s' and remaining tasks",
+                failures_this_tick, name,
+            )
+            log_task_event(name, "skipped", f"cascade protection ({failures_this_tick} failures)")
+            send_alert(
+                "Cascade Failure Protection Triggered",
+                (
+                    f"Stopped after {failures_this_tick} task failures in one tick.\n"
+                    f"Skipped: `{name}` and remaining tasks.\n"
+                    f"Check the automation log for details."
+                ),
+                level="CRITICAL",
+            )
+            break
+
         if dry_run:
             logger.info("[DRY RUN] Would run: %s", name)
             executed += 1
             continue
 
         log_task_event(name, "started")
-        success, detail = run_task(task)
+        success, detail = run_task_with_retry(task)
         now_iso = datetime.now(timezone.utc).isoformat()
 
         if success:
             logger.info("Task '%s' completed successfully", name)
             log_task_event(name, "completed", detail[:200])
+            record_task_success(failure_history, name)
         else:
-            logger.error("Task '%s' failed: %s", name, detail[:200])
+            failures_this_tick += 1
+            consecutive = record_task_failure(failure_history, name, detail)
+            logger.error(
+                "Task '%s' failed (consecutive: %d): %s",
+                name, consecutive, detail[:200],
+            )
             log_task_event(name, "failed", detail[:500])
+
+            # Escalate severity based on consecutive failures
+            level = "ERROR"
+            extra = ""
+            if consecutive >= 5:
+                level = "CRITICAL"
+                extra = f"\n\n*{consecutive} consecutive failures* — investigate immediately."
+            elif consecutive >= 3:
+                extra = f"\n\n*{consecutive} consecutive failures* — may need attention."
+
             send_alert(
                 f"Automation Task Failed: {name}",
-                f"Task: `{name}`\nScript: `{task['script']}`\n\n```\n{detail[:300]}\n```",
-                level="ERROR",
+                (
+                    f"Task: `{name}`\n"
+                    f"Script: `{task['script']}`\n"
+                    f"Consecutive failures: {consecutive}\n\n"
+                    f"```\n{detail[:300]}\n```"
+                    f"{extra}"
+                ),
+                level=level,
             )
 
         state[name] = now_iso

@@ -375,6 +375,18 @@ def _schedule_auto_scan(profile_id: str) -> None:
                 await save_scan(result)
             except Exception:
                 pass
+
+            # Persist to scan history
+            try:
+                dim_scores = {k: v.score for k, v in result.dimensions.items()}
+                from .scan_history_routes import persist_scan_result
+                await persist_scan_result(
+                    url=result.url, scan_id=result.scan_id,
+                    score=result.clarvia_score, rating=result.rating,
+                    service_name=result.service_name, dimensions=dim_scores or None,
+                )
+            except Exception:
+                pass
         except Exception as e:
             logger.warning("Auto-scan failed for %s: %s", profile_id, e)
             if profile_id in _profiles:
@@ -590,6 +602,18 @@ async def scan_profile(profile_id: str, _key: ApiKeyDep):
         except Exception as e:
             logger.warning("Failed to persist scan to Supabase: %s", e)
 
+        # Persist to scan history
+        try:
+            dim_scores = {k: v.score for k, v in result.dimensions.items()}
+            from .scan_history_routes import persist_scan_result
+            await persist_scan_result(
+                url=result.url, scan_id=result.scan_id,
+                score=result.clarvia_score, rating=result.rating,
+                service_name=result.service_name, dimensions=dim_scores or None,
+            )
+        except Exception:
+            pass
+
         return {
             "profile_id": profile_id,
             "clarvia_score": result.clarvia_score,
@@ -660,6 +684,18 @@ async def rescan_profile(profile_id: str):
             await save_scan(result)
         except Exception as e:
             logger.warning("Failed to persist rescan to Supabase: %s", e)
+
+        # Persist to scan history
+        try:
+            dim_scores = {k: v.score for k, v in result.dimensions.items()}
+            from .scan_history_routes import persist_scan_result
+            await persist_scan_result(
+                url=result.url, scan_id=result.scan_id,
+                score=result.clarvia_score, rating=result.rating,
+                service_name=result.service_name, dimensions=dim_scores or None,
+            )
+        except Exception:
+            pass
 
         return {
             "profile_id": profile_id,

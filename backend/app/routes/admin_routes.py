@@ -342,6 +342,18 @@ async def _background_rescan(urls: list[str], max_concurrent: int = 3) -> None:
                 result = await run_scan(url)
                 results.append(result.model_dump(mode="json"))
                 logger.info("Rescanned %s: score=%d", url, result.clarvia_score)
+
+                # Persist to scan history
+                try:
+                    dim_scores = {k: v.score for k, v in result.dimensions.items()}
+                    from .scan_history_routes import persist_scan_result
+                    await persist_scan_result(
+                        url=result.url, scan_id=result.scan_id,
+                        score=result.clarvia_score, rating=result.rating,
+                        service_name=result.service_name, dimensions=dim_scores or None,
+                    )
+                except Exception:
+                    pass
             except Exception as e:
                 logger.warning("Rescan failed for %s: %s", url, e)
                 errors.append({"url": url, "error": str(e)})

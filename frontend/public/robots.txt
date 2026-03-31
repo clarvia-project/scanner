@@ -3,6 +3,7 @@ Allow: /
 Disallow: /api/
 Disallow: /admin
 Disallow: /marketing
+Disallow: /register
 
 User-agent: GPTBot
 Allow: /

@@ -8,6 +8,7 @@
 orchestrator:
   log_file: data/automation.log
   telegram_on_failure: true
+  cascade_failure_threshold: 5  # skip remaining tasks if N fail in one tick
 
 tasks:
   healthcheck:

@@ -9,6 +9,8 @@ const DIMENSIONS = [
     label: "API Accessibility",
     max: 25,
     color: "text-blue-400",
+    bg: "bg-blue-400/10",
+    border: "border-blue-400/20",
     subs: [
       { name: "Endpoint Existence", max: 7, desc: "Publicly reachable endpoint returning 2xx" },
       { name: "Response Speed", max: 6, desc: "Median response time, target <200ms" },
@@ -24,6 +26,8 @@ const DIMENSIONS = [
     label: "Data Structuring",
     max: 25,
     color: "text-purple-400",
+    bg: "bg-purple-400/10",
+    border: "border-purple-400/20",
     subs: [
       { name: "Schema Definition", max: 7, desc: "OpenAPI/JSON Schema published with typed models" },
       { name: "Pricing Quantified", max: 5, desc: "Machine-readable pricing information" },
@@ -38,6 +42,8 @@ const DIMENSIONS = [
     label: "Agent Compatibility",
     max: 25,
     color: "text-cyan-400",
+    bg: "bg-cyan-400/10",
+    border: "border-cyan-400/20",
     subs: [
       { name: "MCP Server Exists", max: 7, desc: "Registered on mcp.so, Smithery, or Glama" },
       { name: "robots.txt Agent Policy", max: 5, desc: "Agent-friendly robots.txt with AI agent rules" },
@@ -52,6 +58,8 @@ const DIMENSIONS = [
     label: "Trust Signals",
     max: 25,
     color: "text-emerald-400",
+    bg: "bg-emerald-400/10",
+    border: "border-emerald-400/20",
     subs: [
       { name: "Success Rate & Uptime", max: 6, desc: "Public status page with uptime metrics and history" },
       { name: "Documentation Quality", max: 5, desc: "API reference, guides, code examples, changelogs" },
@@ -64,9 +72,59 @@ const DIMENSIONS = [
   },
 ];
 
+const AGENT_GRADES = [
+  {
+    grade: "AGENT_NATIVE",
+    range: "80 — 100",
+    meaning: "Fully optimized for autonomous AI agent use",
+    behavior: "Agents can use this tool autonomously without human configuration",
+    color: "text-emerald-400",
+    bg: "bg-emerald-400/10",
+  },
+  {
+    grade: "AGENT_FRIENDLY",
+    range: "60 — 79",
+    meaning: "Good agent support with minor gaps",
+    behavior: "Agents can use with some initial configuration or setup",
+    color: "text-blue-400",
+    bg: "bg-blue-400/10",
+  },
+  {
+    grade: "AGENT_POSSIBLE",
+    range: "40 — 59",
+    meaning: "Partial agent compatibility",
+    behavior: "Agents should use as fallback only; expect friction",
+    color: "text-yellow-400",
+    bg: "bg-yellow-400/10",
+  },
+  {
+    grade: "AGENT_HOSTILE",
+    range: "0 — 39",
+    meaning: "Not designed for agent use",
+    behavior: "Agents should avoid; high failure rate expected",
+    color: "text-red-400",
+    bg: "bg-red-400/10",
+  },
+];
+
+const GATEWAY_RATINGS = [
+  { label: "Exceptional", range: "90+", desc: "World-class agent readiness across all dimensions", color: "text-emerald-400" },
+  { label: "Excellent", range: "80 — 89", desc: "Production-ready for autonomous agents", color: "text-blue-400" },
+  { label: "Strong", range: "65 — 79", desc: "Good with minor gaps to address", color: "text-cyan-400" },
+  { label: "Moderate", range: "45 — 64", desc: "Usable but needs improvement in key areas", color: "text-yellow-400" },
+  { label: "Basic", range: "25 — 44", desc: "Significant gaps in agent compatibility", color: "text-orange-400" },
+  { label: "Low", range: "0 — 24", desc: "Not agent-ready; requires fundamental changes", color: "text-red-400" },
+];
+
+const ONCHAIN_BONUS = [
+  { name: "Transaction Success Rate", max: 10, desc: "RPC endpoint health and responsiveness for blockchain services" },
+  { name: "Real Volume / Chain Coverage", max: 10, desc: "Number of supported chains and WebSocket availability" },
+  { name: "Staking / Commitment", max: 5, desc: "SLA, uptime guarantees, enterprise signals" },
+];
+
 const CHANGES = [
-  { change: "Rate Limit Info: 3 \u2192 6 pts", reason: "#1 cause of agent failures in production (429 errors)" },
-  { change: "MCP Server: 10 \u2192 7 pts", reason: "Important but APIs work fine without MCP via OpenAPI specs" },
+  { change: "Rate Limit Info: 3 → 6 pts", reason: "#1 cause of agent failures in production (429 errors)" },
+  { change: "MCP Server: 10 → 7 pts", reason: "Important but APIs work fine without MCP via OpenAPI specs" },
   { change: "NEW: Idempotency Support (3 pts)", reason: "Critical for agent retry safety" },
   { change: "NEW: Streaming Support (3 pts)", reason: "Essential for LLM-based API services" },
   { change: "NEW: Pagination Pattern (2 pts)", reason: "Agents need to handle large datasets reliably" },
@@ -129,6 +187,7 @@ export default function MethodologyPage() {
       </header>
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-12 space-y-12">
+        {/* Hero */}
         <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold">Scoring Methodology</h1>
           <p className="text-muted max-w-xl mx-auto text-sm leading-relaxed">
@@ -148,6 +207,36 @@ export default function MethodologyPage() {
             This methodology is also available as structured JSON at{" "}
             <code className="text-accent bg-accent/10 px-1.5 py-0.5 rounded text-xs">GET /api/v1/methodology</code>
           </p>
+        </div>
+
+        {/* Formula Overview */}
+        <div className="space-y-4">
+          <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
+            Formula
+          </h2>
+          <div className="glass-card rounded-xl px-6 py-5 space-y-4">
+            <div className="font-mono text-sm text-center text-foreground leading-relaxed">
+              <p>Clarvia Score = API Accessibility (25)</p>
+              <p className="text-muted">+</p>
+              <p>Data Structuring (25)</p>
+              <p className="text-muted">+</p>
+              <p>Agent Compatibility (25)</p>
+              <p className="text-muted">+</p>
+              <p>Trust Signals (25)</p>
+              <p className="text-muted mt-2 text-xs">= 100 points base + up to 25 Web3 bonus</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              {DIMENSIONS.map((dim) => (
+                <div
+                  key={dim.key}
+                  className={`rounded-lg px-3 py-2.5 text-center ${dim.bg} border ${dim.border}`}
+                >
+                  <p className={`text-lg font-bold font-mono ${dim.color}`}>{dim.max}</p>
+                  <p className="text-[10px] text-muted mt-0.5">{dim.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Dimensions */}
@@ -175,6 +264,75 @@ export default function MethodologyPage() {
             </div>
           </div>
         ))}
+
+        {/* Web3 / Onchain Bonus */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-amber-400">Web3 Onchain Bonus</h2>
+            <span className="text-xs text-muted font-mono">+25 pts max</span>
+          </div>
+          <div className="glass-card rounded-xl px-6 py-4 space-y-3">
+            <p className="text-xs text-muted leading-relaxed">
+              Blockchain-specific services receive up to 25 bonus points on top of the base 100.
+              Non-blockchain services receive 0 bonus and are not penalized.
+            </p>
+          </div>
+          <div className="glass-card rounded-xl overflow-hidden divide-y divide-card-border/30">
+            {ONCHAIN_BONUS.map((sf) => (
+              <div key={sf.name} className="px-6 py-3.5 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <span className="text-sm">{sf.name}</span>
+                  <p className="text-xs text-muted mt-0.5">{sf.desc}</p>
+                </div>
+                <span className="text-sm font-mono text-muted shrink-0">{sf.max}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Agent Grades */}
+        <div className="space-y-4">
+          <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
+            Agent Grades
+          </h2>
+          <p className="text-xs text-muted leading-relaxed">
+            Agent grades tell AI agents how to treat a tool. Agents use these grades to make autonomous decisions
+            about whether to integrate a service, use it as a fallback, or avoid it entirely.
+          </p>
+          <div className="glass-card rounded-xl overflow-hidden divide-y divide-card-border/30">
+            {AGENT_GRADES.map((g) => (
+              <div key={g.grade} className="px-6 py-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className={`text-sm font-mono font-semibold ${g.color}`}>{g.grade}</span>
+                  <span className="text-xs text-muted font-mono">{g.range}</span>
+                </div>
+                <p className="text-sm text-foreground">{g.meaning}</p>
+                <p className="text-xs text-muted mt-1">{g.behavior}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Gateway Ratings */}
+        <div className="space-y-4">
+          <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
+            Gateway Ratings
+          </h2>
+          <p className="text-xs text-muted leading-relaxed">
+            Human-readable quality labels displayed alongside scores. These map directly to the numeric score.
+          </p>
+          <div className="glass-card rounded-xl overflow-hidden divide-y divide-card-border/30">
+            {GATEWAY_RATINGS.map((r) => (
+              <div key={r.label} className="px-6 py-3 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <span className={`text-sm font-medium ${r.color}`}>{r.label}</span>
+                  <p className="text-xs text-muted mt-0.5">{r.desc}</p>
+                </div>
+                <span className="text-xs text-muted font-mono shrink-0">{r.range}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Weight changes */}
         <div className="space-y-4">
@@ -209,6 +367,29 @@ export default function MethodologyPage() {
             <p>
               MCP support was reduced from 10 to 7 points because well-documented OpenAPI specs enable agent
               integration without MCP. We want to reward all paths to agent compatibility, not just one protocol.
+            </p>
+            <p>
+              Scores are <strong className="text-foreground">deterministic</strong> — the same input always produces the same score.
+              All scan data and scoring logic are transparent. No manual overrides, no pay-to-boost.
+            </p>
+          </div>
+        </div>
+
+        {/* How a Scan Works */}
+        <div className="space-y-4">
+          <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
+            How a Scan Works
+          </h2>
+          <div className="glass-card rounded-xl px-6 py-5 space-y-3 text-sm text-muted leading-relaxed">
+            <p>
+              When you submit a URL, Clarvia runs <strong className="text-foreground">11 independent crawlers</strong> in
+              parallel — checking endpoints, response headers, documentation, schema definitions, MCP registries,
+              and more. The entire scan typically completes in under 30 seconds.
+            </p>
+            <p>
+              Each crawler produces evidence-backed sub-factor scores. These roll up into the four dimension scores,
+              which sum to the final Clarvia Score. Every recommendation in the scan report is tied to a specific
+              measured gap — no generic advice.
             </p>
           </div>
         </div>

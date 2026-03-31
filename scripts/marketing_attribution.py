@@ -18,10 +18,13 @@ import argparse
 import json
 import logging
 import sys
+import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
+from urllib.request import urlopen, Request
+from urllib.error import URLError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,6 +43,97 @@ AGENT_TRAFFIC_PATH = PROJECT_ROOT / "data" / "agent-traffic.jsonl"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "marketing-attribution.jsonl"
 
 DEFAULT_WINDOW_DAYS = 7
+
+CLARVIA_API_BASE = "https://clarvia-api.onrender.com"
+
+
+def sync_agent_traffic_from_api(days: int = 30) -> int:
+    """Fetch agent traffic from the production Clarvia API and write to local JSONL.
+
+    The AgentTrafficMiddleware on Render records to /app/data/agent-traffic.jsonl,
+    but the stats endpoint aggregates it. We reconstruct per-day entries from the
+    /v1/traffic/stats endpoint so marketing_attribution can correlate locally.
+
+    Returns the number of daily entries written.
+    """
+    url = f"{CLARVIA_API_BASE}/v1/traffic/stats?days={days}"
+    logger.info("Syncing agent traffic from %s", url)
+
+    try:
+        req = Request(url, headers={"User-Agent": "clarvia-attribution-sync/1.0"})
+        with urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode())
+    except (URLError, json.JSONDecodeError, OSError) as e:
+        logger.warning("Failed to fetch agent traffic from API: %s", e)
+        return 0
+
+    daily = data.get("daily", [])
+    if not daily:
+        logger.info("No daily traffic data from API")
+        return 0
+
+    # Load existing entries to avoid duplicates
+    existing_dates: set[str] = set()
+    if AGENT_TRAFFIC_PATH.exists():
+        with open(AGENT_TRAFFIC_PATH) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                    ts = entry.get("timestamp", "")
+                    if len(ts) >= 10:
+                        existing_dates.add(ts[:10])
+                except json.JSONDecodeError:
+                    continue
+
+    written = 0
+    with open(AGENT_TRAFFIC_PATH, "a") as f:
+        for day_data in daily:
+            date_str = day_data.get("date", "")
+            if not date_str or date_str in existing_dates:
+                continue
+
+            by_agent = day_data.get("by_agent", {})
+            total = day_data.get("total", 0)
+
+            # Write one entry per agent type per day
+            if by_agent:
+                for agent_type, count in by_agent.items():
+                    entry = {
+                        "timestamp": f"{date_str}T12:00:00+00:00",
+                        "timestamp_unix": datetime.strptime(date_str, "%Y-%m-%d")
+                            .replace(hour=12, tzinfo=timezone.utc)
+                            .timestamp(),
+                        "agent_type": agent_type,
+                        "requests": count,
+                        "path": "/api/aggregate",
+                        "method": "GET",
+                        "status_code": 200,
+                        "source": "api_sync",
+                    }
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                    written += 1
+            else:
+                # Fallback: single entry with total count
+                entry = {
+                    "timestamp": f"{date_str}T12:00:00+00:00",
+                    "timestamp_unix": datetime.strptime(date_str, "%Y-%m-%d")
+                        .replace(hour=12, tzinfo=timezone.utc)
+                        .timestamp(),
+                    "agent_type": "unknown",
+                    "requests": total,
+                    "path": "/api/aggregate",
+                    "method": "GET",
+                    "status_code": 200,
+                    "source": "api_sync",
+                }
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                written += 1
+
+    logger.info("Synced %d agent traffic entries from API", written)
+    return written
 
 
 def parse_timestamp(ts_str: str) -> Optional[datetime]:
@@ -194,6 +288,14 @@ def main() -> None:
 
     logger.info("=== Marketing Attribution Tracker ===")
     logger.info("Window: %d days | Min lift: %.1f%%", args.window, args.min_lift)
+
+    # Sync agent traffic from production API if local data is sparse
+    if not AGENT_TRAFFIC_PATH.exists() or AGENT_TRAFFIC_PATH.stat().st_size < 100:
+        logger.info("Local agent-traffic.jsonl is empty/missing — syncing from production API...")
+        sync_agent_traffic_from_api(days=30)
+    else:
+        # Always try to sync recent data (new days only, deduped)
+        sync_agent_traffic_from_api(days=7)
 
     # Load data
     marketing_entries = load_jsonl(MARKETING_LOG_PATH)
