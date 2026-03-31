@@ -4,7 +4,7 @@
     {
       "name": "clarvia",
       "url": "https://clarvia.art/.well-known/mcp/server-card.json",
-      "description": "AI Agent Tool Directory & AEO Scanner — Search 27,871+ tools scored for agent readiness. 16 tools for searching, scanning, gate-checking, comparing, trending analysis, and AEO optimization.",
+      "description": "AI Agent Tool Directory & AEO Scanner — Search 27,886+ tools scored for agent readiness. 16 tools for searching, scanning, gate-checking, comparing, trending analysis, and AEO optimization.",
       "transport": "stdio",
       "install": {
         "npm": "npx -y clarvia-mcp-server",
