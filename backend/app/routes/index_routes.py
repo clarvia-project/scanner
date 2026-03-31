@@ -1584,6 +1584,16 @@ async def leaderboard(
         filtered = _filter_by_category(filtered, category)
     if type:
         filtered = [s for s in filtered if s.get("service_type", "").lower() == type.lower()]
+
+    # Deduplicate by URL (keep highest-scoring entry for each URL)
+    seen_urls: dict[str, dict] = {}
+    for s in filtered:
+        url_key = (s.get("url") or "").lower().rstrip("/")
+        existing = seen_urls.get(url_key)
+        if existing is None or s.get("clarvia_score", 0) > existing.get("clarvia_score", 0):
+            seen_urls[url_key] = s
+    filtered = list(seen_urls.values())
+
     filtered = sorted(filtered, key=lambda s: s.get("clarvia_score", 0), reverse=True)[:limit]
     return {
         "leaderboard": [

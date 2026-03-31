@@ -339,6 +339,23 @@ def _schedule_agents_json_check(profile_id: str, url: str) -> None:
         pass
 
 
+def _classify_scan_error(exc: Exception) -> str:
+    """Return a human-readable reason string for a scan failure."""
+    msg = str(exc).lower()
+    exc_type = type(exc).__name__
+    if "toomanyredir" in exc_type.lower() or "toomanyredir" in msg:
+        return "TooManyRedirects"
+    if "timeout" in exc_type.lower() or "timeout" in msg:
+        return "Timeout"
+    if "unreachable" in msg or "cannot connect" in msg or "connection refused" in msg:
+        return "URL unreachable"
+    if "ssl" in exc_type.lower() or "ssl" in msg:
+        return "SSL error"
+    if "dns" in msg or "name or service not known" in msg or "nodename nor servname" in msg:
+        return "DNS resolution failed"
+    return f"{exc_type}: {str(exc)[:120]}"
+
+
 def _schedule_auto_scan(profile_id: str) -> None:
     """Auto-trigger scan after registration (non-blocking)."""
     import asyncio
@@ -391,6 +408,7 @@ def _schedule_auto_scan(profile_id: str) -> None:
             logger.warning("Auto-scan failed for %s: %s", profile_id, e)
             if profile_id in _profiles:
                 _profiles[profile_id]["status"] = "scan_failed"
+                _profiles[profile_id]["scan_error_reason"] = _classify_scan_error(e)
                 _save_profiles()
 
     try:
@@ -655,9 +673,10 @@ async def scan_profile(profile_id: str, _key: ApiKeyDep):
             "status": "scanned",
             "scan_id": result.scan_id,
         }
-    except Exception:
+    except Exception as e:
         logger.exception("Profile scan failed for %s", profile["url"])
         profile["status"] = "scan_failed"
+        profile["scan_error_reason"] = _classify_scan_error(e)
         _save_profiles()
         raise HTTPException(
             status_code=500,
@@ -738,9 +757,10 @@ async def rescan_profile(profile_id: str):
             "status": "scanned",
             "scan_id": result.scan_id,
         }
-    except Exception:
+    except Exception as e:
         logger.exception("Rescan failed for %s", profile["url"])
         profile["status"] = "scan_failed"
+        profile["scan_error_reason"] = _classify_scan_error(e)
         _save_profiles()
         raise HTTPException(
             status_code=500,

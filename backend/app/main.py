@@ -1011,6 +1011,15 @@ async def api_v1_leaderboard(category: str | None = None, type: str | None = Non
     if type:
         scans = [s for s in scans if s.get("service_type", "").lower() == type.lower()]
 
+    # Deduplicate by URL (keep highest-scoring entry per URL)
+    seen_urls: dict[str, dict] = {}
+    for s in scans:
+        url_key = (s.get("url") or "").lower().rstrip("/")
+        existing = seen_urls.get(url_key)
+        if existing is None or s.get("clarvia_score", 0) > existing.get("clarvia_score", 0):
+            seen_urls[url_key] = s
+    scans = list(seen_urls.values())
+
     # Sort by score descending
     scans.sort(key=lambda s: s.get("clarvia_score", 0), reverse=True)
 
@@ -1308,8 +1317,9 @@ async def api_v1_methodology():
             },
         },
         "onchain_bonus": {
-            "max": 25,
-            "description": "Additional points for blockchain-integrated services (V2)",
+            "max": 0,
+            "status": "coming_soon",
+            "description": "Blockchain-integrated services bonus (not yet active — planned for V2)",
             "sub_factors": {
                 "transaction_success_rate": {"max": 10, "description": "On-chain transaction success rate"},
                 "real_volume": {"max": 10, "description": "Verified real transaction volume"},
