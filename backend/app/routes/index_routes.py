@@ -877,20 +877,10 @@ def _deduplicate_services(services: list[dict[str, Any]]) -> list[dict[str, Any]
     deduped = [services[i] for i in sorted(kept_indices)]
     removed_url = len(services) - len(deduped)
 
-    # --- Pass 2: fuzzy name dedup (same URL domain+path root) ---
-    # Group by base URL domain to limit comparison scope
+    # --- Pass 2: fuzzy name dedup (same URL path root) ---
+    # Group by domain+first_path_segment to avoid O(n²) on large domains
+    # e.g. github.com/owner instead of github.com — keeps groups small
     from urllib.parse import urlparse
-
-    domain_groups: dict[str, list[int]] = {}
-    for i, s in enumerate(deduped):
-        url = s.get("url") or ""
-        try:
-            parsed = urlparse(url)
-            domain = parsed.netloc.lower()
-        except Exception:
-            domain = ""
-        if domain:
-            domain_groups.setdefault(domain, []).append(i)
 
     def _url_path_root(url: str) -> str:
         """Extract domain + first path segment for grouping."""
@@ -902,30 +892,36 @@ def _deduplicate_services(services: list[dict[str, Any]]) -> list[dict[str, Any]
         except Exception:
             return ""
 
+    path_root_groups: dict[str, list[int]] = {}
+    for i, s in enumerate(deduped):
+        url = s.get("url") or ""
+        path_root = _url_path_root(url)
+        if path_root:
+            path_root_groups.setdefault(path_root, []).append(i)
+
     remove_fuzzy: set[int] = set()
-    for domain, indices in domain_groups.items():
+    for path_root, indices in path_root_groups.items():
         if len(indices) < 2:
             continue
-        # Compare pairs within the same domain
+        # Compare pairs within the same path root
         for a_pos in range(len(indices)):
             a_idx = indices[a_pos]
             if a_idx in remove_fuzzy:
                 continue
             a_name = deduped[a_idx].get("service_name", "").lower().strip()
-            a_path_root = _url_path_root(deduped[a_idx].get("url", ""))
             for b_pos in range(a_pos + 1, len(indices)):
                 b_idx = indices[b_pos]
                 if b_idx in remove_fuzzy:
                     continue
                 b_name = deduped[b_idx].get("service_name", "").lower().strip()
+                # Quick length pre-filter: skip SequenceMatcher if lengths differ too much
+                len_a, len_b = len(a_name), len(b_name)
+                if len_a == 0 or len_b == 0:
+                    continue
+                if min(len_a, len_b) / max(len_a, len_b) < 0.7:
+                    continue
                 name_ratio = SequenceMatcher(None, a_name, b_name).ratio()
                 if name_ratio <= 0.90:
-                    continue
-                # Also require the URL paths to share the same root
-                # (same project, not just same domain like docs.aws.amazon.com).
-                # If paths differ, these are different tools even with similar names.
-                b_path_root = _url_path_root(deduped[b_idx].get("url", ""))
-                if a_path_root and b_path_root and a_path_root != b_path_root:
                     continue
                 # Keep the one with higher score
                 a_score = deduped[a_idx].get("clarvia_score", 0)
