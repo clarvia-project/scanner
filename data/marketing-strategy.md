@@ -1342,3 +1342,67 @@ Added 3 new repos:
 - Tool page SSR: layout.tsx injects tool-specific JSON-LD + metadata ✓
 - Category pages: JSON-LD schema now shows correct tool counts ✓
 - Next: Wait for Vercel to redeploy (triggered by git push). AI crawlers need 1-2 weeks to reindex.
+
+## Field Notes — 2026-03-31 (Cycle 7 - ~07:30 UTC)
+
+### Key Outreach This Cycle
+Discovered and submitted to several very high-star repos not previously targeted:
+
+1. **affaan-m/everything-claude-code** (121K⭐, Issue #1040) — MCP config section. One of the largest Claude Code repos.
+2. **google-gemini/gemini-cli** (99K⭐, Issue #24309) — MCP-native CLI, resource + badge outreach.
+3. **upstash/context7** (51K⭐, Issue #2364) — Popular MCP server, badge outreach.
+4. **Mintplex-Labs/anything-llm** (57K⭐, Issue #5308) — Full MCP-compatibility, badge + resource.
+5. **idosal/git-mcp** (7.8K⭐, Issue #233) — Remote MCP server, badge outreach.
+6. **VoltAgent/awesome-agent-skills** (13K⭐, Issue #331) — Submitted 3 Clarvia skills (scan/recommend/compare).
+7. **ccplugins/awesome-claude-code-plugins** (657⭐, Issue #122) — Claude Code plugins directory.
+8. **toolsdk-ai/toolsdk-mcp-registry** (169⭐, Issue #226) — Enterprise MCP registry/gateway.
+
+### Badge Outreach Cumulative (~340K combined stars now)
+Previous: 19 repos ~200K stars. Added ~140K more this cycle.
+
+### Infrastructure
+- Vercel sitemap fix: committed and pushed. Sitemap URLs now use `tool_*` format. Deploy pending.
+- agents.json updated: corrected install command (`npx -y`), fixed tool count, added new capabilities.
+
+### Key Insight
+Searching by `topic:mcp` on GitHub surfaces repos with 50K-180K stars that hadn't been targeted. These large tool repos (n8n, Gemini CLI, anything-llm, context7) have huge user bases and MCP support — they're ideal badge/resource outreach targets.
+
+
+## Field Notes — 2026-03-31 (Cycle 8 - ~08:00 UTC)
+
+### New Outreach Wave: 17 repos, 80K+ combined stars
+
+Extended outreach to MCP framework and tooling repos not previously targeted:
+
+1. **PrefectHQ/fastmcp** (24K⭐, Issue #3718) — Python MCP SDK. Developers building MCP servers with fastmcp are exact AEO target audience.
+2. **microsoft/mcp-for-beginners** (15K⭐, Issue #688) — Educational MCP resource. Clarvia as a linter for beginner MCP servers.
+3. **mcp-use/mcp-use** (9.5K⭐, Issue #1264) — Fullstack MCP framework users.
+4. **lastmile-ai/mcp-agent** (8K⭐, Issue #655) — Agent pipeline builders.
+5. **yzfly/Awesome-MCP-ZH** (6.7K⭐, Issue #120) — Chinese MCP community. Submitted in Chinese.
+6. **IBM/mcp-context-forge** (3.5K⭐, Issue #3936) — IBM MCP gateway integration idea.
+7. **metatool-ai/metamcp** (2.1K⭐, Issue #279) — MCP aggregator integration.
+8. **chatmcp/mcpso** (1.9K⭐, Issue #1409) — MCP directory listing.
+9. **ravitemer/mcphub.nvim** (1.75K⭐, Issue #281) — Neovim MCP client users.
+10. **stacklok/toolhive** (1.7K⭐, Issue #4455) — Enterprise MCP platform.
+11. **jaw9c/awesome-remote-mcp-servers** (1K⭐, Issue #200) — Listed as remote MCP server.
+12. **rohitg00/awesome-devops-mcp-servers** (970⭐, Issue #110) — DevOps + CI/CD angle.
+13. **mcpjungle/MCPJungle** (939⭐, Issue #203) — Self-hosted MCP gateway.
+14. **Puliczek/awesome-mcp-security** (672⭐, Issue #95) — Security angle via trust signals.
+15. **Code-and-Sorts/awesome-copilot-agents** (460⭐, Issue #26) — GitHub Copilot agent use case.
+16. **PipedreamHQ/awesome-mcp-servers** (260⭐, Issue #40) — MCP directory.
+
+### Metrics Update
+- npm last week: 595 downloads total (cumulative 30d), daily trend: 232→130→113→110→10
+- Smithery: Listed (24 tools) but description still empty — issue #17 pending
+
+### Key Insight: Chinese MCP Community
+- yzfly/Awesome-MCP-ZH has 6.7K stars and is a major Chinese MCP resource hub
+- Submitted in Chinese — this is a new channel not previously targeted
+- Chinese tech community = significant potential developer base
+
+### Next Priorities
+1. Chinese tech community follow-up (WeChat, CSDN, Zhihu) — out of scope for this agent
+2. Check if Smithery description fix (#17) was resolved
+3. Track acceptance of framework-level submissions (fastmcp, mcp-for-beginners most impactful)
+4. LobeHub plugin submission (74K stars, needs browser-based form)
+

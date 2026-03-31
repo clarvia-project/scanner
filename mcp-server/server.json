@@ -6,12 +6,12 @@
     "url": "https://github.com/clarvia-project/scanner.git",
     "source": "github"
   },
-  "version": "1.1.2",
+  "version": "1.2.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "clarvia-mcp-server",
-      "version": "1.1.2",
+      "version": "1.2.0",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
