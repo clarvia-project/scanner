@@ -1,14 +1,14 @@
 # State of MCP Quality: Q1 2026 Analysis
 
 > **Published**: March 2026 | **Last Updated**: April 1, 2026
-> **Source**: Clarvia AEO Scanner — 27,899+ tools analyzed
+> **Source**: Clarvia AEO Scanner — 27,906+ tools analyzed
 > **Methodology**: AEO (Agent Engine Optimization) scoring across 5 dimensions
 
 ---
 
 ## Executive Summary
 
-Clarvia has analyzed **27,899+ MCP servers and AI agent tools** indexed across major registries as of Q1 2026. The data reveals a stark quality gap: **only 0.3% of tools achieve Excellent AEO scores**, while **33% remain in the Weak tier** — meaning most AI agents fail to discover or effectively use the majority of available tools.
+Clarvia has analyzed **27,906+ MCP servers and AI agent tools** indexed across major registries as of Q1 2026. The data reveals a stark quality gap: **only 0.3% of tools achieve Excellent AEO scores**, while **33% remain in the Weak tier** — meaning most AI agents fail to discover or effectively use the majority of available tools.
 
 ---
 
@@ -179,6 +179,35 @@ The improvement is driven primarily by major cloud providers and venture-backed 
 
 ---
 
+## April 2026 Update: Registry Coverage & Discovery Growth
+
+Since this report was first published in March 2026, Clarvia's ecosystem coverage has expanded significantly:
+
+| Metric | March 2026 | April 2026 | Growth |
+|--------|-----------|-----------|--------|
+| Total tools indexed | 15,400+ | **27,906+** | +81% |
+| npm weekly downloads | 232 | **714** | +208% |
+| MCP registries listed | 2 | **6** | 3x |
+| AI crawlers whitelisted | 0 | **7** | New |
+| Tool pages with JSON-LD | 0% | **100%** | New |
+
+### New MCP Registry Coverage (April 2026)
+Clarvia is now listed across all major MCP registries:
+- **Smithery** (`@clarvia/clarvia-mcp-server`) — 24 tools auto-discovered
+- **PulseMCP** — Listed in the 14,000+ server directory
+- **Glama.ai** — Full listing with tool catalog
+- **mcp.so** — Active listing
+- **MCPHub.ai** — Draft submission under review
+- **SkillsIndex.dev** — Pending 48h review
+
+### AI Crawler Whitelist (New)
+As of April 2026, Clarvia's `robots.txt` explicitly allows all major AI crawlers:
+`GPTBot, ClaudeBot, OAI-SearchBot, PerplexityBot, Applebot-Extended, CCBot, Bytespider`
+
+This means all 27,906+ tool profile pages are now indexed by AI search engines — enabling citation in Perplexity, ChatGPT Search, and Google AI Overviews.
+
+---
+
 ## Check Your Score
 
 ```bash
@@ -195,6 +224,6 @@ curl "https://clarvia-api.onrender.com/v1/score?url=your-mcp-server.com"
 
 ---
 
-*Data as of March 31, 2026. Clarvia re-scans all indexed tools weekly.*  
+*Data as of April 1, 2026. Clarvia re-scans all indexed tools weekly.*  
 *Methodology: [clarvia.art/methodology](https://clarvia.art/methodology)*  
 *Source code: [github.com/clarvia-project/scanner](https://github.com/clarvia-project/scanner)*
