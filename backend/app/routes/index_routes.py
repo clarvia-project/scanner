@@ -1303,6 +1303,9 @@ async def list_services(
         # Normalize: treat underscores and hyphens as spaces for matching
         q_normalized = q_lower.replace("_", "").replace("-", "")
         q_spaced = q_lower.replace("_", " ").replace("-", " ")
+        # Multi-word AND matching: split query into words, all must appear somewhere
+        q_words = [w for w in q_spaced.split() if len(w) >= 2]
+        multi_word = len(q_words) > 1
         matched = []
         for s in filtered:
             name = s.get("service_name", "").lower()
@@ -1310,17 +1313,22 @@ async def list_services(
             url = s.get("url", "").lower()
             tags = [t.lower() for t in s.get("tags", [])]
             name_norm = name.replace("_", "").replace("-", "")
-            if (q_lower not in name and q_lower not in desc and q_lower not in url
-                    and not any(q_lower in t for t in tags)
-                    and q_normalized not in name_norm
-                    and q_spaced not in name and q_spaced not in desc):
+            combined = name + " " + desc + " " + url + " " + " ".join(tags)
+            # Phrase match (exact substring)
+            phrase_match = (q_lower in name or q_lower in desc or q_lower in url
+                            or any(q_lower in t for t in tags)
+                            or q_normalized in name_norm
+                            or q_spaced in name or q_spaced in desc)
+            # Multi-word AND match: every word must appear in the combined text
+            word_match = multi_word and all(w in combined for w in q_words)
+            if not phrase_match and not word_match:
                 continue
-            # Relevance: name exact > name contains > tags > description
+            # Relevance: name exact > phrase in name > word match in name > tags > description
             if name == q_lower:
                 relevance = 4
-            elif q_lower in name:
+            elif q_lower in name or q_spaced in name:
                 relevance = 3
-            elif any(q_lower in t for t in tags):
+            elif any(q_lower in t for t in tags) or (multi_word and all(w in name for w in q_words)):
                 relevance = 2
             else:
                 relevance = 1
