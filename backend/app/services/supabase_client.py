@@ -106,9 +106,15 @@ async def get_scan_from_db(scan_id: str) -> dict | None:
         return None
 
     try:
-        result = client.table("scans").select("*").eq("scan_id", scan_id).single().execute()
+        result = (
+            client.table("scans")
+            .select("*")
+            .eq("scan_id", scan_id)
+            .limit(1)
+            .execute()
+        )
         if result.data:
-            row = result.data
+            row = result.data[0]
             # Reconstruct ScanResponse-compatible dict
             return {
                 "scan_id": row["scan_id"],
@@ -170,10 +176,10 @@ async def get_report(scan_id: str) -> dict | None:
             .select("*")
             .eq("scan_id", scan_id)
             .eq("payment_status", "paid")
-            .single()
+            .limit(1)
             .execute()
         )
-        return result.data if result.data else None
+        return result.data[0] if result.data else None
     except Exception:
         return None
 

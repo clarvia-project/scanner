@@ -242,41 +242,36 @@ export default function LandingPage() {
   const animatedCategories = useAnimatedCounter(stats.categories);
 
   useEffect(() => {
-    fetch("/data/prebuilt-scans.json")
-      .then((res) => res.json())
-      .then((json: { service_name: string; url: string; clarvia_score: number; rating: string; scan_id: string }[]) => {
-        const sorted = [...json]
-          .sort((a, b) => b.clarvia_score - a.clarvia_score)
-          .slice(0, 5)
-          .map((s) => ({
-            name: s.service_name,
-            url: s.url.replace(/^https?:\/\//, ""),
-            score: s.clarvia_score,
-            rating: s.rating,
-            scan_id: s.scan_id,
-          }));
+    fetch(`${API_BASE}/v1/leaderboard?limit=5`)
+      .then((res) => (res.ok ? res.json() : { leaderboard: [] }))
+      .then((json: { leaderboard: { name: string; url: string; score: number; rating: string; scan_id: string }[] }) => {
+        const sorted = (json.leaderboard || []).map((s) => ({
+          name: s.name,
+          url: s.url.replace(/^https?:\/\//, ""),
+          score: s.score,
+          rating: s.rating,
+          scan_id: s.scan_id,
+        }));
         setTopScores(sorted);
       })
-      .catch(() => {});
+      .catch(console.warn);
   }, []);
 
   // Fetch live stats for hero counters
   useEffect(() => {
-    Promise.all([
-      fetch(`${API_BASE}/v1/stats`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      fetch("/data/prebuilt-scans.json").then((r) => (r.ok ? r.json() : [])).catch(() => []),
-    ]).then(([apiStats, scans]) => {
-      const scoredCount = Array.isArray(scans) ? scans.length : 0;
-      const apiTotal = apiStats?.total_services ?? 0;
-      const excellent = Array.isArray(scans) ? scans.filter((s: { clarvia_score: number }) => s.clarvia_score >= 80).length : 0;
-      setStats({
-        totalTools: apiTotal,
-        totalScored: scoredCount || apiTotal,
-        avgScore: apiStats?.avg_score || 0,
-        categories: apiStats?.categories_count || 20,
-        excellentCount: excellent,
+    fetch(`${API_BASE}/v1/stats`)
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((apiStats) => {
+        if (!apiStats) return;
+        setStats({
+          totalTools: apiStats.total_services ?? 0,
+          totalScored: apiStats.total_services ?? 0,
+          avgScore: apiStats.avg_score || 0,
+          categories: apiStats.categories_count || 20,
+          excellentCount: apiStats.score_distribution?.excellent ?? 0,
+        });
       });
-    });
   }, []);
 
   // Fetch top picks (score >= 80)
@@ -286,7 +281,7 @@ export default function LandingPage() {
       .then((data) => {
         if (data?.top_picks) setTopPicks(data.top_picks);
       })
-      .catch(() => {});
+      .catch(console.warn);
   }, []);
 
   const topPicksCategories = ["all", ...new Set(topPicks.map((t) => t.category))];

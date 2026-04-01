@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Nav from "@/app/components/Nav";
+import { API_BASE } from "@/lib/api";
 
 // ----- Types -----
 
@@ -147,13 +148,46 @@ export default function ForAgentsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch("/data/prebuilt-scans.json")
-      .then((res) => res.json())
-      .then((json: ScanEntry[]) => {
-        json.sort((a, b) => b.clarvia_score - a.clarvia_score);
-        setData(json);
+    fetch(`${API_BASE}/v1/services?sort=score_desc&limit=100&fields=full`)
+      .then((res) => (res.ok ? res.json() : { services: [] }))
+      .then((json) => {
+        const raw = Array.isArray(json) ? json : (json.services || []);
+        const items: ScanEntry[] = raw.map((item: Record<string, unknown>) => {
+          const dims = (item.dimensions ?? {}) as Record<string, unknown>;
+          // If dimensions values are numbers (flat API format), convert to nested
+          const firstVal = Object.values(dims)[0];
+          const DIM_MAX: Record<string, number> = {
+            api_accessibility: 30, data_structuring: 25, agent_compatibility: 25, trust_signals: 20,
+          };
+          const DIM_KEY_MAP: Record<string, string> = {
+            tool_quality: "api_accessibility", integration_readiness: "data_structuring",
+            documentation_discovery: "agent_compatibility", trust_ecosystem: "trust_signals",
+          };
+          let normalizedDims: Record<string, Dimension>;
+          if (firstVal && typeof firstVal === "object" && "score" in (firstVal as Record<string, unknown>)) {
+            normalizedDims = dims as Record<string, Dimension>;
+          } else {
+            normalizedDims = {} as Record<string, Dimension>;
+            for (const key of Object.keys(DIM_MAX)) {
+              const apiKey = Object.entries(DIM_KEY_MAP).find(([, v]) => v === key)?.[0];
+              const val = (apiKey ? dims[apiKey] : dims[key]) ?? 0;
+              normalizedDims[key] = { score: typeof val === "number" ? val : 0, max: DIM_MAX[key] };
+            }
+          }
+          return {
+            scan_id: item.scan_id as string,
+            url: (item.url as string) ?? "",
+            service_name: (item.service_name as string) || (item.name as string) || "",
+            clarvia_score: (item.clarvia_score as number) ?? 0,
+            rating: (item.rating as string) ?? "Basic",
+            scanned_at: (item.scanned_at as string) ?? "",
+            dimensions: normalizedDims as ScanEntry["dimensions"],
+          };
+        });
+        items.sort((a, b) => b.clarvia_score - a.clarvia_score);
+        setData(items);
       })
-      .catch(() => {})
+      .catch(console.warn)
       .finally(() => setLoading(false));
   }, []);
 

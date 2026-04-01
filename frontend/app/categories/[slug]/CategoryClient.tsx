@@ -188,7 +188,7 @@ export default function CategoryClient({
           return r.json();
         })
         .then((d) => setData(d))
-        .catch(() => {})
+        .catch(console.warn)
         .finally(() => setLoading(false));
     },
     [slug]

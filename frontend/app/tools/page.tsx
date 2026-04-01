@@ -155,7 +155,7 @@ export default function ToolsPage() {
     fetch(`${API_BASE}/v1/stats?source=all`)
       .then((r) => r.json())
       .then(setStats)
-      .catch(() => {});
+      .catch(console.warn);
   }, []);
 
   // Intent search

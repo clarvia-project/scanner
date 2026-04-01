@@ -26,16 +26,13 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
       score = data.clarvia_score;
     }
   } catch {
-    // Fallback: try prebuilt scans
+    // Fallback: try services API
     try {
-      const fallback = await fetch(`${SITE_URL}/data/prebuilt-scans.json`);
-      if (fallback.ok) {
-        const scans = await fallback.json();
-        const match = scans.find((s: { scan_id: string }) => s.scan_id === id);
-        if (match) {
-          serviceName = match.service_name || "";
-          score = match.clarvia_score;
-        }
+      const svcRes = await fetch(`${API_BASE}/v1/services/${id}`);
+      if (svcRes.ok) {
+        const svc = await svcRes.json();
+        serviceName = svc.service_name || svc.name || "";
+        score = svc.clarvia_score ?? svc.score ?? null;
       }
     } catch {
       // silent fallback

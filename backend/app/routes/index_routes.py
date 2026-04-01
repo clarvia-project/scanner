@@ -875,6 +875,56 @@ def _load_collected() -> None:
     _collected_tools = tools
     _collected_loaded = True
     logger.info("Loaded %d collected tools from %d files", len(tools), len(_COLLECTED_FILES))
+    # Invalidate merge cache so next call rebuilds with new collected tools
+    _invalidate_all_tools_cache()
+
+
+# ---------------------------------------------------------------------------
+# Merged tool cache: _services + _collected_tools deduped once, reused everywhere
+# ---------------------------------------------------------------------------
+_all_tools_cache: list[dict[str, Any]] | None = None
+
+
+def _invalidate_all_tools_cache() -> None:
+    """Reset the merged tools cache (call when _services or _collected_tools change)."""
+    global _all_tools_cache
+    _all_tools_cache = None
+
+
+def get_all_tools() -> list[dict[str, Any]]:
+    """Return merged _services + _collected_tools, cached after first build.
+
+    This replaces the repeated pattern:
+        scanned_ids = {s["scan_id"] for s in _services}
+        all_tools = list(_services) + [t for t in _collected_tools if t["scan_id"] not in scanned_ids]
+    """
+    global _all_tools_cache
+    if _all_tools_cache is not None:
+        return _all_tools_cache
+
+    _ensure_loaded()
+    _load_collected()
+
+    scanned_ids = {s["scan_id"] for s in _services}
+    merged = list(_services) + [
+        t for t in _collected_tools if t["scan_id"] not in scanned_ids
+    ]
+    _all_tools_cache = merged
+    logger.info("Built merged tools cache: %d total (%d scanned + %d collected unique)",
+                len(merged), len(_services), len(merged) - len(_services))
+    return _all_tools_cache
+
+
+def find_tool_by_scan_id(scan_id: str) -> dict[str, Any] | None:
+    """Look up a tool by scan_id from both scanned and collected sources."""
+    svc = _by_scan_id.get(scan_id)
+    if svc:
+        return svc
+    _load_collected()
+    for t in _collected_tools:
+        if t["scan_id"] == scan_id:
+            return t
+    return None
 
 
 def _deduplicate_services(services: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1053,6 +1103,7 @@ def _merge_profiles() -> None:
             _services.append(entry)
             _by_scan_id[scan_id] = entry
 
+        _invalidate_all_tools_cache()
         logger.info("Merged profiles, total services: %d", len(_services))
     except Exception as e:
         logger.warning("Failed to merge profiles: %s", e)
@@ -1259,10 +1310,7 @@ def _full_service(s: dict[str, Any]) -> dict[str, Any]:
 
 def _total_tool_count() -> int:
     """Single source of truth for the total tool count across all data sources."""
-    _ensure_loaded()
-    _load_collected()
-    scanned_ids = {s["scan_id"] for s in _services}
-    return len(_services) + sum(1 for t in _collected_tools if t["scan_id"] not in scanned_ids)
+    return len(get_all_tools())
 
 
 def _add_headers(response: Response) -> None:
@@ -1309,15 +1357,11 @@ async def list_services(
         if len(_search_log) < _MAX_SEARCH_LOG:
             _search_log.append({"query": q, "category": category, "ts": _time.time(), "results": 0})
 
-    if source in ("all", "collected"):
-        _load_collected()
-
     # Handle similar_to: override category/service_type filters from the reference tool
     if similar_to:
-        _load_collected()
         ref = _by_scan_id.get(similar_to)
         if not ref:
-            for t in _collected_tools:
+            for t in get_all_tools():
                 if t["scan_id"] == similar_to:
                     ref = t
                     break
@@ -1330,13 +1374,10 @@ async def list_services(
             source = "all"
 
     if source == "collected":
+        _load_collected()
         filtered = list(_collected_tools)
     elif source == "all":
-        # Merge: scanned services first (higher quality), then collected
-        scanned_ids = {s["scan_id"] for s in _services}
-        filtered = list(_services) + [
-            t for t in _collected_tools if t["scan_id"] not in scanned_ids
-        ]
+        filtered = list(get_all_tools())
     else:
         filtered = _services
 
@@ -1516,16 +1557,12 @@ async def get_alternatives(
     Uses category matching + description keyword overlap to find the most similar tools.
     """
     _ensure_loaded()
-    _load_collected()
     _add_headers(response)
 
     service_name_lower = service_name.lower().strip()
 
-    # Build full pool: scanned + collected (deduplicated)
-    scanned_ids = {s["scan_id"] for s in _services}
-    pool = list(_services) + [
-        t for t in _collected_tools if t["scan_id"] not in scanned_ids
-    ]
+    # Build full pool: scanned + collected (deduplicated, cached)
+    pool = get_all_tools()
 
     # --- Step 1: Find the target service by fuzzy name match ---
     target = None
@@ -1710,11 +1747,7 @@ async def leaderboard(
     """Top-scoring services leaderboard."""
     _ensure_loaded()
     _add_headers(response)
-    _load_collected()
-    scanned_ids = {s["scan_id"] for s in _services}
-    pool = list(_services) + [
-        t for t in _collected_tools if t["scan_id"] not in scanned_ids
-    ]
+    pool = get_all_tools()
     filtered = pool
     if category:
         filtered = _filter_by_category(filtered, category)
@@ -1778,14 +1811,7 @@ async def get_service(scan_id: str, response: Response):
     _ensure_loaded()
     _add_headers(response)
 
-    service = _by_scan_id.get(scan_id)
-    if not service:
-        # Try collected tools
-        _load_collected()
-        for t in _collected_tools:
-            if t["scan_id"] == scan_id:
-                service = t
-                break
+    service = find_tool_by_scan_id(scan_id)
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
@@ -1821,15 +1847,8 @@ async def get_service_evidence(
     """
     _ensure_loaded()
     _add_headers(response)
-    _load_collected()
 
-    svc = _by_scan_id.get(scan_id)
-    if not svc:
-        for t in _collected_tools:
-            if t["scan_id"] == scan_id:
-                svc = t
-                break
-
+    svc = find_tool_by_scan_id(scan_id)
     if not svc:
         raise HTTPException(status_code=404, detail=f"Service {scan_id} not found")
 
@@ -1933,15 +1952,8 @@ async def get_service_trend(
     """
     _ensure_loaded()
     _add_headers(response)
-    _load_collected()
 
-    svc = _by_scan_id.get(scan_id)
-    if not svc:
-        for t in _collected_tools:
-            if t["scan_id"] == scan_id:
-                svc = t
-                break
-
+    svc = find_tool_by_scan_id(scan_id)
     if not svc:
         raise HTTPException(status_code=404, detail=f"Service {scan_id} not found")
 
@@ -2034,11 +2046,7 @@ async def list_categories(
 
     # Build the pool based on source param (same as /stats)
     if source == "all":
-        _load_collected()
-        scanned_ids = {s["scan_id"] for s in _services}
-        pool = list(_services) + [
-            t for t in _collected_tools if t["scan_id"] not in scanned_ids
-        ]
+        pool = get_all_tools()
     else:
         pool = _services
 
@@ -2210,14 +2218,10 @@ async def get_category_detail(
 ):
     """Get tools in a specific category, ranked by Clarvia Score."""
     _ensure_loaded()
-    _load_collected()
     _add_headers(response)
 
-    # Build pool: scanned + collected (deduplicated)
-    scanned_ids = {s["scan_id"] for s in _services}
-    pool = list(_services) + [
-        t for t in _collected_tools if t["scan_id"] not in scanned_ids
-    ]
+    # Build pool: scanned + collected (deduplicated, cached)
+    pool = get_all_tools()
 
     # Filter by category (handles pseudo-categories like "mcp" → service_type)
     filtered = _filter_by_category(pool, slug)
@@ -2297,7 +2301,7 @@ async def compare_services(
                 results.append(_compact_service(service))
     elif names or services or tools:
         name_list = [n.strip().lower() for n in (names or services or tools).split(",")][:4]
-        all_tools = list(_services) + list(_collected_tools)
+        all_tools = get_all_tools()
         for name_q in name_list:
             # Exact match first, then substring match
             found = None
@@ -2338,11 +2342,7 @@ async def get_stats(
         pool = _services
     else:
         # Default: include all tools for consistent counts
-        _load_collected()
-        scanned_ids = {s["scan_id"] for s in _services}
-        pool = list(_services) + [
-            t for t in _collected_tools if t["scan_id"] not in scanned_ids
-        ]
+        pool = get_all_tools()
 
     total = len(pool)
     if total == 0:
@@ -2461,7 +2461,7 @@ async def audit_dependencies(
         pkg_names = list(deps.keys())
 
     # Look up each package in the index
-    all_tools = list(_services) + list(_collected_tools)
+    all_tools = get_all_tools()
     name_index = {}
     for t in all_tools:
         sname = t.get("service_name", "").lower()

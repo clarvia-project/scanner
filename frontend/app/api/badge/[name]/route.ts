@@ -5,7 +5,7 @@ export const runtime = "edge";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL || "https://clarvia-api.onrender.com";
 
-// Proxy to backend badge generator, which has full prebuilt-scans lookup.
+// Proxy to backend badge generator.
 // This route makes https://clarvia.art/api/badge/{name} the canonical badge URL.
 export async function GET(
   req: NextRequest,

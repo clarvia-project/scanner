@@ -150,14 +150,8 @@ def _ensure_index_built() -> None:
     try:
         from . import index_routes
 
-        index_routes._ensure_loaded()
-        index_routes._load_collected()
-
-        # Merge: scanned first, then collected (deduped)
-        scanned_ids = {s["scan_id"] for s in index_routes._services}
-        all_tools = list(index_routes._services) + [
-            t for t in index_routes._collected_tools if t["scan_id"] not in scanned_ids
-        ]
+        # Use cached merged tools
+        all_tools = index_routes.get_all_tools()
 
         # Normalize scanned services to have same fields as collected
         normalized = []

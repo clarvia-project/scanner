@@ -997,7 +997,7 @@ function PlaybookSection({ scanId }: { scanId: string }) {
         setTotalGain(data.total_potential_gain || 0);
         setProjectedScore(data.projected_score || 0);
       })
-      .catch(() => {})
+      .catch(console.warn)
       .finally(() => setLoaded(true));
   }, [scanId]);
 
@@ -1142,7 +1142,7 @@ function HistorySection({
         const scans = data.scans || data.items || [];
         setHistory(scans);
       })
-      .catch(() => {})
+      .catch(console.warn)
       .finally(() => setLoaded(true));
   }, [url]);
 
@@ -1499,14 +1499,23 @@ function CompareSection({ result }: { result: ScanResult }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/data/prebuilt-scans.json")
-      .then((r) => r.json())
-      .then((data: PrebuiltScan[]) => {
-        const filtered = data.filter((s) => s.scan_id !== result.scan_id);
-        filtered.sort((a, b) => b.clarvia_score - a.clarvia_score);
-        setServices(filtered);
+    fetch(`${API_BASE}/v1/services?sort=score_desc&limit=30&fields=full`)
+      .then((r) => (r.ok ? r.json() : { services: [] }))
+      .then((json) => {
+        const raw = Array.isArray(json) ? json : (json.services || []);
+        const items: PrebuiltScan[] = raw
+          .filter((s: { scan_id: string }) => s.scan_id !== result.scan_id)
+          .map((s: Record<string, unknown>) => ({
+            scan_id: s.scan_id as string,
+            service_name: (s.service_name as string) || (s.name as string) || "",
+            clarvia_score: (s.clarvia_score as number) ?? 0,
+            rating: (s.rating as string) ?? "Basic",
+            dimensions: s.dimensions as PrebuiltScan["dimensions"],
+          }));
+        items.sort((a, b) => b.clarvia_score - a.clarvia_score);
+        setServices(items);
       })
-      .catch(() => {});
+      .catch(console.warn);
   }, [result.scan_id]);
 
   useEffect(() => {
@@ -2109,21 +2118,8 @@ export default function ScanResultPage() {
           }
         } catch { /* continue to next fallback */ }
 
-        // Fallback 2: prebuilt-scans.json (large file, last resort)
-        const fallbackRes = await fetch("/data/prebuilt-scans.json");
-        if (!fallbackRes.ok) throw new Error(`Scan not found (${scanId})`);
-        const scans: ScanResult[] = await fallbackRes.json();
-        const match = scans.find((s) => s.scan_id === scanId);
-        if (!match) throw new Error(`Scan not found (${scanId})`);
-
-        if (!match.top_recommendations) match.top_recommendations = [];
-        if (!match.scan_duration_ms) match.scan_duration_ms = 0;
-        if (!match.onchain_bonus) {
-          match.onchain_bonus = { score: 0, max: 10, applicable: false, sub_factors: {} };
-        }
-
-        setResult(match);
-        requestAnimationFrame(() => setAppeared(true));
+        // No more fallbacks — scan not found
+        throw new Error(`Scan not found (${scanId})`);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load scan");
       } finally {

@@ -21,17 +21,22 @@ FREE_LIMIT = 10  # scans per hour per IP
 API_KEY_LIMIT = 100  # scans per hour per API key
 WINDOW_SECONDS = 3600  # 1 hour
 
+# Read (GET) rate limits — per minute, to block aggressive scraping bots
+READ_LIMIT_PER_MINUTE = 60
+READ_WINDOW_SECONDS = 60
+
 
 class RateLimitEntry:
-    __slots__ = ("count", "window_start")
+    __slots__ = ("count", "window_start", "_window_seconds")
 
-    def __init__(self) -> None:
+    def __init__(self, window_seconds: int = WINDOW_SECONDS) -> None:
         self.count = 0
         self.window_start = time.monotonic()
+        self._window_seconds = window_seconds
 
     def reset_if_expired(self) -> None:
         now = time.monotonic()
-        if now - self.window_start >= WINDOW_SECONDS:
+        if now - self.window_start >= self._window_seconds:
             self.count = 0
             self.window_start = now
 
@@ -43,7 +48,7 @@ class RateLimitEntry:
     @property
     def remaining(self) -> float:
         elapsed = time.monotonic() - self.window_start
-        return max(0, WINDOW_SECONDS - elapsed)
+        return max(0, self._window_seconds - elapsed)
 
 
 # In-memory store: keyed by IP or API key
@@ -52,6 +57,10 @@ class RateLimitEntry:
 # RateLimitEntry object.  5k covers ~5k unique IPs/keys per 2h window, which is
 # far more than realistic traffic on Render Starter.
 _rate_store: TTLCache = TTLCache(maxsize=5_000, ttl=WINDOW_SECONDS * 2)
+
+# Separate read rate limit store: IP → request count in current minute window.
+# Smaller TTL (2 min) and smaller maxsize since this only tracks per-minute bursts.
+_read_rate_store: TTLCache = TTLCache(maxsize=2_000, ttl=READ_WINDOW_SECONDS * 2)
 
 
 # Private IP prefixes — used to identify proxy hops vs real clients
@@ -165,6 +174,39 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 response.headers["X-RateLimit-Reset"] = str(int(time.time() + WINDOW_SECONDS))
                 return response
 
+        # --- Read rate limit: 60 req/min per IP for all API reads ---
+        if not is_scan and request.method == "GET":
+            read_key = f"read:{client_ip}"
+            if read_key not in _read_rate_store:
+                _read_rate_store[read_key] = RateLimitEntry(window_seconds=READ_WINDOW_SECONDS)
+            read_entry = _read_rate_store[read_key]
+            read_count = read_entry.increment()
+
+            if read_count > READ_LIMIT_PER_MINUTE:
+                retry_after = int(read_entry.remaining)
+                logger.warning("Read rate limit exceeded for IP %s (count=%d)", client_ip, read_count)
+                origin = request.headers.get("origin", "")
+                cors_headers: dict[str, str] = {}
+                if origin:
+                    cors_headers["Access-Control-Allow-Origin"] = origin
+                    cors_headers["Vary"] = "Origin"
+                return JSONResponse(
+                    status_code=429,
+                    content={
+                        "error": "Rate limit exceeded",
+                        "detail": f"Maximum {READ_LIMIT_PER_MINUTE} read requests per minute. Try again in {retry_after}s.",
+                        "retry_after": retry_after,
+                    },
+                    headers={
+                        "Retry-After": str(retry_after),
+                        "X-RateLimit-Limit": str(READ_LIMIT_PER_MINUTE),
+                        "X-RateLimit-Remaining": "0",
+                        "X-RateLimit-Reset": str(int(time.time() + read_entry.remaining)),
+                        **cors_headers,
+                    },
+                )
+
+        # --- Scan rate limit: per hour ---
         store_key, limit = _resolve_limit(api_key)
         if not store_key:
             store_key = f"ip:{client_ip}"

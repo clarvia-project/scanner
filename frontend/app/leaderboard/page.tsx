@@ -152,7 +152,7 @@ const SUB_FACTOR_FILTERS: SubFactorFilter[] = [
 ];
 
 // ----- API response normalizer -----
-// The /v1/services API returns a different shape than local prebuilt-scans.json.
+// The /v1/services API returns a different shape than ScanEntry.
 // Normalize API items so the rest of the page can treat them as ScanEntry.
 
 interface ApiServiceItem {
@@ -472,12 +472,14 @@ export default function LeaderboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch("/data/prebuilt-scans.json")
-      .then((res) => res.json())
-      .then((json: ScanEntry[]) => {
-        setData(json);
+    fetch(`${API_BASE}/v1/services?sort=score_desc&limit=100&fields=full`)
+      .then((res) => (res.ok ? res.json() : { services: [] }))
+      .then((json) => {
+        const raw = Array.isArray(json) ? json : (json.services || []);
+        const items: ScanEntry[] = raw.map(normalizeToScanEntry);
+        setData(items);
       })
-      .catch(() => {})
+      .catch(console.warn)
       .finally(() => setLoading(false));
   }, []);
 
@@ -490,7 +492,7 @@ export default function LeaderboardPage() {
         const sorted = (json.leaderboard || []).slice().sort((a, b) => b.score - a.score);
         setTopPerformers(sorted);
       })
-      .catch(() => {})
+      .catch(console.warn)
       .finally(() => setTopLoading(false));
   }, []);
 
@@ -673,6 +675,7 @@ export default function LeaderboardPage() {
                 <Link
                   key={tp.scan_id}
                   href={`/tool/${tp.scan_id}`}
+                  prefetch={false}
                   className="group glass-card rounded-xl p-4 text-center transition-all duration-200 hover:border-accent/40 hover:shadow-lg hover:shadow-accent/5 hover:-translate-y-0.5"
                 >
                   <div className="text-[10px] font-mono text-muted/50 mb-1">#{tp.rank ?? i + 1}</div>

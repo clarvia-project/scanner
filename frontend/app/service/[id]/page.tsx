@@ -353,7 +353,7 @@ export default function ServiceDetailPage() {
     const fetchStats = fetch(`${API_BASE}/v1/feedback/${id}/stats`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => data && setStats(data))
-      .catch(() => {});
+      .catch(console.warn);
 
     Promise.all([fetchService, fetchStats]).finally(() => setLoading(false));
   }, [id]);

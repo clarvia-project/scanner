@@ -252,6 +252,22 @@ sys.stdout.buffer.write(pickle.dumps(raw))
         except Exception as e:
             logger.warning("Semantic search index build failed: %s", e)
 
+        # Eagerly load collected tools and build merged cache
+        try:
+            ir._load_collected()
+            ir.get_all_tools()
+            logger.info("Collected tools loaded and merged cache built at startup")
+        except Exception as e:
+            logger.warning("Startup collected tools load failed: %s", e)
+
+        # Eagerly build recommendation engine index
+        try:
+            from .routes.recommend_routes import _ensure_index_built
+            _ensure_index_built()
+            logger.info("Recommendation index built at startup")
+        except Exception as e:
+            logger.warning("Startup recommendation index build failed: %s", e)
+
     import sys
     threading.Thread(target=_bg_load_subprocess, daemon=True).start()
     logger.info("Index data loading scheduled (subprocess)")

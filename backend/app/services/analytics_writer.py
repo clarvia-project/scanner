@@ -135,6 +135,8 @@ class AnalyticsWriter:
         self._lock = asyncio.Lock()
         self._flush_task: asyncio.Task | None = None
         self._running = False
+        self._consecutive_failures = 0
+        self._max_backoff = 60.0  # seconds
 
     def start(self) -> None:
         """Start the background flush loop."""
@@ -162,9 +164,16 @@ class AnalyticsWriter:
                 await self._flush_unlocked()
 
     async def _flush_loop(self) -> None:
-        """Periodically flush buffer to disk."""
+        """Periodically flush buffer to disk with exponential backoff on failures."""
         while self._running:
-            await asyncio.sleep(self._flush_interval)
+            if self._consecutive_failures > 0:
+                backoff = min(
+                    self._flush_interval * (2 ** self._consecutive_failures),
+                    self._max_backoff,
+                )
+                await asyncio.sleep(backoff)
+            else:
+                await asyncio.sleep(self._flush_interval)
             await self._flush()
 
     async def _flush(self) -> None:
@@ -217,9 +226,6 @@ class AnalyticsWriter:
                     "ua": entry.get("ua", "")[:200],
                     "agent": entry.get("agent"),
                     "tool_activity": entry.get("tool_activity"),
-                    "utm_source": entry.get("utm_source"),
-                    "utm_medium": entry.get("utm_medium"),
-                    "utm_campaign": entry.get("utm_campaign"),
                 }
                 for entry in entries
             ]
@@ -229,9 +235,19 @@ class AnalyticsWriter:
                 batch = rows[i : i + 500]
                 client.table("analytics_events").insert(batch).execute()
 
+            # Reset backoff on success
+            self._consecutive_failures = 0
+
         except Exception as e:
-            # Never let Supabase errors kill the analytics pipeline
-            logger.warning("Supabase analytics flush failed (JSONL still written): %s", e)
+            self._consecutive_failures = min(self._consecutive_failures + 1, 5)
+            backoff = min(
+                self._flush_interval * (2 ** self._consecutive_failures),
+                self._max_backoff,
+            )
+            logger.warning(
+                "Supabase analytics flush failed (attempt %d, next backoff %.0fs): %s",
+                self._consecutive_failures, backoff, e,
+            )
 
     @staticmethod
     def _append_file(filepath: Path, content: str) -> None:
