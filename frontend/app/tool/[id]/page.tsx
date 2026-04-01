@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { API_BASE } from "@/lib/api";
+import { API_BASE, stripHtml } from "@/lib/api";
 
 function BadgeEmbed({ toolId }: { toolId: string }) {
   const [copied, setCopied] = useState<string | null>(null);
@@ -388,7 +388,7 @@ export default function ToolDetailPage() {
                 <h1 className="text-2xl font-bold tracking-tight">{tool.name}</h1>
               </div>
               {tool.description && (
-                <p className="text-muted leading-relaxed max-w-xl">{tool.description}</p>
+                <p className="text-muted leading-relaxed max-w-xl">{stripHtml(tool.description)}</p>
               )}
             </div>
             <div className={`flex-shrink-0 px-5 py-4 rounded-xl border text-center ${scoreBg(tool.clarvia_score)}`}>

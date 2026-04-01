@@ -239,7 +239,7 @@ function CompareTable({ result }: { result: CompareResult }) {
                   <div className={`text-2xl font-bold font-mono ${scoreColor(svc.score)}`}>
                     {svc.score !== null ? svc.score : "—"}
                   </div>
-                  <div className="text-[10px] text-muted mt-0.5">{svc.rating || scoreRating(svc.score)}</div>
+                  <div className="text-[10px] text-muted mt-0.5">{scoreRating(svc.score)}</div>
                 </div>
               </div>
             );
@@ -384,7 +384,7 @@ function LegacyCompareCards({ tools }: { tools: ComparedTool[] }) {
                 <div className={`text-2xl font-bold font-mono ${scoreColor(tool.clarvia_score)}`}>
                   {tool.clarvia_score}
                 </div>
-                <div className="text-[10px] text-muted mt-0.5">{tool.rating}</div>
+                <div className="text-[10px] text-muted mt-0.5">{scoreRating(tool.clarvia_score)}</div>
               </div>
 
               <div className="space-y-2.5 mb-4 flex-1">

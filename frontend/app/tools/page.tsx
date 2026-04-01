@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { API_BASE, recommendTools, type RecommendResult } from "@/lib/api";
+import { API_BASE, recommendTools, stripHtml, type RecommendResult } from "@/lib/api";
 
 interface Tool {
   name: string;
@@ -340,7 +340,7 @@ export default function ToolsPage() {
             Keyword Search
           </button>
           <button
-            onClick={() => setSearchMode("intent")}
+            onClick={() => { setSearchMode("intent"); if (debouncedQuery) setLoading(true); }}
             className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all cursor-pointer flex items-center gap-1.5 ${
               searchMode === "intent" ? "btn-gradient text-white" : "glass-subtle text-muted"
             }`}
@@ -484,7 +484,7 @@ export default function ToolsPage() {
                   </div>
                   {rec.description && (
                     <p className="text-xs text-muted/70 line-clamp-2 mb-1.5 leading-relaxed">
-                      {rec.description}
+                      {stripHtml(rec.description)}
                     </p>
                   )}
                   <p className="text-[10px] text-accent/60 font-mono mb-1.5">
@@ -539,7 +539,7 @@ export default function ToolsPage() {
                 </div>
                 {tool.description && (
                   <p className="text-xs text-muted/70 line-clamp-2 mb-1.5 leading-relaxed">
-                    {tool.description}
+                    {stripHtml(tool.description)}
                   </p>
                 )}
                 {tool.url && !tool.description && (

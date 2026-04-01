@@ -1298,8 +1298,8 @@ function FreeActions({ result }: { result: ScanResult }) {
   const [badgeCopied, setBadgeCopied] = useState(false);
   const [badgeStyle, setBadgeStyle] = useState<"flat" | "flat-square">("flat");
 
-  const badgeName = encodeURIComponent(result.service_name);
-  const badgeUrl = `${API_BASE}/api/badge/${badgeName}${badgeStyle !== "flat" ? `?style=${badgeStyle}` : ""}`;
+  const badgeId = encodeURIComponent(result.scan_id || result.service_name);
+  const badgeUrl = `${API_BASE}/api/badge/${badgeId}${badgeStyle !== "flat" ? `?style=${badgeStyle}` : ""}`;
   const detailsUrl = typeof window !== "undefined" ? window.location.href : `https://clarvia.art/scan/${result.scan_id}`;
   const badgeMarkdown = `[![AEO Score: ${result.clarvia_score}](${badgeUrl})](${detailsUrl})`;
   const badgeHtml = `<a href="${detailsUrl}"><img src="${badgeUrl}" alt="AEO Score: ${result.clarvia_score}" /></a>`;
@@ -1674,7 +1674,7 @@ function BadgeEmbed({ scanId, serviceName, score }: { scanId: string; serviceNam
   const [copied, setCopied] = useState<string | null>(null);
   const [style, setStyle] = useState<"flat" | "flat-square" | "for-the-badge">("flat");
 
-  const badgeUrl = `https://clarvia.art/api/badge/${encodeURIComponent(serviceName)}?style=${style}`;
+  const badgeUrl = `https://clarvia.art/api/badge/${encodeURIComponent(scanId)}?style=${style}`;
   const reportUrl = `https://clarvia.art/tool/${encodeURIComponent(serviceName)}`;
 
   const snippets = {
@@ -1707,7 +1707,7 @@ function BadgeEmbed({ scanId, serviceName, score }: { scanId: string; serviceNam
       <div className="flex items-center justify-center py-4 bg-white/5 rounded-xl border border-card-border/30">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`${API_BASE}/api/badge/${encodeURIComponent(serviceName)}?style=${style}`}
+          src={`${API_BASE}/api/badge/${encodeURIComponent(scanId)}?style=${style}`}
           alt="AEO Score Badge"
           height={style === "for-the-badge" ? 28 : 20}
         />

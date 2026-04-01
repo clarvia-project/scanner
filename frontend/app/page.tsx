@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { API_BASE } from "@/lib/api";
+import { API_BASE, stripHtml } from "@/lib/api";
 import { CASE_STUDIES, scoreColorClass, improvementPercent } from "@/lib/case-studies";
 
 interface TopScore {
@@ -564,7 +564,7 @@ export default function LandingPage() {
                   value={altQuery}
                   onChange={(e) => setAltQuery(e.target.value)}
                   placeholder="Find alternatives to..."
-                  className="bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted/60 w-40 font-mono"
+                  className="bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted/60 w-48 font-mono"
                 />
                 <button
                   type="submit"
@@ -611,7 +611,7 @@ export default function LandingPage() {
                         </span>
                       </div>
                       {alt.description && (
-                        <p className="text-xs text-muted mt-1.5 line-clamp-2">{alt.description}</p>
+                        <p className="text-xs text-muted mt-1.5 line-clamp-2">{stripHtml(alt.description)}</p>
                       )}
                       {alt.install_hint && (
                         <p className="text-xs font-mono text-accent/70 mt-1 truncate">{alt.install_hint}</p>
