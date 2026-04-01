@@ -1,7 +1,7 @@
 {
   "name": "clarvia",
-  "version": "1.2.10",
-  "description": "AI Agent Tool Directory & AEO Scanner — Search 27,831+ tools scored for agent readiness. 24 tools for searching, scanning, gate-checking, comparing, trending, and AEO (answer-engine-optimization) scoring.",
+  "version": "1.2.11",
+  "description": "AI Agent Tool Directory & AEO Scanner — Search 27,843+ tools scored for agent readiness. 17 MCP tools for searching, scanning, gate-checking, comparing, trending, and AEO (answer-engine-optimization) scoring.",
   "homepage": "https://clarvia.art",
   "logo": "https://clarvia.art/logos/clarvia-icon.svg",
   "publisher": {
@@ -12,7 +12,9 @@
     {
       "type": "stdio",
       "command": "npx",
-      "args": ["clarvia-mcp-server"]
+      "args": [
+        "clarvia-mcp-server"
+      ]
     },
     {
       "type": "streamable-http",
@@ -22,7 +24,7 @@
   "tools": [
     {
       "name": "search_services",
-      "description": "Search 27,831+ AI agent tools by keyword, category, or AEO score"
+      "description": "Search 27,843+ AI agent tools by keyword, category, or AEO score"
     },
     {
       "name": "scan_service",
@@ -83,8 +85,23 @@
     {
       "name": "clarvia_list_issues",
       "description": "List existing CS tickets — check status of reported issues, see known bugs, or find feature requests to upvote."
+    },
+    {
+      "name": "clarvia_top_picks",
+      "description": "Get top-rated tools by category and service type — best MCP servers, APIs, CLIs ranked by AEO score"
     }
   ],
-  "categories": ["developer-tools", "ai", "search", "quality-assurance"],
-  "tags": ["aeo", "mcp", "agent", "tool-discovery", "scoring"]
+  "categories": [
+    "developer-tools",
+    "ai",
+    "search",
+    "quality-assurance"
+  ],
+  "tags": [
+    "aeo",
+    "mcp",
+    "agent",
+    "tool-discovery",
+    "scoring"
+  ]
 }
