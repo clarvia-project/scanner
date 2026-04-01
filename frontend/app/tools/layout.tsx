@@ -31,9 +31,9 @@ async function fetchTopTools(): Promise<Tool[]> {
 }
 
 export const metadata: Metadata = {
-  title: "AI Agent Tool Directory — 27,906+ Tools Scored | Clarvia",
+  title: "AI Agent Tool Directory — 27,843+ Tools Scored | Clarvia",
   description:
-    "Browse and search 27,906+ AI agent tools including MCP servers, APIs, CLI tools, and skills. Every tool scored for agent readiness with the Clarvia AEO standard.",
+    "Browse and search 27,843+ AI agent tools including MCP servers, APIs, CLI tools, and skills. Every tool scored for agent readiness with the Clarvia AEO standard.",
   keywords: [
     "MCP server directory",
     "AI agent tools",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "AI Agent Tool Directory | Clarvia",
     description:
-      "Search 27,906+ MCP servers, APIs, CLI tools, and skills scored for agent readiness.",
+      "Search 27,843+ MCP servers, APIs, CLI tools, and skills scored for agent readiness.",
     url: "https://clarvia.art/tools",
     siteName: "Clarvia",
     type: "website",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary",
     title: "AI Agent Tool Directory | Clarvia",
-    description: "27,906+ MCP servers and AI tools scored for agent readiness.",
+    description: "27,843+ MCP servers and AI tools scored for agent readiness.",
   },
   alternates: {
     canonical: "https://clarvia.art/tools",
@@ -74,7 +74,7 @@ export default async function ToolsLayout({
     "@type": "CollectionPage",
     name: "AI Agent Tool Directory — Clarvia",
     description:
-      "The largest ranked directory of MCP servers, APIs, CLI tools, and agent skills. 27,906+ tools scored by Clarvia AEO standard.",
+      "The largest ranked directory of MCP servers, APIs, CLI tools, and agent skills. 27,843+ tools scored by Clarvia AEO standard.",
     url: "https://clarvia.art/tools",
     publisher: {
       "@type": "Organization",
@@ -85,7 +85,7 @@ export default async function ToolsLayout({
       "@type": "ItemList",
       name: "Top-Rated AI Agent Tools",
       description: "Highest-scoring MCP servers and AI tools in the Clarvia directory.",
-      numberOfItems: 27906,
+      numberOfItems: 27843,
       itemListOrder: "https://schema.org/ItemListOrderDescending",
       itemListElement: tools.map((tool, idx) => ({
         "@type": "ListItem",
@@ -114,7 +114,7 @@ export default async function ToolsLayout({
         name: "How many AI agent tools does Clarvia index?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Clarvia indexes 27,906+ AI agent tools including MCP servers, REST APIs, CLI tools, and agent skills. Each tool is scored on a 0-100 AEO (AI Engine Optimization) scale measuring agent readiness.",
+          text: "Clarvia indexes 27,843+ AI agent tools including MCP servers, REST APIs, CLI tools, and agent skills. Each tool is scored on a 0-100 AEO (AI Engine Optimization) scale measuring agent readiness.",
         },
       },
       {

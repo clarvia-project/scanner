@@ -89,7 +89,7 @@ export default function RootLayout({
               "@type": "SoftwareApplication",
               "name": "Clarvia",
               "applicationCategory": "DeveloperApplication",
-              "description": "AEO (Agent Engine Optimization) scanner — scores and benchmarks 27,906+ AI agent tools for discoverability, quality, and agent compatibility",
+              "description": "AEO (Agent Engine Optimization) scanner — scores and benchmarks 27,843+ AI agent tools for discoverability, quality, and agent compatibility",
               "url": "https://clarvia.art",
               "offers": {
                 "@type": "Offer",
@@ -142,7 +142,7 @@ export default function RootLayout({
                   "name": "Is Clarvia free?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Yes, scanning, tool search, side-by-side comparison, weekly trending, and embeddable AEO badges are all free. Clarvia indexes over 27,906 tools across the AI agent ecosystem."
+                    "text": "Yes, scanning, tool search, side-by-side comparison, weekly trending, and embeddable AEO badges are all free. Clarvia indexes over 27,843 tools across the AI agent ecosystem."
                   }
                 }
               ]
