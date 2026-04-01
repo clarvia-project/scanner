@@ -2,12 +2,12 @@
 
 # clarvia-mcp-server
 
-**MCP server for Clarvia — search, evaluate, and gate-check 27,831+ AI agent tools**
+**MCP server for Clarvia — search, evaluate, and gate-check 27,843+ AI agent tools**
 
 [![npm version](https://img.shields.io/npm/v/clarvia-mcp-server?color=cb3837)](https://www.npmjs.com/package/clarvia-mcp-server)
 [![Smithery](https://smithery.ai/badge/@clarvia/aeo-scanner)](https://smithery.ai/server/@clarvia/aeo-scanner)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![MCP Tools](https://img.shields.io/badge/MCP_tools-24-6366f1)](#tools)
+[![MCP Tools](https://img.shields.io/badge/MCP_tools-17-6366f1)](#tools)
 
 </div>
 
