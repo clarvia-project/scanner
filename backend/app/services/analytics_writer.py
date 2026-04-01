@@ -217,8 +217,6 @@ class AnalyticsWriter:
                     "ua": entry.get("ua", "")[:200],
                     "agent": entry.get("agent"),
                     "tool_activity": entry.get("tool_activity"),
-                    "referrer": entry.get("referrer"),
-                    "referrer_channel": entry.get("referrer_channel"),
                     "utm_source": entry.get("utm_source"),
                     "utm_medium": entry.get("utm_medium"),
                     "utm_campaign": entry.get("utm_campaign"),
