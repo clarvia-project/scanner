@@ -34,6 +34,7 @@ interface ScanResult {
   service_name: string;
   clarvia_score: number;
   rating: string;
+  agent_grade?: string;
   dimensions: {
     api_accessibility: Dimension;
     data_structuring: Dimension;
@@ -92,6 +93,21 @@ function gradeBadgeClass(rating: string): string {
       return "bg-score-yellow/10 text-score-yellow border-score-yellow/20";
     default:
       return "bg-score-red/10 text-score-red border-score-red/20";
+  }
+}
+
+function agentGradeMeta(grade: string): { label: string; colorClass: string; description: string } {
+  switch (grade) {
+    case "AGENT_NATIVE":
+      return { label: "Agent Native", colorClass: "bg-score-green/10 text-score-green border-score-green/20", description: "Built for AI agents — full discovery, auth, and tool compatibility" };
+    case "AGENT_FRIENDLY":
+      return { label: "Agent Friendly", colorClass: "bg-accent/10 text-accent border-accent/20", description: "Agents can integrate with moderate effort" };
+    case "AGENT_POSSIBLE":
+      return { label: "Agent Possible", colorClass: "bg-score-yellow/10 text-score-yellow border-score-yellow/20", description: "Basic agent use possible, but significant friction remains" };
+    case "AGENT_HOSTILE":
+      return { label: "Agent Hostile", colorClass: "bg-score-red/10 text-score-red border-score-red/20", description: "Agents cannot reliably discover or use this service" };
+    default:
+      return { label: grade, colorClass: "bg-card-border/20 text-muted border-card-border", description: "" };
   }
 }
 
@@ -1824,6 +1840,21 @@ function ScanResultView({
           >
             {result.rating}
           </span>
+          {result.agent_grade && (() => {
+            const gm = agentGradeMeta(result.agent_grade);
+            return (
+              <span className="group relative">
+                <span className={`inline-block px-4 py-1.5 rounded-xl border text-xs font-mono tracking-wider cursor-help ${gm.colorClass}`}>
+                  {gm.label}
+                </span>
+                {gm.description && (
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 rounded-xl bg-card-bg border border-card-border text-xs text-muted leading-relaxed opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-lg text-center">
+                    {gm.description}
+                  </span>
+                )}
+              </span>
+            );
+          })()}
           {isVerified && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono bg-score-green/10 text-score-green border-score-green/20">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
