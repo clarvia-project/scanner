@@ -2828,3 +2828,11 @@ Key milestone repos:
 - Tool pages /tool/ (singular) confirmed SSR-working; /tools/ (plural) returns 404 — different URL pattern
 - aiagentsdirectory.com has a /submit-agent page (not yet submitted - needs browser form)
 - IndexNow pinged for 5 major tool profile pages
+
+### 2026-04-01 06:20 UTC (Cycle 49)
+- **Top zero-result query fixed**: langflow had 9 searches, 0 results (was in new-tools-queue but not scored). Added Langflow, Dify AI, Composio, Replit, OpenAI, Letta AI directly to prebuilt-scans.
+- **npm v1.2.9**: Updated description to mention 6 popular AI frameworks → better npm search discovery
+- **IndexNow key**: Deployed clarvia2026art.txt to enable faster Bing/Google indexing submissions
+- **Batch scored 50 more**: MCP registry tools added, 265 duplicates removed, total now 15,059 scored tools
+- **GitHub flag still active**: All GitHub ops skipped. Focus on non-GitHub channels.
+- **Next**: When Render deploys, verify langflow search returns results. Then do IndexNow pings for new content.
