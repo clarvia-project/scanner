@@ -144,6 +144,22 @@ export default function RootLayout({
                     "@type": "Answer",
                     "text": "Yes, scanning, tool search, side-by-side comparison, weekly trending, and embeddable AEO badges are all free. Clarvia indexes over 27,843 tools across the AI agent ecosystem."
                   }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Is Clarvia AEO the same as Answer Engine Optimization?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. Clarvia uses AEO to mean AI Engine Optimization — how ready an MCP server or API is for autonomous AI agent usage. This is distinct from Answer Engine Optimization (brand visibility in AI chatbot answers), which is what tools like Profound and Goodie AI measure. Clarvia AEO is specifically about MCP server quality: documentation completeness, parameter clarity, structured outputs, and agent discoverability."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What is MCP AEO scoring?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "MCP AEO (Model Context Protocol AI Engine Optimization) scoring measures how well an MCP server is optimized for autonomous AI agent discovery and usage. Clarvia evaluates 27,843+ MCP servers across dimensions including tool description quality, parameter documentation, error handling, structured outputs, and discovery metadata. Higher scores mean AI agents can more reliably find and use the tool without human intervention."
+                  }
                 }
               ]
             })
