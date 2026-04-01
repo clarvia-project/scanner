@@ -1,6 +1,6 @@
 {
   "name": "Clarvia",
-  "description": "AI agent tool discovery and AEO scoring platform. 27,800+ indexed tools.",
+  "description": "AI agent tool discovery and AEO (answer-engine-optimization) scoring platform. 27,831+ indexed tools with agent-readiness scores.",
   "url": "https://clarvia.art",
   "api": {
     "base_url": "https://clarvia-api.onrender.com",
