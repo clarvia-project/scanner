@@ -12,7 +12,7 @@ mcp>=1.8.0
 
 # Recommendation engine
 scikit-learn~=1.8.0
-numpy~=2.4.3
+numpy~=2.4.4
 
 # PDF generation
 reportlab~=4.4.10
