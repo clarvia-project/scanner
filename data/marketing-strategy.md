@@ -2836,3 +2836,34 @@ Key milestone repos:
 - **Batch scored 50 more**: MCP registry tools added, 265 duplicates removed, total now 15,059 scored tools
 - **GitHub flag still active**: All GitHub ops skipped. Focus on non-GitHub channels.
 - **Next**: When Render deploys, verify langflow search returns results. Then do IndexNow pings for new content.
+
+
+## Field Notes — 2026-04-01 (Cycle 50, ~06:45 UTC)
+
+### Key Fix: Multi-Word AND Search
+- Problem: queries like 'postgres mcp' returned 0 results because search required exact phrase match
+- Fix: Split multi-word queries into tokens, require all tokens to appear in combined name+desc+url+tags field
+- Results:
+  - postgres mcp: 0 → 36
+  - supabase mcp: 0 → 12  
+  - stripe mcp: 0 → 10
+  - langchain tools: 0 → 23
+  - crewai agent: 0 → 28
+- Deployed to Render successfully
+
+### Registry Updates
+- server.json: bumped v1.2.6 → v1.2.9, updated description to 27,610+ tools
+- glama.json: synced indexed_tools from 27911 to 27610 (accurate count)
+- MCP official registry shows Clarvia as active (4 versions)
+
+### IndexNow Status
+- Bing: 403 (key file returns 404 — need to investigate why clarvia2026art.txt is 404)
+- Yandex: 202 ✅  
+- Naver: 200 ✅
+- The older key 'clarvia2026.txt' is accessible but Bing rejects it too
+
+### Next Priorities
+1. Fix Bing IndexNow (the key file clarvia2026art.txt is 404 despite being in public dir)
+2. Update npm to v1.2.10 with server.json description improvements (triggers registry re-sync)
+3. Smithery registration (manual browser needed)
+4. PulseMCP registration (manual browser needed)
