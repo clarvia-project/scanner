@@ -2203,6 +2203,18 @@ export default function ScanResultPage() {
                 Register
               </Link>
               <Link
+                href="/trending"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Trending
+              </Link>
+              <Link
+                href="/compare"
+                className="text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Compare
+              </Link>
+              <Link
                 href="/docs"
                 className="text-sm text-muted hover:text-foreground transition-colors"
               >

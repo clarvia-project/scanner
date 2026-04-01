@@ -62,7 +62,16 @@ def _find_service(identifier: str) -> Optional[dict]:
     if clean_id.endswith(".svg"):
         clean_id = clean_id[:-4]
 
-    # 1. Try in-memory cache by scan_id
+    # 1. Try prebuilt scans first (authoritative scores)
+    prebuilt = _load_prebuilt()
+    decoded_id = unquote(clean_id)
+    lower_id = decoded_id.lower()
+
+    for entry in prebuilt:
+        if entry.get("scan_id") == clean_id:
+            return entry
+
+    # 2. Fall back to in-memory scan cache (live scans)
     scan = get_cached_scan(clean_id)
     if scan:
         return {
@@ -71,15 +80,6 @@ def _find_service(identifier: str) -> Optional[dict]:
             "clarvia_score": scan.clarvia_score,
             "rating": scan.rating,
         }
-
-    # 2-3. Try prebuilt scans
-    prebuilt = _load_prebuilt()
-    decoded_id = unquote(clean_id)
-    lower_id = decoded_id.lower()
-
-    for entry in prebuilt:
-        if entry.get("scan_id") == clean_id:
-            return entry
 
     for entry in prebuilt:
         if entry.get("service_name", "").lower() == lower_id:

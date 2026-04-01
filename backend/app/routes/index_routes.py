@@ -1341,30 +1341,29 @@ async def list_services(
     if similar_to:
         filtered = [s for s in filtered if s["scan_id"] != similar_to]
 
-    # When a text query is active, relevance sort is already applied — skip re-sort
-    # unless user explicitly requested a different sort order
-    if not q:
-        if sort == SortOrder.score_desc:
-            filtered.sort(key=lambda s: s["clarvia_score"], reverse=True)
-        elif sort == SortOrder.score_asc:
-            filtered.sort(key=lambda s: s["clarvia_score"])
-        elif sort == SortOrder.name_asc:
-            filtered.sort(key=lambda s: s["service_name"].lower())
-        elif sort == SortOrder.name_desc:
-            filtered.sort(key=lambda s: s["service_name"].lower(), reverse=True)
-        elif sort == SortOrder.recent:
-            filtered.sort(key=lambda s: s.get("scanned_at") or "", reverse=True)
-    else:
-        # With text query: only re-sort if user explicitly set a non-default sort
-        if sort == SortOrder.score_asc:
-            filtered.sort(key=lambda s: s["clarvia_score"])
-        elif sort == SortOrder.name_asc:
-            filtered.sort(key=lambda s: s["service_name"].lower())
-        elif sort == SortOrder.name_desc:
-            filtered.sort(key=lambda s: s["service_name"].lower(), reverse=True)
-        elif sort == SortOrder.recent:
-            filtered.sort(key=lambda s: s.get("scanned_at") or "", reverse=True)
-        # score_desc (default) → keep relevance order
+    # Deduplicate by scan_id (keep highest score if duplicates exist)
+    seen_ids: dict[str, int] = {}
+    deduped: list[dict] = []
+    for s in filtered:
+        sid = s["scan_id"]
+        if sid not in seen_ids:
+            seen_ids[sid] = len(deduped)
+            deduped.append(s)
+        elif s["clarvia_score"] > deduped[seen_ids[sid]]["clarvia_score"]:
+            deduped[seen_ids[sid]] = s
+    filtered = deduped
+
+    # Sort results — always respect the requested sort order
+    if sort == SortOrder.score_desc:
+        filtered.sort(key=lambda s: s["clarvia_score"], reverse=True)
+    elif sort == SortOrder.score_asc:
+        filtered.sort(key=lambda s: s["clarvia_score"])
+    elif sort == SortOrder.name_asc:
+        filtered.sort(key=lambda s: s["service_name"].lower())
+    elif sort == SortOrder.name_desc:
+        filtered.sort(key=lambda s: s["service_name"].lower(), reverse=True)
+    elif sort == SortOrder.recent:
+        filtered.sort(key=lambda s: s.get("scanned_at") or "", reverse=True)
 
     total = len(filtered)
 

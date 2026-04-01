@@ -79,10 +79,12 @@ function scoreBg(score: number | null) {
 
 function scoreRating(score: number | null): string {
   if (score === null) return "Unknown";
-  if (score >= 80) return "Strong";
-  if (score >= 60) return "Moderate";
-  if (score >= 40) return "Weak";
-  return "Poor";
+  if (score >= 90) return "Exceptional";
+  if (score >= 80) return "Excellent";
+  if (score >= 65) return "Strong";
+  if (score >= 45) return "Moderate";
+  if (score >= 25) return "Basic";
+  return "Minimal";
 }
 
 function barColor(pct: number) {
@@ -186,6 +188,82 @@ function ShareButtons({ label, href }: { label: string; href: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
         </svg>
         Copy
+      </button>
+    </div>
+  );
+}
+
+// ─── Inline Add Tool Card (replaces Link to /tools) ─────────────────────────
+
+function AddToolCard({ ids, router }: { ids: string[]; router: ReturnType<typeof useRouter> }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<{ name: string; scan_id: string; clarvia_score: number }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!query || query.length < 2) { setResults([]); return; }
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`${API_BASE}/v1/services?q=${encodeURIComponent(query)}&limit=6&source=all`);
+        if (res.ok) {
+          const data = await res.json();
+          setResults((data.services || []).filter((s: { scan_id: string }) => !ids.includes(s.scan_id)));
+        }
+      } catch { /* ignore */ }
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query, ids]);
+
+  function addTool(scanId: string) {
+    const newIds = [...ids, scanId].join(",");
+    router.push(`/compare?ids=${newIds}`);
+    setOpen(false);
+    setQuery("");
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="glass-subtle rounded-xl p-5 flex flex-col items-center justify-center gap-2 border-dashed border-card-border/50 hover:border-accent/30 transition-all min-h-[300px] w-full cursor-pointer"
+      >
+        <div className="text-2xl text-muted/30">+</div>
+        <span className="text-xs text-muted/50">Add tool</span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="glass-subtle rounded-xl p-5 flex flex-col gap-3 border-dashed border-card-border/50 min-h-[300px]">
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search tool to compare..."
+        autoFocus
+        className="w-full px-3 py-2 bg-card-bg/50 border border-card-border rounded-lg text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent/50"
+      />
+      {searching && <p className="text-xs text-muted">Searching...</p>}
+      <div className="flex flex-col gap-1 overflow-y-auto max-h-[200px]">
+        {results.map((r) => (
+          <button
+            key={r.scan_id}
+            onClick={() => addTool(r.scan_id)}
+            className="text-left px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-sm"
+          >
+            <span className="text-foreground">{r.name}</span>
+            <span className="ml-2 text-xs text-accent font-mono">{r.clarvia_score}</span>
+          </button>
+        ))}
+        {query.length >= 2 && !searching && results.length === 0 && (
+          <p className="text-xs text-muted px-3 py-2">No results</p>
+        )}
+      </div>
+      <button onClick={() => { setOpen(false); setQuery(""); }} className="text-xs text-muted hover:text-foreground mt-auto">
+        Cancel
       </button>
     </div>
   );
@@ -337,6 +415,7 @@ function CompareTable({ result }: { result: CompareResult }) {
 // ─── Legacy DB compare cards (unchanged visual) ───────────────────────────────
 
 function LegacyCompareCards({ tools }: { tools: ComparedTool[] }) {
+  const router = useRouter();
   const allDimensions = Array.from(
     new Set(tools.flatMap((t) => Object.keys(t.dimensions)))
   );
@@ -437,13 +516,7 @@ function LegacyCompareCards({ tools }: { tools: ComparedTool[] }) {
         })}
 
         {tools.length < 4 && (
-          <Link
-            href="/tools"
-            className="glass-subtle rounded-xl p-5 flex flex-col items-center justify-center gap-2 border-dashed border-card-border/50 hover:border-accent/30 transition-all min-h-[300px]"
-          >
-            <div className="text-2xl text-muted/30">+</div>
-            <span className="text-xs text-muted/50">Add tool</span>
-          </Link>
+          <AddToolCard ids={tools.map((t) => t.scan_id)} router={router} />
         )}
       </div>
 

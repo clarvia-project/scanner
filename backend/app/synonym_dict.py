@@ -106,13 +106,30 @@ for _key, _expansions in INTENT_SYNONYMS.items():
         _FLAT_LOOKUP[_exp_lower].extend(_expansions)
 
 
+_STOPWORDS = frozenset({
+    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
+    "of", "with", "by", "from", "as", "is", "it", "its", "was", "are",
+    "be", "been", "being", "have", "has", "had", "do", "does", "did",
+    "will", "would", "could", "should", "may", "might", "can", "shall",
+    "i", "me", "my", "we", "our", "you", "your", "he", "she", "they",
+    "this", "that", "these", "those", "not", "no", "so", "if", "then",
+    "than", "too", "very", "just", "about", "into", "over", "after",
+    "before", "between", "through", "during", "above", "below",
+    "up", "down", "out", "off", "some", "any", "all", "each", "every",
+    "both", "few", "more", "most", "other", "such", "only", "own",
+    "same", "also", "how", "what", "which", "who", "whom", "when",
+    "where", "why", "want", "need", "like", "get", "make", "use",
+})
+
+
 def expand_intent(intent: str) -> list[str]:
     """Expand a user intent string into a broader set of search terms.
 
     Returns the original terms + all matched synonyms, deduplicated.
+    Stopwords are filtered out to improve search relevance.
     """
     intent_lower = intent.lower().strip()
-    terms = set(intent_lower.split())
+    terms = {w for w in intent_lower.split() if w not in _STOPWORDS and len(w) > 1}
 
     # Direct phrase match first (highest priority)
     for phrase, expansions in INTENT_SYNONYMS.items():
