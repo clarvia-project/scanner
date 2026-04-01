@@ -6,7 +6,7 @@
 
 **The AEO (Agent Engine Optimization) Standard for AI Agent Tools**
 
-Score, discover, and validate **27,875+ AI agent tools** for quality, accessibility, and agent-readiness.
+Score, discover, and validate **27,843+ AI agent tools** for quality, accessibility, and agent-readiness.
 
 [![npm version](https://img.shields.io/npm/v/clarvia-mcp-server?color=cb3837&label=npm)](https://www.npmjs.com/package/clarvia-mcp-server)
 [![npm downloads](https://img.shields.io/npm/dm/clarvia-mcp-server?color=blue)](https://www.npmjs.com/package/clarvia-mcp-server)
@@ -220,7 +220,7 @@ See [examples/](examples/) for ready-to-copy config files.
 
 | Tool | Description |
 |------|-------------|
-| `search_services` | Search 27,800+ indexed AI tools by keyword, category, or minimum AEO score |
+| `search_services` | Search 27,843+ indexed AI tools by keyword, category, or minimum AEO score |
 | `list_categories` | List all tool categories with service counts |
 | `get_stats` | Platform-wide statistics — total services, score distributions |
 
