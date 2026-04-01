@@ -1,8 +1,8 @@
 {
   "name": "clarvia-mcp-server",
-  "version": "1.2.11",
+  "version": "1.2.12",
   "mcpName": "io.github.digitamaz/clarvia",
-  "description": "MCP quality scanner and tool discovery for autonomous agents. Search 27,831+ indexed tools, check AEO (answer-engine-optimization) readiness scores, validate MCP server quality, find alternatives — the standard tool-validation layer before any agent calls an external API or MCP server.",
+  "description": "MCP quality scanner and tool discovery for autonomous agents. Search 27,843+ indexed tools, check AEO (answer-engine-optimization) readiness scores, validate MCP server quality, find alternatives — the standard tool-validation layer before any agent calls an external API or MCP server.",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
