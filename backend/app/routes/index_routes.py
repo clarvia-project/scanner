@@ -1300,13 +1300,20 @@ async def list_services(
 
     if q:
         q_lower = q.lower()
+        # Normalize: treat underscores and hyphens as spaces for matching
+        q_normalized = q_lower.replace("_", "").replace("-", "")
+        q_spaced = q_lower.replace("_", " ").replace("-", " ")
         matched = []
         for s in filtered:
             name = s.get("service_name", "").lower()
             desc = s.get("description", "").lower()
             url = s.get("url", "").lower()
             tags = [t.lower() for t in s.get("tags", [])]
-            if q_lower not in name and q_lower not in desc and q_lower not in url and not any(q_lower in t for t in tags):
+            name_norm = name.replace("_", "").replace("-", "")
+            if (q_lower not in name and q_lower not in desc and q_lower not in url
+                    and not any(q_lower in t for t in tags)
+                    and q_normalized not in name_norm
+                    and q_spaced not in name and q_spaced not in desc):
                 continue
             # Relevance: name exact > name contains > tags > description
             if name == q_lower:
