@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { API_BASE, recommendTools, stripHtml, type RecommendResult } from "@/lib/api";
+import Nav from "@/app/components/Nav";
 
 interface Tool {
   name: string;
@@ -98,23 +100,43 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 export default function ToolsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Initialize state from URL params (preserves state on back navigation)
   const [tools, setTools] = useState<Tool[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [serviceType, setServiceType] = useState("");
-  const [category, setCategory] = useState("");
-  const [sortOrder, setSortOrder] = useState("score_desc");
+  const [query, setQuery] = useState(searchParams.get("q") || "");
+  const [debouncedQuery, setDebouncedQuery] = useState(searchParams.get("q") || "");
+  const [serviceType, setServiceType] = useState(searchParams.get("type") || "");
+  const [category, setCategory] = useState(searchParams.get("category") || "");
+  const [sortOrder, setSortOrder] = useState(searchParams.get("sort") || "score_desc");
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useState(Number(searchParams.get("offset")) || 0);
   const limit = 30;
 
   // Intent search mode
-  const [searchMode, setSearchMode] = useState<"keyword" | "intent">("keyword");
+  const [searchMode, setSearchMode] = useState<"keyword" | "intent">(
+    searchParams.get("mode") === "intent" ? "intent" : "keyword"
+  );
   const [intentResults, setIntentResults] = useState<RecommendResult[]>([]);
   const [intentTotal, setIntentTotal] = useState(0);
   const [expandedTerms, setExpandedTerms] = useState<string[]>([]);
+
+  // Sync state to URL params (enables back button to restore search)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedQuery) params.set("q", debouncedQuery);
+    if (serviceType) params.set("type", serviceType);
+    if (category) params.set("category", category);
+    if (sortOrder !== "score_desc") params.set("sort", sortOrder);
+    if (offset > 0) params.set("offset", String(offset));
+    if (searchMode !== "keyword") params.set("mode", searchMode);
+    const qs = params.toString();
+    const newUrl = qs ? `/tools?${qs}` : "/tools";
+    router.replace(newUrl, { scroll: false });
+  }, [debouncedQuery, serviceType, category, sortOrder, offset, searchMode]);
 
   // Debounce search
   useEffect(() => {
@@ -226,70 +248,7 @@ export default function ToolsPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <Image
-                src="/logos/clarvia-icon.svg"
-                alt="Clarvia"
-                width={30}
-                height={30}
-                className="group-hover:scale-110 transition-transform duration-200"
-                unoptimized
-              />
-              <span className="font-semibold text-base tracking-tight text-foreground">
-                clarvia
-              </span>
-            </Link>
-            <nav className="hidden sm:flex items-center gap-6">
-              <Link
-                href="/tools"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Tools
-              </Link>
-              <Link
-                href="/leaderboard"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Leaderboard
-              </Link>
-              <Link
-                href="/guide"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Guide
-              </Link>
-              <Link
-                href="/register"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Register
-              </Link>
-              <Link
-                href="/trending"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Trending
-              </Link>
-              <Link
-                href="/compare"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Compare
-              </Link>
-              <Link
-                href="/docs"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Docs
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Nav />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
         {/* Hero */}

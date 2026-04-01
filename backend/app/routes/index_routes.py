@@ -1771,8 +1771,10 @@ async def list_categories(
         counts[cat] = counts.get(cat, 0) + 1
 
     # Only include categories that actually have tools (no empty categories)
+    # Filter out ghost categories like "s" (single-char data corruption)
     categories = sorted(
-        [{"name": cat, "count": count} for cat, count in counts.items() if count > 0],
+        [{"name": cat, "count": count} for cat, count in counts.items()
+         if count > 0 and len(cat) >= 2],
         key=lambda x: x["count"],
         reverse=True,
     )

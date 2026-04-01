@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
 const API_BASE =
@@ -145,7 +146,7 @@ export default async function ToolsLayout({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      {children}
+      <Suspense>{children}</Suspense>
     </>
   );
 }

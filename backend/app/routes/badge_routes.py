@@ -40,10 +40,15 @@ _SITE_URL = "https://clarvia.art"
 # ---------------------------------------------------------------------------
 
 def _load_prebuilt() -> list[dict]:
-    """Return prebuilt scans via index_routes (shared, no duplicate load)."""
+    """Return all services (prebuilt + collected) via index_routes."""
     from . import index_routes
     index_routes._ensure_loaded()
-    return index_routes._services
+    index_routes._load_collected()
+    scanned_ids = {s["scan_id"] for s in index_routes._services}
+    collected_new = [
+        t for t in index_routes._collected_tools if t["scan_id"] not in scanned_ids
+    ]
+    return list(index_routes._services) + collected_new
 
 
 def _find_service(identifier: str) -> Optional[dict]:
@@ -67,9 +72,14 @@ def _find_service(identifier: str) -> Optional[dict]:
     decoded_id = unquote(clean_id)
     lower_id = decoded_id.lower()
 
+    # Find best match by scan_id (highest score wins when duplicates exist)
+    best = None
     for entry in prebuilt:
         if entry.get("scan_id") == clean_id:
-            return entry
+            if best is None or entry.get("clarvia_score", 0) > best.get("clarvia_score", 0):
+                best = entry
+    if best:
+        return best
 
     # 2. Fall back to in-memory scan cache (live scans)
     scan = get_cached_scan(clean_id)
@@ -81,9 +91,14 @@ def _find_service(identifier: str) -> Optional[dict]:
             "rating": scan.rating,
         }
 
+    # Exact name match — pick highest score
+    best = None
     for entry in prebuilt:
         if entry.get("service_name", "").lower() == lower_id:
-            return entry
+            if best is None or entry.get("clarvia_score", 0) > best.get("clarvia_score", 0):
+                best = entry
+    if best:
+        return best
 
     # Partial service name match (e.g. "openai" matches "OpenAI")
     for entry in prebuilt:

@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { API_BASE, stripHtml } from "@/lib/api";
 import { CASE_STUDIES, scoreColorClass, improvementPercent } from "@/lib/case-studies";
+import Nav from "@/app/components/Nav";
 
 interface TopScore {
   name: string;
@@ -381,67 +382,7 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen">
       {loading && <ScanningOverlay url={scanningUrl} />}
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <Image
-                src="/logos/clarvia-icon.svg"
-                alt="Clarvia"
-                width={30}
-                height={30}
-                className="group-hover:scale-110 transition-transform duration-200"
-                unoptimized
-              />
-              <span className="font-semibold text-base tracking-tight text-foreground">
-                clarvia
-              </span>
-            </Link>
-            <nav className="hidden sm:flex items-center gap-6">
-              <Link
-                href="/tools"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Tools
-              </Link>
-              <Link
-                href="/leaderboard"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Leaderboard
-              </Link>
-              <Link
-                href="/guide"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Guide
-              </Link>
-              <Link
-                href="/register"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Register
-              </Link>
-              <Link
-                href="/docs"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Docs
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="hidden sm:inline text-xs text-muted/60 font-mono">v1.0</span>
-            <Link
-              href="/register"
-              className="text-xs btn-gradient text-white px-4 py-2 rounded-lg font-medium sm:hidden"
-            >
-              Register
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Nav />
 
       <main className="flex-1">
         {/* ─── Hero ─── */}
