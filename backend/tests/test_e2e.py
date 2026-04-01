@@ -93,10 +93,14 @@ async def test_scan_not_found(client):
 @pytest.mark.asyncio
 async def test_profile_lifecycle(client):
     """Create, read, update, scan, badge — full profile lifecycle."""
+    import time
+    unique = str(int(time.time() * 1000))[-8:]
+    test_name = f"Test Service {unique}"
+    test_url = f"https://example-{unique}.com"
     # Create
     create_resp = await client.post("/v1/profiles", json={
-        "name": "Test Service",
-        "url": "https://example.com",
+        "name": test_name,
+        "url": test_url,
         "description": "A test service for E2E testing",
         "category": "testing",
         "tags": ["test", "e2e"],
@@ -105,13 +109,13 @@ async def test_profile_lifecycle(client):
     profile = create_resp.json()
     profile_id = profile["profile_id"]
     assert profile_id.startswith("prf_")
-    assert profile["name"] == "Test Service"
+    assert profile["name"] == test_name
     assert profile["status"] == "pending_scan"
 
     # Read
     get_resp = await client.get(f"/v1/profiles/{profile_id}")
     assert get_resp.status_code == 200
-    assert get_resp.json()["name"] == "Test Service"
+    assert get_resp.json()["name"] == test_name
 
     # Update (requires API key for write operations)
     headers = {"X-API-Key": TEST_ADMIN_API_KEY} if TEST_ADMIN_API_KEY else {}
@@ -162,10 +166,12 @@ async def test_profile_duplicate_url(client):
 @pytest.mark.asyncio
 async def test_badge_svg(client):
     """Badge endpoint returns valid SVG."""
+    import time
+    unique = str(int(time.time() * 1000))[-8:]
     # Create a profile first
     create_resp = await client.post("/v1/profiles", json={
-        "name": "Badge Test",
-        "url": "https://badge-test.example.com",
+        "name": f"Badge Test {unique}",
+        "url": f"https://badge-test-{unique}.example.com",
     })
     profile_id = create_resp.json()["profile_id"]
 
@@ -186,9 +192,11 @@ async def test_badge_not_found(client):
 @pytest.mark.asyncio
 async def test_badge_color_unscored(client):
     """Unscored profile badge should show '?' with gray color."""
+    import time
+    unique = str(int(time.time() * 1000))[-8:]
     create_resp = await client.post("/v1/profiles", json={
-        "name": "Unscored Badge",
-        "url": "https://unscored-badge.example.com",
+        "name": f"Unscored Badge {unique}",
+        "url": f"https://unscored-badge-{unique}.example.com",
     })
     profile_id = create_resp.json()["profile_id"]
 
