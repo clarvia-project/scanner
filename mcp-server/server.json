@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.digitamaz/clarvia",
-  "description": "AI agent tool discovery and scoring. Search 27,875+ MCP servers, APIs, and CLIs.",
+  "description": "AI agent tool discovery and AEO scoring. Search 27,610+ MCP servers, APIs, CLIs, and Skills. Score any API for agent readiness. Gate-check tools before use.",
   "repository": {
     "url": "https://github.com/clarvia-project/scanner.git",
     "source": "github"
   },
-  "version": "1.2.6",
+  "version": "1.2.9",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "clarvia-mcp-server",
-      "version": "1.2.6",
+      "version": "1.2.9",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
