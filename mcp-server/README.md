@@ -2,7 +2,7 @@
 
 # clarvia-mcp-server
 
-**MCP server for Clarvia — search, evaluate, and gate-check 27,906+ AI agent tools**
+**MCP server for Clarvia — search, evaluate, and gate-check 27,831+ AI agent tools**
 
 [![npm version](https://img.shields.io/npm/v/clarvia-mcp-server?color=cb3837)](https://www.npmjs.com/package/clarvia-mcp-server)
 [![Smithery](https://smithery.ai/badge/@clarvia/aeo-scanner)](https://smithery.ai/server/@clarvia/aeo-scanner)
@@ -179,6 +179,20 @@ Then use compare_my_setup with the returned setup_id
 ```
 Use clarvia_submit_feedback with profile_id, outcome "success", and latency_ms
 ```
+
+---
+
+## Add Your AEO Score Badge
+
+If you're an MCP server developer, add your Clarvia AEO score to your README:
+
+```markdown
+[![AEO Score](https://clarvia.art/api/badge/YOUR-TOOL-NAME)](https://clarvia.art/profile/YOUR-TOOL-NAME)
+```
+
+Example output: `Clarvia: AEO 87/100` — shows your agent-readiness score, auto-updates when scores change.
+
+[Check your tool's score →](https://clarvia.art)
 
 ---
 
