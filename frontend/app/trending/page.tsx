@@ -1,34 +1,56 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { API_BASE } from "@/lib/api";
+import { Metadata } from "next";
+import TrendingClient, { TrendingData } from "./TrendingClient";
 
-interface TrendingTool {
-  name: string;
-  scan_id: string;
-  url: string;
-  description: string;
-  category: string;
-  service_type: string;
-  clarvia_score: number;
-  rating: string;
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "https://clarvia-api.onrender.com";
+
+// ---------------------------------------------------------------------------
+// Data fetching (server-side)
+// ---------------------------------------------------------------------------
+
+async function fetchTrendingData(): Promise<TrendingData | null> {
+  try {
+    const res = await fetch(`${API_BASE}/v1/trending?limit=20`, {
+      next: { revalidate: 3600 }, // revalidate every hour
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
 }
 
-interface CategoryStat {
-  count: number;
-  avg_score: number;
-  top_score: number;
-}
+// ---------------------------------------------------------------------------
+// Metadata (SSR)
+// ---------------------------------------------------------------------------
 
-interface TrendingData {
-  top_tools: TrendingTool[];
-  by_category: Record<string, TrendingTool[]>;
-  rising_stars: TrendingTool[];
-  service_type_leaders: Record<string, TrendingTool>;
-  category_stats: Record<string, CategoryStat>;
-  total_indexed: number;
+export const metadata: Metadata = {
+  title: "Trending AI Tools & MCP Servers — Top Ranked by AEO Score | Clarvia",
+  description:
+    "Discover the top-performing AI tools, MCP servers, and APIs ranked by AEO score. Updated weekly across 27,000+ indexed agent tools on Clarvia.",
+  openGraph: {
+    title: "Trending AI Tools & MCP Servers — Ranked by AEO Score | Clarvia",
+    description:
+      "Top-performing agent tools across 27,000+ indexed services. Ranked by AEO (AI Engine Optimization) score.",
+    url: "https://clarvia.art/trending",
+    siteName: "Clarvia",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://clarvia.art/trending",
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function scoreColor(score: number) {
+  if (score >= 70) return "text-score-green";
+  if (score >= 40) return "text-score-yellow";
+  return "text-score-red";
 }
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -39,130 +61,75 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   general: { label: "General", color: "bg-gray-500/20 text-gray-400 border-gray-500/30" },
 };
 
-const CATEGORY_LABELS: Record<string, { label: string; emoji: string }> = {
-  ai: { label: "AI / ML", emoji: "brain" },
-  developer_tools: { label: "Dev Tools", emoji: "tools" },
-  communication: { label: "Communication", emoji: "chat" },
-  data: { label: "Data", emoji: "chart" },
-  productivity: { label: "Productivity", emoji: "check" },
-  blockchain: { label: "Blockchain", emoji: "link" },
-  payments: { label: "Payments", emoji: "card" },
-  mcp: { label: "MCP", emoji: "plug" },
-  cli: { label: "CLI", emoji: "terminal" },
-  skills: { label: "Skills", emoji: "star" },
-  search: { label: "Search", emoji: "search" },
-  storage: { label: "Storage", emoji: "folder" },
-  cms: { label: "CMS", emoji: "layout" },
-  security: { label: "Security", emoji: "shield" },
-  testing: { label: "Testing", emoji: "check" },
-  monitoring: { label: "Monitoring", emoji: "chart" },
-  database: { label: "Database", emoji: "database" },
-  cloud: { label: "Cloud", emoji: "cloud" },
-  automation: { label: "Automation", emoji: "gear" },
-  media: { label: "Media", emoji: "image" },
-  analytics: { label: "Analytics", emoji: "chart" },
-  ecommerce: { label: "E-commerce", emoji: "cart" },
-  education: { label: "Education", emoji: "book" },
-  healthcare: { label: "Healthcare", emoji: "heart" },
-  design: { label: "Design", emoji: "palette" },
-  documentation: { label: "Docs", emoji: "file" },
-  other: { label: "Other", emoji: "box" },
-};
+// ---------------------------------------------------------------------------
+// JSON-LD (server-rendered for AI crawlers)
+// ---------------------------------------------------------------------------
 
-function scoreColor(score: number) {
-  if (score >= 70) return "text-score-green";
-  if (score >= 40) return "text-score-yellow";
-  return "text-score-red";
-}
+function TrendingJsonLd({ data }: { data: TrendingData }) {
+  const itemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Trending AI Tools & MCP Servers — Ranked by AEO Score",
+    description: `Top-performing agent tools across ${data.total_indexed.toLocaleString()} indexed services, ranked by AEO (AI Engine Optimization) score on Clarvia.`,
+    url: "https://clarvia.art/trending",
+    numberOfItems: data.top_tools.length,
+    itemListElement: data.top_tools.map((tool, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
+        "@type": "SoftwareApplication",
+        name: tool.name,
+        url: tool.url,
+        applicationCategory: tool.category,
+        description:
+          tool.description ||
+          `${tool.name} — AEO Score: ${tool.clarvia_score}/100. ${tool.rating} agent readiness.`,
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: tool.clarvia_score,
+          bestRating: 100,
+          worstRating: 0,
+          ratingCount: 1,
+        },
+      },
+    })),
+  };
 
-function getFaviconUrl(url: string): string | null {
-  if (!url) return null;
-  try {
-    const domain = new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-  } catch {
-    return null;
-  }
-}
-
-function ServiceIcon({ url, name }: { url: string; name: string }) {
-  const [error, setError] = useState(false);
-  const favicon = getFaviconUrl(url);
-
-  if (!favicon || error) {
-    return (
-      <div className="w-8 h-8 rounded-lg bg-card-border/40 flex items-center justify-center flex-shrink-0">
-        <span className="text-xs font-bold text-muted/70">
-          {(name || "?").charAt(0).toUpperCase()}
-        </span>
-      </div>
-    );
-  }
+  const orgLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Clarvia",
+    url: "https://clarvia.art",
+    description:
+      "Clarvia indexes and ranks AI tools, MCP servers, and APIs by AEO (AI Engine Optimization) score — a measure of how agent-ready each tool is.",
+  };
 
   return (
-    <img
-      src={favicon}
-      alt=""
-      width={20}
-      height={20}
-      className="w-8 h-8 rounded-lg bg-card-border/30 p-1.5 flex-shrink-0 object-contain"
-      onError={() => setError(true)}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }}
+      />
+    </>
   );
 }
 
-function ToolCard({ tool, rank }: { tool: TrendingTool; rank?: number }) {
-  const typeInfo = TYPE_LABELS[tool.service_type] || TYPE_LABELS.general;
-  return (
-    <Link
-      href={tool.scan_id.startsWith("tool_") ? `/tool/${tool.scan_id}` : `/scan/${tool.scan_id}`}
-      className="glass-card rounded-xl p-4 hover:border-accent/30 transition-all group flex flex-col"
-    >
-      <div className="flex items-start gap-3 mb-2">
-        {rank !== undefined && (
-          <span className="text-lg font-bold text-muted/30 font-mono w-6 text-right flex-shrink-0">
-            {rank}
-          </span>
-        )}
-        <ServiceIcon url={tool.url} name={tool.name} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${typeInfo.color}`}>
-              {typeInfo.label}
-            </span>
-            <span className={`text-xs font-mono font-bold ${scoreColor(tool.clarvia_score)}`}>
-              {tool.clarvia_score}
-            </span>
-          </div>
-          <h3 className="text-sm font-semibold truncate group-hover:text-accent transition-colors">
-            {tool.name}
-          </h3>
-        </div>
-      </div>
-      {tool.description && (
-        <p className="text-xs text-muted/70 line-clamp-2 leading-relaxed">
-          {tool.description}
-        </p>
-      )}
-    </Link>
-  );
-}
+// ---------------------------------------------------------------------------
+// Page (Server Component)
+// ---------------------------------------------------------------------------
 
-export default function TrendingPage() {
-  const [data, setData] = useState<TrendingData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch(`${API_BASE}/v1/trending?limit=20`)
-      .then((r) => r.json())
-      .then(setData)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+export default async function TrendingPage() {
+  const data = await fetchTrendingData();
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* JSON-LD — server-rendered for AI crawlers */}
+      {data && <TrendingJsonLd data={data} />}
+
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -203,50 +170,20 @@ export default function TrendingPage() {
           <p className="text-muted max-w-2xl">
             Top-performing agent tools across{" "}
             <span className="text-foreground font-semibold font-mono">
-              {data?.total_indexed?.toLocaleString() || "..."}
+              {data?.total_indexed?.toLocaleString() || "27,000+"}
             </span>{" "}
             indexed services. Updated weekly.
           </p>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="glass-card rounded-xl p-4 h-32 animate-pulse" />
-            ))}
+        {!data ? (
+          <div className="glass-card rounded-xl p-12 text-center">
+            <p className="text-muted">Failed to load trending data.</p>
           </div>
-        ) : data ? (
+        ) : (
           <>
-            {/* Category Stats Bar */}
-            <div className="flex flex-wrap gap-2 mb-8">
-              {Object.entries(data.category_stats || {})
-                .sort((a, b) => {
-                  if (a[0] === "other") return 1;
-                  if (b[0] === "other") return -1;
-                  return b[1].count - a[1].count;
-                })
-                .map(([cat, stats]) => {
-                  const info = CATEGORY_LABELS[cat] || CATEGORY_LABELS.other;
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                      className={`glass-subtle px-3 py-2 rounded-lg text-xs font-mono transition-all cursor-pointer flex items-center gap-2 ${
-                        activeCategory === cat ? "ring-1 ring-accent border-accent/30" : ""
-                      }`}
-                    >
-                      <span className="text-foreground font-semibold">{info.label}</span>
-                      <span className="text-muted/50">{stats.count}</span>
-                      <span className={`font-bold ${scoreColor(stats.avg_score)}`}>
-                        avg {stats.avg_score}
-                      </span>
-                    </button>
-                  );
-                })}
-            </div>
-
-            {/* Service Type Leaders */}
-            {data.service_type_leaders && Object.keys(data.service_type_leaders).length > 0 ? (
+            {/* Service Type Leaders — server-rendered */}
+            {data.service_type_leaders && Object.keys(data.service_type_leaders).length > 0 && (
               <section className="mb-10">
                 <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-accent" />
@@ -275,27 +212,50 @@ export default function TrendingPage() {
                   })}
                 </div>
               </section>
-            ) : null}
+            )}
 
-            {/* Top Tools or Category View */}
+            {/* Top Tools Overall — server-rendered for AI crawlers */}
             <section className="mb-10">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                {activeCategory
-                  ? `Top ${CATEGORY_LABELS[activeCategory]?.label || activeCategory}`
-                  : "Top Tools Overall"}
+                Top Tools Overall
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {(activeCategory && data.by_category?.[activeCategory]
-                  ? data.by_category[activeCategory]
-                  : data.top_tools || []
-                ).map((tool, idx) => (
-                  <ToolCard key={tool.scan_id} tool={tool} rank={idx + 1} />
+                {(data.top_tools || []).map((tool, idx) => (
+                  <Link
+                    key={tool.scan_id}
+                    href={tool.scan_id.startsWith("tool_") ? `/tool/${tool.scan_id}` : `/scan/${tool.scan_id}`}
+                    className="glass-card rounded-xl p-4 hover:border-accent/30 transition-all group flex flex-col"
+                  >
+                    <div className="flex items-start gap-3 mb-2">
+                      <span className="text-lg font-bold text-muted/30 font-mono w-6 text-right flex-shrink-0">
+                        {idx + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${(TYPE_LABELS[tool.service_type] || TYPE_LABELS.general).color}`}>
+                            {(TYPE_LABELS[tool.service_type] || TYPE_LABELS.general).label}
+                          </span>
+                          <span className={`text-xs font-mono font-bold ${scoreColor(tool.clarvia_score)}`}>
+                            {tool.clarvia_score}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-semibold truncate group-hover:text-accent transition-colors">
+                          {tool.name}
+                        </h3>
+                      </div>
+                    </div>
+                    {tool.description && (
+                      <p className="text-xs text-muted/70 line-clamp-2 leading-relaxed">
+                        {tool.description}
+                      </p>
+                    )}
+                  </Link>
                 ))}
               </div>
             </section>
 
-            {/* Rising Stars */}
+            {/* Rising Stars — server-rendered */}
             {(data.rising_stars || []).length > 0 && (
               <section className="mb-10">
                 <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -307,16 +267,38 @@ export default function TrendingPage() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {(data.rising_stars || []).map((tool) => (
-                    <ToolCard key={tool.scan_id} tool={tool} />
+                    <Link
+                      key={tool.scan_id}
+                      href={tool.scan_id.startsWith("tool_") ? `/tool/${tool.scan_id}` : `/scan/${tool.scan_id}`}
+                      className="glass-card rounded-xl p-4 hover:border-accent/30 transition-all group flex flex-col"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${(TYPE_LABELS[tool.service_type] || TYPE_LABELS.general).color}`}>
+                            {(TYPE_LABELS[tool.service_type] || TYPE_LABELS.general).label}
+                          </span>
+                          <span className={`text-xs font-mono font-bold ${scoreColor(tool.clarvia_score)}`}>
+                            {tool.clarvia_score}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-semibold truncate group-hover:text-accent transition-colors">
+                          {tool.name}
+                        </h3>
+                      </div>
+                      {tool.description && (
+                        <p className="text-xs text-muted/70 line-clamp-2 leading-relaxed mt-2">
+                          {tool.description}
+                        </p>
+                      )}
+                    </Link>
                   ))}
                 </div>
               </section>
             )}
+
+            {/* Interactive category filter (client component) */}
+            <TrendingClient data={data} />
           </>
-        ) : (
-          <div className="glass-card rounded-xl p-12 text-center">
-            <p className="text-muted">Failed to load trending data.</p>
-          </div>
         )}
       </main>
 
