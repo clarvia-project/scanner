@@ -18,7 +18,7 @@ numpy~=2.4.3
 reportlab~=4.4.10
 
 # Payment (optional — scanner works without it)
-stripe~=14.4.1
+stripe~=15.0.0
 
 # Database (optional — scanner works without it)
 supabase~=2.28.3
