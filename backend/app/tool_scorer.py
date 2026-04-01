@@ -15,232 +15,23 @@ from typing import Any
 
 
 def score_tool(tool: dict[str, Any]) -> dict[str, Any]:
-    """DEPRECATED: Legacy scorer. Use app.scoring.score_tool() instead.
+    """DEPRECATED: Use app.scoring.score_tool() instead.
 
-    Kept only for backwards compatibility. normalize_tool() now calls the new
-    type-specific scoring engine directly.
+    This function is kept as a backward-compatible proxy.
+    All scoring logic now lives in app/scoring/ with type-specific scorers.
     """
-    source = tool.get("source", "")
-    tool_type = tool.get("type", "general")
-
-    # Auto-detect MCP registry entries
-    if not source and "server" in tool:
-        source = "mcp_registry"
-        tool_type = "mcp_server"
-
-    server_data_raw = tool.get("server", {})
-    desc = tool.get("description") or (server_data_raw.get("description") if server_data_raw else "") or ""
-    name = tool.get("name") or tool.get("title") or (server_data_raw.get("name") if server_data_raw else "") or ""
-    homepage = (tool.get("homepage") or tool.get("websiteUrl")
-                or (server_data_raw.get("websiteUrl") if server_data_raw else "")
-                or "")
-    repo = tool.get("repository") or (server_data_raw.get("repository") if server_data_raw else "") or ""
-    if isinstance(repo, dict):
-        repo = repo.get("url", "")
-    version = tool.get("version") or ""
-    keywords = tool.get("keywords") or []
-    npm_score = tool.get("score", 0)  # npm search relevance score
-
-    # --- Description quality (0-20) ---
-    desc_score = 0
-    desc_len = len(desc)
-    if desc_len > 10:
-        desc_score += 5  # Any description at all gets base points
-    if desc_len > 30:
-        desc_score += 3
-    if desc_len > 80:
-        desc_score += 3
-    if desc_len > 150:
-        desc_score += 2
-    if desc_len > 300:
-        desc_score += 1
-    # Bonus for descriptive keywords
-    agent_keywords = ["agent", "ai", "llm", "mcp", "tool", "api", "automat",
-                      "integration", "workflow", "server", "client", "plugin",
-                      "extension", "service", "connect", "interface"]
-    matched_kw = sum(1 for k in agent_keywords if k in desc.lower())
-    desc_score += min(matched_kw * 2, 6)
-    desc_score = min(desc_score, 20)
-
-    # --- Documentation signals (0-20) ---
-    doc_score = 0
-    has_homepage = bool(homepage)
-    has_repo = bool(repo)
-    if has_homepage and has_repo:
-        doc_score += 14  # Both = 14 points
-    elif has_homepage or has_repo:
-        doc_score += 8   # Either one = 8 points
-    if version and version != "0.0.0":
-        doc_score += 3   # Any version (including 0.x) gets 3
-        ver_parts = version.split(".")
-        if len(ver_parts) >= 1 and ver_parts[0].isdigit() and int(ver_parts[0]) >= 1:
-            doc_score += 2  # Mature version bonus
-    if tool.get("openapi_url"):
-        doc_score += 3
-    if tool.get("npm_url"):
-        doc_score += 2
-    # MCP server registry listing = documentation evidence
-    if server_data_raw and (server_data_raw.get("name") or server_data_raw.get("tools")):
-        doc_score += 4
-    if keywords and len(keywords) >= 2:
-        doc_score += 2
-    if keywords and len(keywords) >= 5:
-        doc_score += 1
-    doc_score = min(doc_score, 20)
-
-    # --- Ecosystem presence (0-20) ---
-    eco_score = 0
-    # Source reliability bonus (increased)
-    source_bonuses = {
-        "mcp_registry": 10,
-        "glama": 9,
-        "github": 8,
-        "npm": 9,
-        "apis_guru": 10,
-        "n8n": 8,
-        "composio": 10,
-    }
-    eco_score += source_bonuses.get(source, 6)
-    # npm popularity signal
-    if npm_score > 5000:
-        eco_score += 6
-    elif npm_score > 1000:
-        eco_score += 4
-    elif npm_score > 100:
-        eco_score += 2
-    # Has install command = published
-    if tool.get("install_command"):
-        eco_score += 4
-    # MCP completeness tier (drives score spread for registry entries)
-    server_data_eco = tool.get("server", {})
-    if server_data_eco:
-        has_website = bool(server_data_eco.get("websiteUrl"))
-        has_remotes = bool(server_data_eco.get("remotes"))
-        has_packages = bool(server_data_eco.get("packages"))
-        completeness = sum([has_website, has_remotes, has_packages])
-        eco_score += completeness * 4  # 0, 4, 8, or 12 points spread
-    eco_score = min(eco_score, 20)
-
-    # --- Agent compatibility (0-25) ---
-    agent_score = 0
-    type_bonuses = {
-        "mcp_server": 20,
-        "skill": 17,
-        "cli_tool": 12,
-        "api": 16,
-        "connector": 14,
-    }
-    agent_score += type_bonuses.get(tool_type, 8)
-    # MCP-specific signals (key differentiators for registry entries)
-    server_data = tool.get("server", {})
-    if server_data:
-        if server_data.get("tools"):
-            agent_score += 4
-        if server_data.get("prompts"):
-            agent_score += 2
-        if server_data.get("resources"):
-            agent_score += 1
-        # remotes = hosted/deployable (only 32% have it)
-        remotes = server_data.get("remotes")
-        if remotes:
-            agent_score += 4
-            if isinstance(remotes, list) and len(remotes) > 1:
-                agent_score += 2  # multiple deployment options
-        # packages = installable (69% have it)
-        packages = server_data.get("packages")
-        if packages:
-            agent_score += 2
-        # websiteUrl = well-maintained (only 16% have it)
-        if server_data.get("websiteUrl"):
-            agent_score += 3
-        # title = extra polish
-        if server_data.get("title"):
-            agent_score += 1
-    if tool.get("openapi_url"):
-        agent_score += 5
-    agent_score = min(agent_score, 25)
-
-    # --- Trust signals (0-15) ---
-    trust_score = 0
-    if repo and "github.com" in str(repo):
-        trust_score += 5
-    if homepage and re.match(r"https?://", homepage):
-        trust_score += 4
-    if version and re.match(r"\d+\.\d+", version):
-        trust_score += 3
-    # Official registry = more trust
-    if source in ("mcp_registry", "apis_guru"):
-        trust_score += 4
-    # Well-known org/project names signal trust
-    well_known = ["anthropic", "google", "microsoft", "aws", "stripe", "github",
-                  "slack", "notion", "vercel", "supabase", "cloudflare", "docker",
-                  "postgres", "mongodb", "redis", "openai", "langchain", "firebase",
-                  "twilio", "sendgrid", "datadog", "sentry", "hashicorp"]
-    name_lower = name.lower()
-    if any(wk in name_lower for wk in well_known):
-        trust_score += 3
-
-    # Security signals
-    if "https" in (homepage or "").lower():
-        trust_score += 1  # HTTPS homepage
-    if tool.get("license"):
-        trust_score += 1  # Has license = more trustworthy
-    # Check for security-related keywords in description
-    security_positive = ["authentication", "oauth", "encrypted", "secure", "compliance"]
-    if any(kw in desc.lower() for kw in security_positive):
-        trust_score += 1
-
-    # Dependency/security signals (surface-level checks)
-    dep_signals = tool.get("dependencies", {})
-    if isinstance(dep_signals, dict) and len(dep_signals) > 0:
-        trust_score += 1  # Has declared dependencies = more transparent
-
-    # Check for security-related documentation
-    readme = (tool.get("readme") or "").lower()
-    if any(w in readme for w in ["security", "vulnerability", "cve", "disclosure"]):
-        trust_score += 1
-
-    # Maintained recently (version signal)
-    if version:
-        ver_parts = version.split(".")
-        if len(ver_parts) >= 1 and ver_parts[0].isdigit():
-            major = int(ver_parts[0])
-            if major >= 2:
-                trust_score += 1  # Multiple major versions = long-lived project
-
-    # NOTE: Full security analysis (CVE scanning, SOC2 compliance, GDPR
-    # assessment) is planned but not yet available. Current trust scoring
-    # is surface-level metadata analysis only.
-
-    trust_score = min(trust_score, 15)
-
-    total = desc_score + doc_score + eco_score + agent_score + trust_score
-
-    # Rating thresholds — unified with scanner.py _get_rating() for consistency.
-    # Both systems must use the same labels and thresholds.
-    if total >= 90:
-        rating = "Exceptional"
-    elif total >= 80:
-        rating = "Excellent"
-    elif total >= 65:
-        rating = "Strong"
-    elif total >= 45:
-        rating = "Moderate"
-    elif total >= 25:
-        rating = "Basic"
-    else:
-        rating = "Low"
-
+    from .scoring import score_tool as _new_score_tool
+    result = _new_score_tool(tool)
+    # Map new 4x25 dimensions to legacy 5-dimension format for any old callers
+    dims = result.get("dimensions", {})
+    dim_scores = [v.get("score", 0) for v in dims.values()]
+    total = result.get("clarvia_score", sum(dim_scores))
     return {
         "clarvia_score": total,
-        "rating": rating,
-        "dimensions": {
-            "description_quality": {"score": desc_score, "max": 20},
-            "documentation": {"score": doc_score, "max": 20},
-            "ecosystem_presence": {"score": eco_score, "max": 20},
-            "agent_compatibility": {"score": agent_score, "max": 25},
-            "metadata_quality": {"score": trust_score, "max": 15},
-        },
+        "rating": result.get("rating", "Low"),
+        "dimensions": result.get("dimensions", {}),
+        "source": result.get("source", "unknown"),
+        "scoring_confidence": result.get("scoring_confidence", 0),
     }
 
 
@@ -518,7 +309,8 @@ def normalize_tool(tool: dict[str, Any]) -> dict[str, Any]:
         "service_type": service_type,
         "type_config": type_config if type_config else None,
         "scanned_at": None,
-        "source": f"collected:{source}",
+        "source": scored.get("source", f"collected:{source}"),
+        "scoring_confidence": scored.get("scoring_confidence", 0),
         "tags": tool.get("keywords", [])[:5],
         "pricing": detect_pricing(tool),
         "capabilities": extract_capabilities(tool),

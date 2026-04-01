@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useCallback } from "react";
+import Nav from "@/app/components/Nav";
 
 const STACKS = ["Node.js", "Python", "Go", "Other"] as const;
 type Stack = (typeof STACKS)[number];
@@ -782,57 +783,7 @@ export default function GuidePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-mesh">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <Image
-                src="/logos/clarvia-icon.svg"
-                alt="Clarvia"
-                width={32}
-                height={32}
-                className="rounded-full group-hover:scale-110 transition-transform duration-200"
-              />
-              <span className="font-semibold text-base tracking-tight text-foreground">
-                clarvia
-              </span>
-            </Link>
-            <nav className="hidden sm:flex items-center gap-6">
-              <Link
-                href="/tools"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Tools
-              </Link>
-              <Link
-                href="/leaderboard"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Leaderboard
-              </Link>
-              <Link
-                href="/guide"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Guide
-              </Link>
-              <Link
-                href="/register"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Register
-              </Link>
-              <Link
-                href="/docs"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Docs
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Nav />
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-12 space-y-12">
         {/* Hero */}

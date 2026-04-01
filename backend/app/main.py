@@ -245,6 +245,13 @@ sys.stdout.buffer.write(pickle.dumps(raw))
         logger.info("Index data loaded (subprocess): %d services", len(raw))
         ir._merge_profiles()
 
+        # Build semantic search index
+        try:
+            from .services.semantic_search import build_index as build_semantic_index
+            build_semantic_index(raw)
+        except Exception as e:
+            logger.warning("Semantic search index build failed: %s", e)
+
     import sys
     threading.Thread(target=_bg_load_subprocess, daemon=True).start()
     logger.info("Index data loading scheduled (subprocess)")
@@ -267,6 +274,14 @@ sys.stdout.buffer.write(pickle.dumps(raw))
     # Start persistent analytics JSONL writer
     from .services.analytics_writer import analytics_writer
     analytics_writer.start()
+
+    # Load probe cache (if live_prober module is available)
+    try:
+        from .services.live_prober import load_probe_cache
+        load_probe_cache()
+        logger.info("Probe cache loaded during startup")
+    except ImportError:
+        logger.info("live_prober module not available, skipping probe cache")
 
     # Start MCP session manager (required for Streamable HTTP transport)
     try:

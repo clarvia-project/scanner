@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import ProfileClient from "./ProfileClient";
+import Nav from "@/app/components/Nav";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://clarvia-api.onrender.com";
 
@@ -182,33 +183,7 @@ export default async function ProfilePage({
         />
       ))}
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <Image
-                src="/logos/clarvia-icon.svg"
-                alt="Clarvia"
-                width={32}
-                height={32}
-                className="rounded-full group-hover:scale-110 transition-transform duration-200"
-              />
-              <span className="font-semibold text-base tracking-tight text-foreground">
-                clarvia
-              </span>
-            </Link>
-            <nav className="hidden sm:flex items-center gap-6">
-              <Link href="/tools" className="text-sm text-muted hover:text-foreground transition-colors">Tools</Link>
-              <Link href="/leaderboard" className="text-sm text-muted hover:text-foreground transition-colors">Leaderboard</Link>
-              <Link href="/guide" className="text-sm text-muted hover:text-foreground transition-colors">Guide</Link>
-              <Link href="/register" className="text-sm text-muted hover:text-foreground transition-colors">Register</Link>
-              <Link href="/docs" className="text-sm text-muted hover:text-foreground transition-colors">Docs</Link>
-            </nav>
-          </div>
-          <span className="text-xs text-muted/60 font-mono hidden sm:inline">v1.0</span>
-        </div>
-      </header>
+      <Nav />
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-12">
         {!profile ? (

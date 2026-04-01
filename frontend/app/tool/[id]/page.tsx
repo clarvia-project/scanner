@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { API_BASE, stripHtml } from "@/lib/api";
+import Nav from "@/app/components/Nav";
 
 function BadgeEmbed({ toolId }: { toolId: string }) {
   const [copied, setCopied] = useState<string | null>(null);
@@ -302,55 +303,7 @@ export default function ToolDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <Image src="/logos/clarvia-icon.svg" alt="Clarvia" width={30} height={30} className="group-hover:scale-110 transition-transform duration-200" unoptimized />
-              <span className="font-semibold text-base tracking-tight text-foreground">clarvia</span>
-            </Link>
-            <nav className="hidden sm:flex items-center gap-6">
-              <Link
-                href="/tools"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Tools
-              </Link>
-              <Link
-                href="/leaderboard"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Leaderboard
-              </Link>
-              <Link
-                href="/guide"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Guide
-              </Link>
-              <Link
-                href="/register"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Register
-              </Link>
-              <Link
-                href="/compare"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Compare
-              </Link>
-              <Link
-                href="/docs"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Docs
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Nav />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-8">
         {/* Breadcrumb */}

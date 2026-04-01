@@ -95,6 +95,36 @@ def classify_tool_activity(path: str, method: str) -> str | None:
     return None
 
 
+def classify_referrer(referrer: str) -> str:
+    """Classify referrer into a marketing channel."""
+    if not referrer:
+        return "direct"
+    ref = referrer.lower()
+    if "smithery.ai" in ref:
+        return "smithery"
+    if "glama.ai" in ref:
+        return "glama"
+    if "npmjs.com" in ref or "npm" in ref:
+        return "npm"
+    if "github.com" in ref:
+        return "github"
+    if "google" in ref:
+        return "google_search"
+    if "bing.com" in ref:
+        return "bing_search"
+    if "pypi.org" in ref:
+        return "pypi"
+    if "clarvia" in ref:
+        return "internal"
+    if "twitter.com" in ref or "x.com" in ref:
+        return "twitter"
+    if "reddit.com" in ref:
+        return "reddit"
+    if "linkedin.com" in ref:
+        return "linkedin"
+    return "other"
+
+
 class AnalyticsWriter:
     """Async JSONL writer that buffers entries and flushes periodically."""
 
@@ -187,6 +217,11 @@ class AnalyticsWriter:
                     "ua": entry.get("ua", "")[:200],
                     "agent": entry.get("agent"),
                     "tool_activity": entry.get("tool_activity"),
+                    "referrer": entry.get("referrer"),
+                    "referrer_channel": entry.get("referrer_channel"),
+                    "utm_source": entry.get("utm_source"),
+                    "utm_medium": entry.get("utm_medium"),
+                    "utm_campaign": entry.get("utm_campaign"),
                 }
                 for entry in entries
             ]
@@ -217,6 +252,8 @@ def build_analytics_entry(
     response_time_ms: float,
     client_ip: str,
     user_agent: str,
+    referrer: str = "",
+    query_string: str = "",
 ) -> dict[str, Any]:
     """Build a structured analytics entry from request data."""
     now = datetime.now(timezone.utc)
@@ -245,6 +282,25 @@ def build_analytics_entry(
     if path.startswith("/v1/search") and "?" in path:
         # Path won't have query string; caller should pass it separately
         pass
+
+    # Attribution tracking
+    if referrer:
+        entry["referrer"] = referrer[:500]
+        entry["referrer_channel"] = classify_referrer(referrer)
+
+    # UTM parameters
+    if query_string:
+        from urllib.parse import parse_qs
+        params = parse_qs(query_string)
+        utm_source = params.get("utm_source", [None])[0]
+        utm_medium = params.get("utm_medium", [None])[0]
+        utm_campaign = params.get("utm_campaign", [None])[0]
+        if utm_source:
+            entry["utm_source"] = utm_source[:100]
+        if utm_medium:
+            entry["utm_medium"] = utm_medium[:100]
+        if utm_campaign:
+            entry["utm_campaign"] = utm_campaign[:100]
 
     return entry
 

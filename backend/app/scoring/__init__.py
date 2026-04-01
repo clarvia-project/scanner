@@ -20,7 +20,8 @@ from .mcp_scorer import score_mcp_server
 from .skill_scorer import score_skill
 
 __all__ = [
-    "score_tool", "score_api", "score_cli_tool",
+    "score_tool", "detect_source", "compute_confidence",
+    "score_api", "score_cli_tool",
     "score_connector", "score_mcp_server", "score_skill",
 ]
 
@@ -62,6 +63,95 @@ def detect_tool_type(tool: dict[str, Any]) -> str:
     return "general"
 
 
+def detect_source(tool: dict[str, Any]) -> str:
+    """Detect data source from tool metadata."""
+    # Explicit _source field (set by collection scripts)
+    explicit = tool.get("_source", "")
+    if explicit:
+        return explicit
+
+    # MCP registry entries
+    if "server" in tool and isinstance(tool.get("server"), dict):
+        return "mcp_registry"
+
+    source = tool.get("source", "")
+    if source and source != "unknown":
+        return source
+
+    # Infer from URLs and metadata
+    url = tool.get("url", "") or tool.get("homepage", "") or ""
+    if "apis.guru" in url:
+        return "apis_guru"
+    if "composio" in url:
+        return "composio"
+    if "n8n" in url:
+        return "n8n"
+    npm_url = tool.get("npm_url", "")
+    if npm_url or "npmjs.com" in url:
+        return "npm"
+    pypi_url = tool.get("pypi_url", "")
+    if pypi_url or "pypi.org" in url:
+        return "pypi"
+    repo = tool.get("repository", "")
+    if isinstance(repo, dict):
+        repo = repo.get("url", "")
+    if "github.com" in str(repo) or "github.com" in url:
+        return "github"
+    if "gitlab.com" in str(repo) or "gitlab.com" in url:
+        return "gitlab"
+
+    return "community"
+
+
+def compute_confidence(tool: dict[str, Any]) -> int:
+    """Compute scoring confidence (0-100) based on available evidence."""
+    confidence = 0
+    desc = tool.get("description") or (tool.get("server", {}) or {}).get("description", "") or ""
+
+    if desc and len(desc) > 50:
+        confidence += 20
+    elif desc and len(desc) > 10:
+        confidence += 10
+
+    homepage = tool.get("homepage") or tool.get("url") or (tool.get("server", {}) or {}).get("websiteUrl", "")
+    if homepage:
+        confidence += 15
+
+    repo = tool.get("repository") or ""
+    if isinstance(repo, dict):
+        repo = repo.get("url", "")
+    if repo:
+        confidence += 15
+
+    version = tool.get("version") or ""
+    if version:
+        confidence += 15
+
+    if tool.get("npm_url") or tool.get("pypi_url"):
+        confidence += 10
+
+    npm_quality = tool.get("npm_quality", {})
+    if npm_quality.get("available"):
+        confidence += 10
+
+    keywords = tool.get("keywords") or tool.get("topics") or []
+    if len(keywords) >= 3:
+        confidence += 5
+
+    if tool.get("license"):
+        confidence += 5
+
+    # MCP registry entries get bonus (curated source)
+    server = tool.get("server", {})
+    if server and isinstance(server, dict):
+        if server.get("tools"):
+            confidence += 5
+        if server.get("packages") or server.get("remotes"):
+            confidence += 5
+
+    return min(100, confidence)
+
+
 def score_tool(tool: dict[str, Any]) -> dict[str, Any]:
     """Score any tool by auto-detecting its type and routing to the right scorer.
 
@@ -93,6 +183,8 @@ def score_tool(tool: dict[str, Any]) -> dict[str, Any]:
         tool_type = "general"
 
     result["tool_type"] = tool_type
+    result["source"] = detect_source(tool)
+    result["scoring_confidence"] = compute_confidence(tool)
 
     # ── npm quality bonus (applies to all tool types) ──
     # If npm_quality enrichment data is present, boost the score.

@@ -1,377 +1,198 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { API_BASE } from "@/lib/api";
+import Nav from "@/app/components/Nav";
 
-const TIERS = [
-  {
-    name: "Free",
-    price: "$0",
-    period: "",
-    description: "Get started with basic AEO insights",
-    highlight: false,
-    comingSoon: false,
-    features: [
-      { text: "15 scans per month", coming: false },
-      { text: "Top 3 recommendations", coming: false },
-      { text: "Score badge", coming: false },
-      { text: "AEO guide access", coming: false },
-    ],
-    cta: "Start Scanning",
-    ctaHref: "/",
-    ctaStyle: "border border-card-border hover:border-accent/40 text-foreground",
-  },
-  {
-    name: "Indie",
-    price: "$9",
-    period: "/month",
-    description: "Solo developers & indie hackers",
-    highlight: false,
-    comingSoon: true,
-    features: [
-      { text: "50 scans per month", coming: false },
-      { text: "Basic monitoring (weekly)", coming: false },
-      { text: "AEO badge for README", coming: false },
-      { text: "Email support", coming: false },
-      { text: "Score history (30 days)", coming: false },
-    ],
-    cta: "Get Indie",
-    ctaHref: "#",
-    ctaStyle: "border border-card-border hover:border-accent/40 text-foreground",
-  },
-  {
-    name: "Starter",
-    price: "$19",
-    period: "/month",
-    description: "Essential reports for growing projects",
-    highlight: false,
-    comingSoon: true,
-    features: [
-      { text: "100 scans per month", coming: false },
-      { text: "Full report (evidence unblurred)", coming: false },
-      { text: "Scan history (30 days)", coming: false },
-      { text: "Email support", coming: false },
-      { text: "API access (30 req/hr)", coming: false },
-    ],
-    cta: "Get Starter",
-    ctaHref: "#",
-    ctaStyle: "border border-card-border hover:border-accent/40 text-foreground",
-  },
-  {
-    name: "Pro",
-    price: "$29",
-    period: "/month",
-    description: "Full reports and unlimited scanning",
-    highlight: true,
-    comingSoon: true,
-    features: [
-      { text: "Unlimited scans", coming: false },
-      { text: "Full report with all 15 recommendations", coming: false },
-      { text: "Competitive benchmarks", coming: false },
-      { text: "Code examples (stack-specific)", coming: false },
-      { text: "Scan history tracking", coming: false },
-      { text: "API access (100 req/hr)", coming: false },
-    ],
-    cta: "Get Pro",
-    ctaHref: "#",
-    ctaStyle: "btn-gradient text-white",
-  },
-  {
-    name: "Team",
-    price: "$149",
-    period: "/month",
-    description: "Collaborate with your engineering team",
-    highlight: false,
-    comingSoon: true,
-    features: [
-      { text: "Everything in Pro", coming: false },
-      { text: "5 team seats", coming: false },
-      { text: "API access (500 req/hr)", coming: false },
-      { text: "Priority support", coming: false },
-      { text: "Custom scoring weights", coming: true },
-      { text: "CI/CD integration", coming: false },
-    ],
-    cta: "Contact Us",
-    ctaHref: "mailto:hello@clarvia.art",
-    ctaStyle: "border border-card-border hover:border-accent/40 text-foreground",
-  },
-] as const;
+const FREE_FEATURES = [
+  "Search 27,000+ AI agent tools",
+  "Basic AEO scores (0-100)",
+  "Category browsing & filtering",
+  "Embeddable score badges",
+  "3 scans per month",
+  "Community support",
+];
 
-export default function PricingPage() {
-  const [notifyEmail, setNotifyEmail] = useState("");
-  const [notifySubmitted, setNotifySubmitted] = useState(false);
-  const [notifyLoading, setNotifyLoading] = useState(false);
+const PRO_FEATURES = [
+  "Everything in Free",
+  "Unlimited API calls",
+  "Semantic search (AI-powered)",
+  "Full evidence endpoint",
+  "90-day score trend history",
+  "Batch gate check (100 URLs)",
+  "Live probing data (uptime, latency)",
+  "Popularity & adoption metrics",
+  "Priority email support",
+];
 
-  async function handleNotifySubmit(e: React.FormEvent) {
+const ENTERPRISE_FEATURES = [
+  "Everything in Pro",
+  "Webhook notifications (score changes, outages)",
+  "Custom scoring weights API",
+  "SLA guarantee (99.5% uptime)",
+  "Dedicated support channel",
+  "Custom integrations",
+];
+
+function WaitlistForm({ plan }: { plan: string }) {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!notifyEmail.trim()) return;
-    setNotifyLoading(true);
+    setStatus("loading");
     try {
-      await fetch(`${API_BASE}/v1/notify/pricing`, {
+      const res = await fetch(`${API_BASE}/v1/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: notifyEmail.trim() }),
+        body: JSON.stringify({ email, plan }),
       });
-      setNotifySubmitted(true);
+      const data = await res.json();
+      if (res.ok) {
+        setStatus("success");
+        setMessage(data.message || "You're on the list!");
+      } else {
+        setStatus("error");
+        setMessage(data.detail || "Something went wrong");
+      }
     } catch {
-      // Silently handle
-      setNotifySubmitted(true);
-    } finally {
-      setNotifyLoading(false);
+      setStatus("error");
+      setMessage("Network error — please try again");
     }
+  };
+
+  if (status === "success") {
+    return (
+      <div className="text-center py-4">
+        <div className="text-2xl mb-2">&#10003;</div>
+        <p className="text-sm text-foreground">{message}</p>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-mesh">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <Image
-                src="/logos/clarvia-icon.svg"
-                alt="Clarvia"
-                width={32}
-                height={32}
-                className="rounded-full group-hover:scale-110 transition-transform duration-200"
-              />
-              <span className="font-semibold text-base tracking-tight text-foreground">
-                clarvia
-              </span>
-            </Link>
-            <nav className="hidden sm:flex items-center gap-6">
-              <Link
-                href="/tools"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Tools
-              </Link>
-              <Link
-                href="/leaderboard"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Leaderboard
-              </Link>
-              <Link
-                href="/guide"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Guide
-              </Link>
-              <Link
-                href="/register"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Register
-              </Link>
-              <Link
-                href="/docs"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Docs
-              </Link>
-            </nav>
-          </div>
-          <span className="text-xs text-muted/60 font-mono hidden sm:inline">v1.0</span>
-        </div>
-      </header>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3 mt-4">
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="your@email.com"
+        required
+        className="px-4 py-2.5 rounded-lg bg-background border border-card-border text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+      />
+      <button
+        type="submit"
+        disabled={status === "loading"}
+        className="px-4 py-2.5 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+      >
+        {status === "loading" ? "Joining..." : `Join ${plan.charAt(0).toUpperCase() + plan.slice(1)} Waitlist`}
+      </button>
+      {status === "error" && <p className="text-xs text-red-400">{message}</p>}
+    </form>
+  );
+}
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-16">
-        {/* Hero */}
-        <div className="text-center space-y-4 mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold">
+export default function PricingPage() {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <Nav />
+      <main className="max-w-6xl mx-auto px-6 py-16">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl font-bold tracking-tight mb-4">
             Simple, transparent pricing
           </h1>
-          <p className="text-muted text-sm max-w-lg mx-auto">
-            Start scanning for free. Upgrade when you need full reports,
-            competitive benchmarks, and team collaboration.
+          <p className="text-muted text-lg max-w-2xl mx-auto">
+            Start free. Upgrade when your agents need more power.
+            Pro and Enterprise are coming soon — join the waitlist for early access.
           </p>
         </div>
 
-        {/* Free tier highlight */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-score-green/10 border border-score-green/20">
-            <svg className="w-4 h-4 text-score-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-sm text-score-green font-medium">
-              Currently free: 15 scans/month with no credit card required
-            </span>
-          </div>
-        </div>
-
-        {/* Tiers */}
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 items-start">
-          {TIERS.map((tier) => (
-            <div
-              key={tier.name}
-              className={`glass-card rounded-2xl p-6 sm:p-8 flex flex-col relative transition-all duration-300 ${
-                tier.highlight
-                  ? "border-accent/40 shadow-[0_0_30px_-8px_rgba(99,102,241,0.15)]"
-                  : ""
-              } ${tier.comingSoon ? "overflow-hidden" : ""}`}
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Free */}
+          <div className="rounded-2xl border border-card-border bg-card p-8">
+            <h2 className="text-xl font-semibold mb-1">Free</h2>
+            <div className="text-3xl font-bold mb-1">$0</div>
+            <p className="text-sm text-muted mb-6">Forever free for individuals</p>
+            <a
+              href="/docs"
+              className="block w-full text-center px-4 py-2.5 rounded-lg border border-card-border text-sm font-medium hover:bg-card-border/20 transition-colors mb-6"
             >
-              {tier.highlight && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white text-xs font-medium px-3 py-1 rounded-full z-10">
-                  Recommended
-                </span>
-              )}
+              Get Started
+            </a>
+            <ul className="space-y-3">
+              {FREE_FEATURES.map((f) => (
+                <li key={f} className="flex items-start gap-2 text-sm">
+                  <span className="text-green-400 mt-0.5">&#10003;</span>
+                  <span className="text-muted">{f}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-              {/* Coming Soon overlay */}
-              {tier.comingSoon && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[2px] rounded-2xl">
-                  <div className="text-center">
-                    <span className="inline-block px-4 py-2 rounded-full bg-accent/15 text-accent text-xs font-mono uppercase tracking-wider border border-accent/25">
-                      Coming Soon
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Plan name + price */}
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-1">{tier.name}</h2>
-                <p className="text-xs text-muted mb-4">{tier.description}</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold font-mono">{tier.price}</span>
-                  {tier.period && (
-                    <span className="text-sm text-muted">{tier.period}</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Features */}
-              <ul className="space-y-3 mb-8 flex-1">
-                {tier.features.map((feature) => (
-                  <li key={feature.text} className="flex items-start gap-3 text-sm">
-                    <svg
-                      className={`w-4 h-4 shrink-0 mt-0.5 ${
-                        feature.coming ? "text-muted/60" : "text-score-green"
-                      }`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                    <span className={feature.coming ? "text-muted/60" : ""}>
-                      {feature.text}
-                      {feature.coming && (
-                        <span className="ml-2 text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-card-border/40 text-muted/60">
-                          Coming soon
-                        </span>
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTA */}
-              {!tier.comingSoon ? (
-                tier.ctaHref.startsWith("mailto:") ? (
-                  <a
-                    href={tier.ctaHref}
-                    className={`block w-full px-5 py-3 rounded-xl text-sm font-medium text-center transition-all ${tier.ctaStyle}`}
-                  >
-                    {tier.cta}
-                  </a>
-                ) : (
-                  <Link
-                    href={tier.ctaHref}
-                    className={`block w-full px-5 py-3 rounded-xl text-sm font-medium text-center transition-all ${tier.ctaStyle}`}
-                  >
-                    {tier.cta}
-                  </Link>
-                )
-              ) : (
-                <div className="w-full px-5 py-3 rounded-xl text-sm font-medium text-center bg-card-bg/40 border border-card-border text-muted/50 cursor-not-allowed">
-                  {tier.cta}
-                </div>
-              )}
+          {/* Pro */}
+          <div className="rounded-2xl border-2 border-primary bg-card p-8 relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-primary text-white text-xs font-medium rounded-full">
+              Coming Soon
             </div>
-          ))}
-        </div>
+            <h2 className="text-xl font-semibold mb-1">Pro</h2>
+            <div className="text-3xl font-bold mb-1">$49<span className="text-lg font-normal text-muted">/mo</span></div>
+            <p className="text-sm text-muted mb-6">For teams building with agents</p>
+            <WaitlistForm plan="pro" />
+            <ul className="space-y-3 mt-6">
+              {PRO_FEATURES.map((f) => (
+                <li key={f} className="flex items-start gap-2 text-sm">
+                  <span className="text-primary mt-0.5">&#10003;</span>
+                  <span className="text-muted">{f}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        {/* Notify form */}
-        <div className="mt-16 max-w-md mx-auto">
-          <div className="glass-card rounded-2xl p-8 text-center">
-            <p className="text-sm font-medium text-foreground mb-2">Get notified when paid plans launch</p>
-            <p className="text-xs text-muted mb-5">
-              Be the first to know when Pro, Team, and Enterprise plans are available.
-            </p>
-            {notifySubmitted ? (
-              <div className="flex items-center justify-center gap-2 text-sm text-score-green">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                You&apos;re on the list! We&apos;ll notify you at launch.
-              </div>
-            ) : (
-              <form onSubmit={handleNotifySubmit} className="flex gap-2">
-                <input
-                  type="email"
-                  value={notifyEmail}
-                  onChange={(e) => setNotifyEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  className="flex-1 bg-card-bg/80 border border-card-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all text-sm"
-                />
-                <button
-                  type="submit"
-                  disabled={notifyLoading || !notifyEmail.trim()}
-                  className="shrink-0 btn-gradient text-white px-5 py-3 rounded-xl text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {notifyLoading ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    "Notify Me"
-                  )}
-                </button>
-              </form>
-            )}
+          {/* Enterprise */}
+          <div className="rounded-2xl border border-card-border bg-card p-8">
+            <h2 className="text-xl font-semibold mb-1">Enterprise</h2>
+            <div className="text-3xl font-bold mb-1">$299<span className="text-lg font-normal text-muted">/mo</span></div>
+            <p className="text-sm text-muted mb-6">For organizations at scale</p>
+            <WaitlistForm plan="enterprise" />
+            <ul className="space-y-3 mt-6">
+              {ENTERPRISE_FEATURES.map((f) => (
+                <li key={f} className="flex items-start gap-2 text-sm">
+                  <span className="text-green-400 mt-0.5">&#10003;</span>
+                  <span className="text-muted">{f}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        {/* FAQ / Note */}
-        <div className="text-center mt-12 space-y-2">
-          <p className="text-xs text-muted/60">
-            All plans include HTTPS-only scanning. No credit card required for Free tier.
-          </p>
-          <p className="text-xs text-muted/60">
-            Questions? Reach us at{" "}
-            <a href="mailto:hello@clarvia.art" className="text-accent hover:underline">
-              hello@clarvia.art
-            </a>
-          </p>
+        {/* FAQ */}
+        <div className="mt-24 max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold text-center mb-12">Frequently asked questions</h2>
+          <div className="space-y-8">
+            <div>
+              <h3 className="font-semibold mb-2">When will Pro launch?</h3>
+              <p className="text-sm text-muted">We&apos;re targeting Q2 2026. Waitlist members get early access and a founding member discount.</p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Is the Free tier really free forever?</h3>
+              <p className="text-sm text-muted">Yes. Search, basic scores, badges, and 3 monthly scans will always be free. We believe every agent deserves good tool discovery.</p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">What&apos;s the difference between keyword and semantic search?</h3>
+              <p className="text-sm text-muted">Keyword search matches exact terms. Semantic search (Pro) understands intent — searching &quot;file upload tool&quot; finds S3, Supabase Storage, and Cloudflare R2 even if they don&apos;t mention &quot;file upload&quot; literally.</p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Can I use the API without a key?</h3>
+              <p className="text-sm text-muted">Yes, the Free tier works without an API key (rate-limited by IP). Pro and Enterprise use API keys for higher limits and premium features.</p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Do you offer discounts for startups?</h3>
+              <p className="text-sm text-muted">Yes! Early-stage startups building agent-first products can apply for 50% off Pro. Email us after joining the waitlist.</p>
+            </div>
+          </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-card-border/50 px-6 py-8">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/logos/clarvia-icon.svg"
-              alt="Clarvia"
-              width={24}
-              height={24}
-              className="rounded-full"
-            />
-            <span>Clarvia — Discovery & Trust standard for the agent economy</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-            <a href="https://github.com/clarvia-project" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
-            <a href="https://x.com/clarvia_ai" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@clarvia_ai</a>
-            <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
-            <span className="text-muted/50 cursor-default" title="Coming soon">Terms</span>
-            <Link href="/methodology" className="hover:text-foreground transition-colors">Methodology</Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

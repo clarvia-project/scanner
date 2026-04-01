@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { API_BASE } from "@/lib/api";
+import Nav from "@/app/components/Nav";
 
 // ----- Types -----
 
@@ -368,14 +369,7 @@ export default function ServiceDetailPage() {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-mesh">
-        <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <Image src="/logos/clarvia-icon.svg" alt="Clarvia" width={32} height={32} className="rounded-full" />
-              <span className="font-semibold text-base tracking-tight text-foreground">clarvia</span>
-            </Link>
-          </div>
-        </header>
+        <Nav />
         <div className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
         </div>
@@ -386,22 +380,11 @@ export default function ServiceDetailPage() {
   if (error || !service) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-mesh">
-        <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <Image src="/logos/clarvia-icon.svg" alt="Clarvia" width={32} height={32} className="rounded-full" />
-              <span className="font-semibold text-base tracking-tight text-foreground">clarvia</span>
-            </Link>
-          </div>
-        </header>
+        <Nav />
         <div className="flex-1 flex flex-col items-center justify-center gap-4">
           <p className="text-muted text-sm">{error || "Service not found"}</p>
-              <Link
-                href="/tools"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Tools
-              </Link>          <Link href="/leaderboard" className="text-accent text-sm hover:underline">Back to Leaderboard</Link>
+          <Link href="/tools" className="text-sm text-muted hover:text-foreground transition-colors">Tools</Link>
+          <Link href="/leaderboard" className="text-accent text-sm hover:underline">Back to Leaderboard</Link>
         </div>
       </div>
     );
@@ -412,56 +395,7 @@ export default function ServiceDetailPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-mesh">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <Image
-                src="/logos/clarvia-icon.svg"
-                alt="Clarvia"
-                width={32}
-                height={32}
-                className="rounded-full group-hover:scale-110 transition-transform duration-200"
-              />
-              <span className="font-semibold text-base tracking-tight text-foreground">clarvia</span>
-            </Link>
-            <nav className="hidden sm:flex items-center gap-6">
-              <Link
-                href="/tools"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Tools
-              </Link>
-              <Link
-                href="/leaderboard"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Leaderboard
-              </Link>
-              <Link
-                href="/guide"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Guide
-              </Link>
-              <Link
-                href="/register"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Register
-              </Link>
-              <Link
-                href="/docs"
-                className="text-sm text-muted hover:text-foreground transition-colors"
-              >
-                Docs
-              </Link>
-            </nav>
-          </div>
-          <span className="text-xs text-muted/60 font-mono hidden sm:inline">v1.0</span>
-        </div>
-      </header>
+      <Nav />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-12">
         {/* Breadcrumb */}

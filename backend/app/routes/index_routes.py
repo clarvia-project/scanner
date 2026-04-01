@@ -12,6 +12,22 @@ import time as _time
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 
+try:
+    from ..services.live_prober import get_probe_result
+except ImportError:
+    def get_probe_result(scan_id: str):
+        return None
+
+try:
+    from ..services.semantic_search import search as semantic_search, hybrid_search, is_ready as semantic_ready
+except ImportError:
+    def semantic_search(query, top_k=20):
+        return []
+    def hybrid_search(query, keyword_results, top_k=20, **kw):
+        return keyword_results
+    def semantic_ready():
+        return False
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1", tags=["index"])
@@ -1150,9 +1166,22 @@ def _compact_service(s: dict[str, Any]) -> dict[str, Any]:
         "install_hint": _generate_install_hint(s),
         "popularity": s.get("popularity", 0),
         "cross_refs": s.get("cross_refs", {}),
+        "source": s.get("source", "unknown"),
+        "scoring_confidence": s.get("scoring_confidence", None),
         "added_at": s.get("added_at") or s.get("scanned_at"),
         "rank": None,
     }
+    # Live probe data (if available)
+    probe = get_probe_result(s.get("scan_id", ""))
+    if probe:
+        result["is_online"] = probe.get("reachable", False)
+        result["last_checked"] = probe.get("probed_at")
+        result["response_time_ms"] = probe.get("response_time_ms")
+    else:
+        result["is_online"] = None  # Unknown — not yet probed
+        result["last_checked"] = None
+        result["response_time_ms"] = None
+
     # Include connection_info for typed services
     tc = s.get("type_config")
     if tc:
@@ -1208,7 +1237,23 @@ def _full_service(s: dict[str, Any]) -> dict[str, Any]:
     result["dimensions"] = s.get("dimensions", {})
     result["recommendations"] = s.get("recommendations", [])
     result["tags"] = s.get("tags", [])
+    result["source"] = s.get("source", "unknown")
+    result["scoring_confidence"] = s.get("scoring_confidence", None)
     result["methodology"] = s.get("methodology")
+
+    # Probe details (full)
+    probe = get_probe_result(s.get("scan_id", ""))
+    if probe:
+        result["probe_data"] = {
+            "reachable": probe.get("reachable", False),
+            "response_time_ms": probe.get("response_time_ms"),
+            "status_code": probe.get("status_code"),
+            "has_openapi": probe.get("has_openapi", False),
+            "has_mcp": probe.get("has_mcp", False),
+            "has_agents_json": probe.get("has_agents_json", False),
+            "ssl_valid": probe.get("ssl_valid", True),
+            "probed_at": probe.get("probed_at"),
+        }
     return result
 
 
@@ -1242,6 +1287,8 @@ async def list_services(
     added_after: str | None = Query(None, description="ISO date filter, e.g. 2026-03-20"),
     similar_to: str | None = Query(None, description="Find tools similar to this scan_id"),
     fields: FieldsLevel = Query(FieldsLevel.standard, description="Response detail level: minimal (6 fields, ~70%% smaller), standard (default), full (with sub_factors)"),
+    include_archived: bool = Query(False, description="Include archived (score<20) tools in results"),
+    search_mode: str = Query("keyword", description="Search mode: keyword (default), semantic, hybrid"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
@@ -1250,7 +1297,8 @@ async def list_services(
     Supports compound filters: service_type + category + score + text search.
     Defaults to all 27,000+ agent tools (MCP servers, APIs, CLIs, Skills).
     Use source=scanned to limit to prebuilt-scans only.
-    Example: GET /v1/services?service_type=mcp_server&q=github
+    search_mode: 'keyword' (default), 'semantic' (TF-IDF), 'hybrid' (RRF fusion).
+    Example: GET /v1/services?service_type=mcp_server&q=github&search_mode=hybrid
     """
     _ensure_loaded()
     _add_headers(response)
@@ -1291,6 +1339,10 @@ async def list_services(
         ]
     else:
         filtered = _services
+
+    # Archive filter: exclude score < 20 unless explicitly requested
+    if not include_archived:
+        filtered = [s for s in filtered if s.get("clarvia_score", 0) >= 20]
 
     if category:
         filtered = _filter_by_category(filtered, category)
@@ -1336,6 +1388,19 @@ async def list_services(
         # Sort by relevance first, then by score within same relevance
         matched.sort(key=lambda x: (x[0], x[1]["clarvia_score"]), reverse=True)
         filtered = [s for _, s in matched]
+
+    # Semantic/hybrid search override
+    if q and search_mode in ("semantic", "hybrid") and semantic_ready():
+        if search_mode == "semantic":
+            sem_results = semantic_search(q, top_k=limit * 2)
+            id_to_service = {s["scan_id"]: s for s in filtered}
+            filtered = [id_to_service[r["scan_id"]] for r in sem_results if r["scan_id"] in id_to_service]
+        elif search_mode == "hybrid":
+            keyword_list = [{"scan_id": s["scan_id"]} for s in filtered[:limit * 2]]
+            hybrid_results = hybrid_search(q, keyword_list, top_k=limit * 2)
+            hybrid_ids = [r["scan_id"] for r in hybrid_results]
+            id_to_service = {s["scan_id"]: s for s in filtered}
+            filtered = [id_to_service[sid] for sid in hybrid_ids if sid in id_to_service]
 
     filtered = [s for s in filtered if s["clarvia_score"] >= min_score]
 
@@ -1424,6 +1489,8 @@ async def search_alias(
     added_after: str | None = Query(None),
     similar_to: str | None = Query(None),
     fields: FieldsLevel = Query(FieldsLevel.standard),
+    include_archived: bool = Query(False),
+    search_mode: str = Query("keyword", description="Search mode: keyword, semantic, hybrid"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
@@ -1433,7 +1500,8 @@ async def search_alias(
         response=response, category=category, service_type=service_type,
         q=effective_q, min_score=min_score, max_score=None, sort=sort,
         source=source, added_after=added_after, similar_to=similar_to,
-        fields=fields, limit=limit, offset=offset,
+        fields=fields, include_archived=include_archived,
+        search_mode=search_mode, limit=limit, offset=offset,
     )
 
 
@@ -1739,6 +1807,216 @@ async def get_service(scan_id: str, response: Response):
             "last_scanned": service.get("scanned_at"),
         }
     return _full_service(service)
+
+
+@router.get("/services/{scan_id}/evidence")
+async def get_service_evidence(
+    scan_id: str,
+    response: Response,
+):
+    """Detailed scoring evidence — why did this tool get this score?
+
+    Shows raw evidence for each scoring dimension, probe data,
+    and external signals. Helps tool makers understand and improve scores.
+    """
+    _ensure_loaded()
+    _add_headers(response)
+    _load_collected()
+
+    svc = _by_scan_id.get(scan_id)
+    if not svc:
+        for t in _collected_tools:
+            if t["scan_id"] == scan_id:
+                svc = t
+                break
+
+    if not svc:
+        raise HTTPException(status_code=404, detail=f"Service {scan_id} not found")
+
+    # Build evidence response
+    dims = svc.get("dimensions", {})
+    evidence: dict[str, Any] = {
+        "scan_id": scan_id,
+        "service_name": svc.get("service_name", ""),
+        "clarvia_score": svc.get("clarvia_score", 0),
+        "rating": svc.get("rating", ""),
+        "scoring_confidence": svc.get("scoring_confidence"),
+        "source": svc.get("source", "unknown"),
+        "dimensions": {},
+    }
+
+    # Dimension evidence
+    for dim_name, dim_data in dims.items():
+        dim_evidence: dict[str, Any] = {
+            "score": dim_data.get("score", 0),
+            "max": dim_data.get("max", 25),
+        }
+        # Include sub_factors if available
+        if "sub_factors" in dim_data:
+            dim_evidence["sub_factors"] = dim_data["sub_factors"]
+        elif "evidence" in dim_data:
+            dim_evidence["evidence"] = dim_data["evidence"]
+        evidence["dimensions"][dim_name] = dim_evidence
+
+    # Probe evidence (if available)
+    try:
+        from ..services.live_prober import get_probe_result
+        probe = get_probe_result(scan_id)
+        if probe:
+            evidence["probe_evidence"] = {
+                "last_probe": probe.get("probed_at"),
+                "reachable": probe.get("reachable", False),
+                "response_time_ms": probe.get("response_time_ms"),
+                "status_code": probe.get("status_code"),
+                "ssl_valid": probe.get("ssl_valid"),
+                "detected_features": {
+                    "openapi": probe.get("has_openapi", False),
+                    "mcp_registry": probe.get("has_mcp", False),
+                    "agents_json": probe.get("has_agents_json", False),
+                },
+            }
+    except ImportError:
+        pass
+
+    # External signals
+    try:
+        from ..services.popularity_service import get_popularity
+        pop = get_popularity(scan_id)
+        if pop:
+            evidence["external_signals"] = {
+                "npm_weekly_downloads": pop.get("npm_weekly"),
+                "github_stars": pop.get("github_stars"),
+                "pypi_weekly_downloads": pop.get("pypi_weekly"),
+                "popularity_score": pop.get("popularity_score", 0),
+                "fetched_at": pop.get("fetched_at"),
+            }
+    except ImportError:
+        pass
+
+    # Metadata summary
+    evidence["metadata"] = {
+        "url": svc.get("url", ""),
+        "category": svc.get("category", ""),
+        "service_type": svc.get("service_type", ""),
+        "pricing": svc.get("pricing", "unknown"),
+        "difficulty": svc.get("difficulty", "unknown"),
+        "capabilities": svc.get("capabilities", []),
+    }
+
+    # Score improvement tips
+    tips: list[str] = []
+    score = svc.get("clarvia_score", 0)
+    if score < 80:
+        if not svc.get("description") or len(svc.get("description", "")) < 50:
+            tips.append("Add a detailed description (50+ characters) for +5-10 points")
+        cross_refs = svc.get("cross_refs", {})
+        if "github" not in cross_refs:
+            tips.append("Link a GitHub repository for +5 trust points")
+        if "npm" not in cross_refs:
+            tips.append("Publish to npm for +5 ecosystem points")
+        if svc.get("service_type") != "mcp_server":
+            tips.append("Create an MCP server wrapper for +7 agent compatibility points")
+    evidence["improvement_tips"] = tips
+
+    return evidence
+
+
+@router.get("/services/{scan_id}/trend")
+async def get_service_trend(
+    scan_id: str,
+    response: Response,
+    days: int = Query(30, ge=7, le=90, description="Number of days of history"),
+):
+    """Score trend over time — shows how a tool's score has changed.
+
+    Reads from scan_history table/file to show historical scores.
+    """
+    _ensure_loaded()
+    _add_headers(response)
+    _load_collected()
+
+    svc = _by_scan_id.get(scan_id)
+    if not svc:
+        for t in _collected_tools:
+            if t["scan_id"] == scan_id:
+                svc = t
+                break
+
+    if not svc:
+        raise HTTPException(status_code=404, detail=f"Service {scan_id} not found")
+
+    current_score = svc.get("clarvia_score", 0)
+
+    # Try to get historical data from scan history
+    history: list[dict[str, Any]] = []
+    try:
+        history_file = Path(__file__).resolve().parent.parent.parent / "data" / "scan-history.jsonl"
+        if history_file.exists():
+            from datetime import date, timedelta
+
+            cutoff = (date.today() - timedelta(days=days)).isoformat()
+            url = svc.get("url", "")
+            name = svc.get("service_name", "")
+
+            with open(history_file) as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    try:
+                        entry = json.loads(line)
+                        entry_url = entry.get("url", "")
+                        entry_name = entry.get("service_name", "")
+                        entry_date = entry.get("scanned_at", "")[:10]
+
+                        if entry_date < cutoff:
+                            continue
+
+                        if entry_url == url or entry_name == name:
+                            history.append({
+                                "date": entry_date,
+                                "score": entry.get("clarvia_score") or entry.get("score", 0),
+                                "rating": entry.get("rating", ""),
+                            })
+                    except (json.JSONDecodeError, KeyError):
+                        continue
+    except Exception:
+        pass
+
+    # Deduplicate by date (keep latest per day)
+    by_date: dict[str, dict[str, Any]] = {}
+    for h in history:
+        d = h["date"]
+        by_date[d] = h  # Last entry per date wins
+    history = sorted(by_date.values(), key=lambda x: x["date"])
+
+    # Compute trend
+    score_change = 0
+    trend = "stable"
+    if len(history) >= 2:
+        oldest = history[0]["score"]
+        newest = history[-1]["score"]
+        score_change = newest - oldest
+        if score_change >= 3:
+            trend = "improving"
+        elif score_change <= -3:
+            trend = "declining"
+
+    result: dict[str, Any] = {
+        "scan_id": scan_id,
+        "service_name": svc.get("service_name", ""),
+        "period_days": days,
+        "current_score": current_score,
+        "score_change": score_change,
+        "trend": trend,
+        "history": history[-days:],  # Cap to requested days
+        "data_points": len(history),
+    }
+
+    # Dimension trends (compare current vs oldest)
+    if history:
+        result["note"] = "Dimension-level trends require full scan history (coming soon)"
+
+    return result
 
 
 @router.get("/categories")
@@ -2102,6 +2380,7 @@ async def get_stats(
             "moderate": len([s for s in pool if 35 <= s["clarvia_score"] < 60]),
             "weak": len([s for s in pool if s["clarvia_score"] < 35]),
         },
+        "archived_count": sum(1 for s in pool if s.get("clarvia_score", 0) < 20),
         "by_category": by_category_result,
         "by_type": by_type,
     }
@@ -2926,3 +3205,66 @@ async def generate_report(scan_id: str, response: Response):
         report["recommendation"] = "NOT RECOMMENDED — This tool has significant compatibility gaps for AI agent use."
 
     return report
+
+
+# ---------------------------------------------------------------------------
+# Waitlist
+# ---------------------------------------------------------------------------
+
+@router.post("/waitlist")
+async def join_waitlist(
+    request: Request,
+    response: Response,
+):
+    """Join the Pro/Enterprise waitlist."""
+    _add_headers(response)
+
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    email = body.get("email", "").strip().lower()
+    plan = body.get("plan", "pro")  # "pro" or "enterprise"
+
+    if not email or "@" not in email or "." not in email:
+        raise HTTPException(status_code=400, detail="Valid email required")
+
+    if plan not in ("pro", "enterprise"):
+        raise HTTPException(status_code=400, detail="Plan must be 'pro' or 'enterprise'")
+
+    # Store in Supabase waitlist table
+    stored = False
+    try:
+        from ..services.supabase_client import get_supabase
+        client = get_supabase()
+        if client:
+            client.table("waitlist").upsert({
+                "email": email,
+                "plan": plan,
+                "source": "api",
+            }, on_conflict="email").execute()
+            stored = True
+    except Exception as e:
+        logger.warning("Supabase waitlist write failed: %s", e)
+
+    # Also append to local file as backup
+    waitlist_file = Path(__file__).resolve().parent.parent.parent / "data" / "waitlist.jsonl"
+    try:
+        entry = json.dumps({
+            "email": email,
+            "plan": plan,
+            "ts": datetime.now(timezone.utc).isoformat(),
+        })
+        with open(waitlist_file, "a") as f:
+            f.write(entry + "\n")
+    except Exception:
+        pass
+
+    return {
+        "status": "joined",
+        "email": email,
+        "plan": plan,
+        "message": f"You're on the {plan.title()} waitlist! We'll notify you when it launches.",
+        "position": None,
+    }

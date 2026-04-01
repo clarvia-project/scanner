@@ -1,0 +1,16 @@
+[
+  {
+    "id": "EXP-2026-04-01",
+    "hypothesis": "Adding source and scoring_confidence to API responses increases agent trust and repeat usage",
+    "channel": "api",
+    "change": "Added source, scoring_confidence fields to all /v1/services responses",
+    "metric": "daily_api_calls",
+    "baseline": null,
+    "target": null,
+    "start_date": "2026-04-01",
+    "end_date": "2026-04-08",
+    "status": "active",
+    "result": null,
+    "verdict": null
+  }
+]

@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { API_BASE } from "@/lib/api";
+import Nav from "@/app/components/Nav";
 
 export default function ReportPage() {
   const params = useParams();
@@ -55,23 +56,7 @@ export default function ReportPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-mesh">
-      <header className="sticky top-0 z-40 border-b border-card-border/50 backdrop-blur-xl bg-background/80">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <Image
-              src="/logos/clarvia-icon.svg"
-              alt="Clarvia"
-              width={32}
-              height={32}
-              className="rounded-full group-hover:scale-110 transition-transform duration-200"
-            />
-            <span className="font-semibold text-base tracking-tight text-foreground">
-              clarvia
-            </span>
-          </Link>
-          <span className="text-xs text-muted font-mono">Detailed Report</span>
-        </div>
-      </header>
+      <Nav />
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-12">
         {loading && (

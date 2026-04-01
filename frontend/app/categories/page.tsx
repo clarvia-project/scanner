@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import Nav from "@/app/components/Nav";
 
 interface Category {
   name: string;
@@ -366,67 +367,7 @@ export default async function CategoriesPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Navigation */}
-      <nav className="border-b border-card-border/50 backdrop-blur-md bg-background/80 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <Image
-              src="/logos/clarvia-icon.svg"
-              alt="Clarvia"
-              width={30}
-              height={30}
-              className="transition-transform group-hover:scale-110"
-            />
-            <span className="text-lg font-semibold tracking-tight">
-              Clarvia
-            </span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/tools"
-              className="text-sm text-muted hover:text-foreground transition-colors"
-            >
-              Tools
-            </Link>
-            <Link
-              href="/leaderboard"
-              className="text-sm text-muted hover:text-foreground transition-colors"
-            >
-              Leaderboard
-            </Link>
-            <Link
-              href="/guide"
-              className="text-sm text-muted hover:text-foreground transition-colors"
-            >
-              Guide
-            </Link>
-            <Link
-              href="/register"
-              className="text-sm text-muted hover:text-foreground transition-colors"
-            >
-              Register
-            </Link>
-            <Link
-              href="/trending"
-              className="text-sm text-muted hover:text-foreground transition-colors"
-            >
-              Trending
-            </Link>
-            <Link
-              href="/compare"
-              className="text-sm text-muted hover:text-foreground transition-colors"
-            >
-              Compare
-            </Link>
-            <Link
-              href="/docs"
-              className="text-sm text-muted hover:text-foreground transition-colors"
-            >
-              Docs
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <Nav />
 
       {/* Hero */}
       <section className="relative overflow-hidden">

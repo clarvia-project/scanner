@@ -405,6 +405,8 @@ class AnalyticsMiddleware(BaseHTTPMiddleware):
                 response_time_ms=elapsed_ms,
                 client_ip=client_ip,
                 user_agent=user_agent,
+                referrer=request.headers.get("referer", ""),
+                query_string=str(request.url.query) if request.url.query else "",
             )
             # Attach agent type to analytics entry for moat data accumulation
             if agent_type:
