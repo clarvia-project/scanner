@@ -402,6 +402,7 @@ export default function LandingPage() {
                   alt="Clarvia Owl"
                   width={200}
                   height={200}
+                  className="w-[140px] h-[140px] sm:w-[200px] sm:h-[200px]"
                   priority
                   unoptimized
                 />
@@ -415,7 +416,7 @@ export default function LandingPage() {
             </div>
 
             {/* Stats counters */}
-            <div className="flex items-center justify-center gap-8 text-sm font-mono opacity-0 animate-fade-in stagger-2">
+            <div className="flex items-center justify-center gap-4 sm:gap-8 text-sm font-mono opacity-0 animate-fade-in stagger-2 px-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-foreground">{animatedTools.toLocaleString()}+</div>
                 <div className="text-xs text-muted">tools indexed</div>
@@ -432,7 +433,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] animate-fade-in-up">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] animate-fade-in-up">
               Is your service{" "}
               <span className="text-gradient">ready for AI agents?</span>
             </h1>
@@ -452,7 +453,7 @@ export default function LandingPage() {
             )}
 
             {/* URL Input */}
-            <form onSubmit={handleSubmit} className="flex gap-3 max-w-lg mx-auto pt-4 opacity-0 animate-fade-in-up stagger-3">
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto px-4 sm:px-0 pt-4 opacity-0 animate-fade-in-up stagger-3">
               <div className="relative flex-1">
                 <input
                   type="text"
