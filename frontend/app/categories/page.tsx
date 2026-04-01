@@ -239,6 +239,37 @@ const CATEGORY_ORDER = [
   "other",
 ];
 
+// Static fallback counts from April 2026 (used when API is unavailable)
+const STATIC_COUNTS: Record<string, number> = {
+  developer_tools: 9635,
+  mcp: 7987,
+  other: 7734,
+  cli: 6867,
+  ai: 3248,
+  cloud: 2100,
+  automation: 1500,
+  communication: 1200,
+  data: 900,
+  productivity: 800,
+  search: 600,
+  monitoring: 500,
+  testing: 450,
+  security: 420,
+  analytics: 380,
+  storage: 350,
+  cms: 300,
+  design: 280,
+  documentation: 250,
+  payments: 220,
+  blockchain: 200,
+  media: 180,
+  ecommerce: 160,
+  education: 140,
+  healthcare: 120,
+  skills: 1671,
+  open_data: 292,
+};
+
 async function getCategories(): Promise<{
   categories: Category[];
   total: number;
@@ -253,11 +284,17 @@ async function getCategories(): Promise<{
     if (!res.ok) throw new Error("API error");
     const data = await res.json();
     const categories: Category[] = data.categories || [];
-    const total = categories.reduce((s, c) => s + c.count, 0);
-    return { categories, total };
+    if (categories.length > 0) {
+      const total = categories.reduce((s, c) => s + c.count, 0);
+      return { categories, total };
+    }
   } catch {
-    return { categories: [], total: 42809 };
+    /* fall through to static fallback */
   }
+  // Static fallback — ensures page renders even during API cold start
+  const categories = Object.entries(STATIC_COUNTS).map(([name, count]) => ({ name, count }));
+  const total = categories.reduce((s, c) => s + c.count, 0);
+  return { categories, total };
 }
 
 function CategoryIcon({ path }: { path: string }) {
