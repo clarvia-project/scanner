@@ -1739,7 +1739,11 @@ async def list_categories(
     response: Response,
     source: str | None = Query(None, description="'all' to include collected tools"),
 ):
-    """List available categories with service counts."""
+    """List available categories with service counts.
+
+    Returns real categories (based on 'category' field) and service types
+    (based on 'service_type' field) as separate arrays to avoid double-counting.
+    """
     _ensure_loaded()
     _add_headers(response)
 
@@ -1753,27 +1757,36 @@ async def list_categories(
     else:
         pool = _services
 
+    # Count by real category field only
     counts: dict[str, int] = {}
     for s in pool:
         cat = s.get("category", "other")
         counts[cat] = counts.get(cat, 0) + 1
 
-    # Also include categories from _CATEGORY_MAP that may have 0 tools
-    for cat in _CATEGORY_MAP:
-        if cat not in counts:
-            counts[cat] = 0
+    # Only include categories that actually have tools (no empty categories)
+    categories = sorted(
+        [{"name": cat, "count": count} for cat, count in counts.items() if count > 0],
+        key=lambda x: x["count"],
+        reverse=True,
+    )
 
-    # Add pseudo-categories based on service_type (mcp, skills, cli)
-    for alias_name, alias_type in _CATEGORY_TYPE_ALIASES.items():
-        alias_count = sum(1 for s in pool if s.get("service_type", "general") == alias_type)
-        counts[alias_name] = alias_count
+    # Separate service_type breakdown (mcp_server, api, cli_tool, skill, general)
+    type_counts: dict[str, int] = {}
+    for s in pool:
+        st = s.get("service_type", "general")
+        type_counts[st] = type_counts.get(st, 0) + 1
+
+    types = sorted(
+        [{"name": st, "count": count} for st, count in type_counts.items() if count > 0],
+        key=lambda x: x["count"],
+        reverse=True,
+    )
 
     return {
-        "categories": sorted(
-            [{"name": cat, "count": count} for cat, count in counts.items()],
-            key=lambda x: x["count"],
-            reverse=True,
-        )
+        "categories": categories,
+        "types": types,
+        "total": len(pool),
+        "categories_count": len(categories),
     }
 
 
@@ -2052,6 +2065,9 @@ async def get_stats(
     by_cat: dict[str, list[int]] = {}
     for s in pool:
         cat = s.get("category", "other")
+        # Skip malformed category names (single char like "s")
+        if len(cat) <= 1:
+            cat = "other"
         by_cat.setdefault(cat, []).append(s["clarvia_score"])
 
     by_type: dict[str, int] = {}
@@ -2059,22 +2075,25 @@ async def get_stats(
         st = s.get("service_type", "general")
         by_type[st] = by_type.get(st, 0) + 1
 
+    by_category_result = {
+        cat: {
+            "count": len(scores),
+            "avg_score": round(sum(scores) / len(scores), 1),
+        }
+        for cat, scores in sorted(by_cat.items())
+    }
+
     result: dict[str, Any] = {
         "total_services": total,
         "avg_score": round(avg, 1),
+        "categories_count": len(by_category_result),
         "score_distribution": {
             "excellent": len([s for s in pool if s["clarvia_score"] >= 80]),
             "strong": len([s for s in pool if 60 <= s["clarvia_score"] < 80]),
             "moderate": len([s for s in pool if 35 <= s["clarvia_score"] < 60]),
             "weak": len([s for s in pool if s["clarvia_score"] < 35]),
         },
-        "by_category": {
-            cat: {
-                "count": len(scores),
-                "avg_score": round(sum(scores) / len(scores), 1),
-            }
-            for cat, scores in sorted(by_cat.items())
-        },
+        "by_category": by_category_result,
         "by_type": by_type,
     }
 

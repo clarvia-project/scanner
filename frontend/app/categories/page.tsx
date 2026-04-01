@@ -285,14 +285,19 @@ async function getCategories(): Promise<{
     const data = await res.json();
     const categories: Category[] = data.categories || [];
     if (categories.length > 0) {
-      const total = categories.reduce((s, c) => s + c.count, 0);
+      // Use API-provided total (avoids double-counting from pseudo-categories)
+      const total = data.total ?? categories.reduce((s: number, c: Category) => s + c.count, 0);
       return { categories, total };
     }
   } catch {
     /* fall through to static fallback */
   }
   // Static fallback — ensures page renders even during API cold start
-  const categories = Object.entries(STATIC_COUNTS).map(([name, count]) => ({ name, count }));
+  // Only use real categories (exclude pseudo-categories like mcp, cli, skills)
+  const pseudoCategories = new Set(["mcp", "cli", "skills"]);
+  const categories = Object.entries(STATIC_COUNTS)
+    .filter(([name]) => !pseudoCategories.has(name))
+    .map(([name, count]) => ({ name, count }));
   const total = categories.reduce((s, c) => s + c.count, 0);
   return { categories, total };
 }
