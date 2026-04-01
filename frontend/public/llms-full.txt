@@ -10,7 +10,7 @@ MCP Server: npx clarvia-mcp-server
 
 ## 1. What is Clarvia?
 
-Clarvia indexes 27,906+ tools across the AI agent ecosystem and scores each one on a 0-100 scale (the "Clarvia Score") for agent readiness. Think of it as "Lighthouse for AI agents" — instead of measuring web performance, it measures how well a service can be found and used by autonomous AI agents.
+Clarvia indexes 42,000+ tools across the AI agent ecosystem and scores each one on a 0-100 scale (the "Clarvia Score") for agent readiness. Think of it as "Lighthouse for AI agents" — instead of measuring web performance, it measures how well a service can be found and used by autonomous AI agents.
 
 ### What is AEO?
 
@@ -694,14 +694,14 @@ All responses include:
 
 ## 8. Research Data (Q1 2026)
 
-### MCP Ecosystem Quality Analysis
-Total tools analyzed: 27,906
+### MCP Ecosystem Quality Analysis (Q1 2026, updated April 2026)
+Total tools analyzed: 27,888 (scored) / 42,000+ (indexed)
 Average AEO score: 45.0/100
 Score distribution:
-- Excellent (80-100): 91 tools (0.3%)
-- Strong (60-79): 4,729 tools (17.0%)
-- Moderate (40-59): 13,834 tools (49.6%)
-- Weak (0-39): 9,232 tools (33.1%)
+- Excellent (80-100): 90 tools (0.3%)
+- Strong (60-79): 4,721 tools (16.9%)
+- Moderate (40-59): 13,848 tools (49.7%)
+- Weak (0-39): 9,229 tools (33.1%)
 
 ### Top Categories by AEO Score
 1. Cloud (AWS/GCP/Azure/Cloudflare): 66.6/100 avg — 1,084 tools
