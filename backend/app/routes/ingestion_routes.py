@@ -161,7 +161,7 @@ async def ingestion_recent(
         if (t.get("indexed_at") or t.get("scanned_at", "")) > cutoff_iso
     ]
     recent.sort(
-        key=lambda t: t.get("indexed_at") or t.get("scanned_at", ""),
+        key=lambda t: t.get("indexed_at") or t.get("scanned_at") or "",
         reverse=True,
     )
 
@@ -191,9 +191,9 @@ async def new_tools(
     if category:
         all_tools = [t for t in all_tools if t.get("category") == category]
 
-    # Sort by indexed_at or scanned_at (newest first)
+    # Sort by indexed_at or scanned_at (newest first, None → empty string)
     all_tools.sort(
-        key=lambda t: t.get("indexed_at") or t.get("scanned_at", ""),
+        key=lambda t: t.get("indexed_at") or t.get("scanned_at") or "",
         reverse=True,
     )
 
@@ -240,7 +240,7 @@ async def trending_tools(
 
     def _trending_key(t: dict) -> float:
         score = t.get("clarvia_score", 0)
-        ts = t.get("indexed_at") or t.get("scanned_at", "")
+        ts = t.get("indexed_at") or t.get("scanned_at") or ""
         # Boost tools indexed in the last 7 days
         recency_boost = 1.5 if ts > week_ago else 1.0
         return score * recency_boost
