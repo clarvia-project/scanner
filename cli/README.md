@@ -99,4 +99,19 @@ Badge: https://clarvia.art/api/badge/stripe
 
 ## GitHub Action
 
-See [github-action/](../github-action/) for the companion GitHub Action.
+Run AEO checks in CI/CD with the [Clarvia AEO Check](https://github.com/marketplace/actions/clarvia-aeo-score-check) GitHub Action:
+
+```yaml
+name: AEO Check
+on: [pull_request]
+jobs:
+  aeo:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: clarvia-project/clarvia-action@v1
+```
+
+Auto-detects MCP configs and posts an AEO score comment on every PR.
