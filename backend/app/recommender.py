@@ -236,6 +236,69 @@ class RecommendationEngine:
         }
 
 
+    def find_similar(
+        self,
+        scan_id: str,
+        *,
+        category: str | None = None,
+        limit: int = 10,
+        exclude_scan_ids: set[str] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Find tools similar to a given tool using TF-IDF cosine similarity.
+
+        Unlike recommend() which takes a text query, this takes a scan_id
+        and computes similarity against that tool's TF-IDF vector directly.
+        """
+        if not self._built or self._tfidf_matrix is None:
+            return []
+
+        # Find the tool's index
+        target_idx = None
+        for idx, tool in enumerate(self._tools):
+            if tool["scan_id"] == scan_id:
+                target_idx = idx
+                break
+        if target_idx is None:
+            return []
+
+        from sklearn.metrics.pairwise import cosine_similarity
+
+        target_vec = self._tfidf_matrix[target_idx]
+        similarities = cosine_similarity(target_vec, self._tfidf_matrix).flatten()
+
+        exclude = exclude_scan_ids or set()
+        exclude.add(scan_id)
+
+        candidates = []
+        for idx, sim in enumerate(similarities):
+            if sim < 0.01:
+                continue
+            t = self._tools[idx]
+            if t["scan_id"] in exclude:
+                continue
+            if category and t.get("category", "").lower() != category.lower():
+                continue
+
+            # Blend: 70% TF-IDF similarity + 30% quality
+            max_clarvia = max((x["clarvia_score"] for x in self._tools), default=1) or 1
+            quality = t["clarvia_score"] / max_clarvia
+            combined = 0.7 * float(sim) + 0.3 * quality
+
+            candidates.append({
+                "name": t["service_name"],
+                "url": t.get("url", ""),
+                "score": t["clarvia_score"],
+                "category": t.get("category", "other"),
+                "similarity": round(combined, 3),
+                "description": (t.get("description") or "")[:200],
+                "scan_id": t["scan_id"],
+                "tfidf_sim": round(float(sim), 4),
+            })
+
+        candidates.sort(key=lambda x: x["similarity"], reverse=True)
+        return candidates[:limit]
+
+
 def _build_match_reason(intent: str, tool: dict, expanded_terms: list[str]) -> str:
     """Build a human-readable match reason."""
     intent_lower = intent.lower()

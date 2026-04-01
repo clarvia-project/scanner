@@ -73,6 +73,13 @@ function scoreGlowClass(score: number): string {
   return "glow-red";
 }
 
+function scoreInterpretation(score: number): string {
+  if (score >= 80) return "Excellent — AI agents can fully discover and use this service with minimal friction.";
+  if (score >= 60) return "Good — Agents can use this service, but some areas need improvement for seamless integration.";
+  if (score >= 40) return "Needs Work — Agents face notable barriers. Focus on the top recommendations below.";
+  return "Poor — Agents cannot effectively discover or use this service yet. Major improvements needed.";
+}
+
 function gradeBadgeClass(rating: string): string {
   switch (rating) {
     case "Exceptional":
@@ -88,30 +95,61 @@ function gradeBadgeClass(rating: string): string {
   }
 }
 
-const DIMENSION_META: Record<string, { label: string; description: string; color: string; iconColor: string }> = {
+const DIMENSION_META: Record<string, {
+  label: string;
+  description: string;
+  color: string;
+  iconColor: string;
+  beginnerTip: string;
+  scoreHints: { low: string; mid: string; high: string };
+}> = {
   api_accessibility: {
     label: "API Accessibility",
     description: "How easily agents can reach and authenticate with your API",
     color: "blue",
     iconColor: "text-blue-400",
+    beginnerTip: "Can AI agents find a clear entrance to this service? This checks for API docs, CORS headers, and authentication.",
+    scoreHints: {
+      low: "Agents struggle to find or connect to this API. Adding OpenAPI docs and CORS headers would help.",
+      mid: "Basic access works, but authentication or documentation could be clearer for agents.",
+      high: "Agents can easily discover and connect to this API.",
+    },
   },
   data_structuring: {
     label: "Data Structuring",
     description: "Schema definition, pricing clarity, and error handling",
     color: "purple",
     iconColor: "text-purple-400",
+    beginnerTip: "When agents get data back, is it well-organized? This checks for clear schemas, error messages, and pricing info.",
+    scoreHints: {
+      low: "Responses lack clear structure. Agents may misinterpret the data without proper schemas.",
+      mid: "Data is partially structured, but some responses lack schemas or clear error formats.",
+      high: "Clean, well-documented data structures that agents can parse reliably.",
+    },
   },
   agent_compatibility: {
     label: "Agent Compatibility",
     description: "MCP support, robot policies, and discovery mechanisms",
     color: "cyan",
     iconColor: "text-cyan-400",
+    beginnerTip: "Is this service built with AI agents in mind? This checks for MCP support, robot-friendly policies, and discovery features.",
+    scoreHints: {
+      low: "No agent-specific features detected. Adding MCP support or an agent-friendly robots.txt would help.",
+      mid: "Some agent features exist, but full MCP support or discovery mechanisms are missing.",
+      high: "Strong agent support with MCP, clear robot policies, and easy discovery.",
+    },
   },
   trust_signals: {
     label: "Trust Signals",
     description: "Uptime, documentation quality, and update frequency",
     color: "emerald",
     iconColor: "text-emerald-400",
+    beginnerTip: "Can agents trust this service to be reliable? This checks uptime, documentation quality, and how often it's updated.",
+    scoreHints: {
+      low: "Limited reliability signals. Agents may hesitate to depend on this service.",
+      mid: "Some trust signals present, but documentation or uptime could be improved.",
+      high: "Highly reliable with strong docs, good uptime, and regular updates.",
+    },
   },
 };
 
@@ -289,7 +327,7 @@ function DimensionBar({
   const pct = dimension.max > 0 ? (dimension.score / dimension.max) * 100 : 0;
 
   // Pick top 3 sub-factors to show as highlights (sorted by impact: lowest ratio first to show issues)
-  const subEntries = Object.entries(dimension.sub_factors);
+  const subEntries = Object.entries(dimension.sub_factors || {});
   const highlights = [...subEntries]
     .sort((a, b) => {
       const ratioA = a[1].max > 0 ? a[1].score / a[1].max : 0;
@@ -309,6 +347,14 @@ function DimensionBar({
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className={`text-sm font-semibold ${meta?.iconColor || "text-foreground"}`}>{meta?.label || dimKey}</span>
+              {meta?.beginnerTip && (
+                <span className="group relative">
+                  <span className="cursor-help text-muted/50 hover:text-muted text-xs">[?]</span>
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 rounded-xl bg-card-bg border border-card-border text-xs text-muted leading-relaxed opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50 shadow-lg">
+                    {meta.beginnerTip}
+                  </span>
+                </span>
+              )}
             </div>
             <span className="font-mono text-sm text-muted">
               {dimension.score}/{dimension.max}
@@ -320,6 +366,12 @@ function DimensionBar({
               style={{ width: `${pct}%` }}
             />
           </div>
+          {/* Score interpretation hint */}
+          {meta?.scoreHints && (
+            <p className="mt-2 text-xs text-muted/70 leading-relaxed">
+              {pct >= 70 ? meta.scoreHints.high : pct >= 30 ? meta.scoreHints.mid : meta.scoreHints.low}
+            </p>
+          )}
           {/* Sub-factor highlights — always visible */}
           {highlights.length > 0 && (
             <div className="mt-3 space-y-1.5">
@@ -355,7 +407,7 @@ function DimensionBar({
       >
         <div className="px-6 pb-5 space-y-4 border-t border-card-border/30 pt-4">
           <p className="text-xs text-muted">{meta?.description}</p>
-          {Object.entries(dimension.sub_factors).map(([key, sf]) => {
+          {Object.entries(dimension.sub_factors || {}).map(([key, sf]) => {
             const sfPct = sf.max > 0 ? (sf.score / sf.max) * 100 : 0;
             const evidenceLines = formatEvidence(sf.evidence);
             return (
@@ -1270,10 +1322,10 @@ function FreeActions({ result }: { result: ScanResult }) {
       ``,
       `DIMENSIONS`,
       `----------`,
-      ...Object.entries(result.dimensions).map(([key, dim]) => {
+      ...(result.dimensions ? Object.entries(result.dimensions).map(([key, dim]) => {
         const label = DIMENSION_META[key]?.label || key;
         return `${label}: ${dim.score}/${dim.max}`;
-      }),
+      }) : []),
       ``,
       `TOP RECOMMENDATIONS`,
       `-------------------`,
@@ -1745,6 +1797,15 @@ function ScanResultView({
         appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       }`}
     >
+      {/* First-visit guide banner */}
+      <div className="glass-card rounded-xl px-5 py-4 border-accent/20 bg-accent/5">
+        <p className="text-xs text-muted leading-relaxed text-center">
+          <span className="text-accent font-semibold">What is this report?</span>{" "}
+          This measures how easily AI agents can discover, connect to, and use this tool.
+          A higher score means agents can integrate with less friction.
+        </p>
+      </div>
+
       {/* Service header */}
       <div className="text-center space-y-3">
         <h1 className="text-3xl font-bold">{result.service_name}</h1>
@@ -1786,18 +1847,22 @@ function ScanResultView({
             />
           )}
         </div>
-        <p className="text-xs text-muted/60 italic text-center max-w-md mx-auto pt-2">
-          Clarvia Score does not measure a company&apos;s size or quality.
-          It measures how easily AI agents can discover and use this service.
+        <p className={`text-sm text-center max-w-lg mx-auto pt-2 leading-relaxed ${scoreTextClass(result.clarvia_score)}`}>
+          {scoreInterpretation(result.clarvia_score)}
         </p>
       </div>
 
       {/* Dimensions */}
       <div className="space-y-4">
-        <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
-          Dimensions
-        </h2>
-        {Object.entries(result.dimensions).map(([key, dim]) => (
+        <div>
+          <h2 className="text-xs font-mono text-accent uppercase tracking-widest">
+            Dimensions
+          </h2>
+          <p className="text-xs text-muted/60 mt-1">
+            Your score is broken down into 4 areas. Hover [?] for explanations.
+          </p>
+        </div>
+        {result.dimensions && Object.entries(result.dimensions).map(([key, dim]) => (
           <DimensionBar key={key} dimKey={key} dimension={dim} />
         ))}
       </div>
@@ -1836,7 +1901,7 @@ function ScanResultView({
       <PlaybookSection scanId={result.scan_id} />
 
       {/* History & Trends */}
-      <HistorySection url={result.url} currentScore={result.clarvia_score} currentDimensions={result.dimensions} />
+      {result.dimensions && <HistorySection url={result.url} currentScore={result.clarvia_score} currentDimensions={result.dimensions} />}
 
       {/* Recommendations — show only top 3 free */}
       {result.top_recommendations.length > 0 && (

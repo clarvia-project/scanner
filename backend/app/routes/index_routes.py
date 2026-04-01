@@ -1491,66 +1491,74 @@ async def get_alternatives(
     target_url_lower = target.get("url", "").lower().rstrip("/")
     target_name_lower = target_name.lower().strip()
 
-    # --- Step 2: Find alternatives in the same category ---
-    # Exclude by scan_id AND by url/name to prevent self-referential results
-    same_category = [
-        s for s in pool
-        if s.get("category") == target_category
-        and s["scan_id"] != target_scan_id
-        and s.get("url", "").lower().rstrip("/") != target_url_lower
-        and s.get("service_name", "").lower().strip() != target_name_lower
-    ]
+    # --- Step 2: Use TF-IDF engine for semantic similarity ---
+    from ..recommender import get_engine
 
-    # --- Step 3: Score by description keyword overlap ---
-    target_words = set(_tokenize_for_similarity(target_desc))
+    engine = get_engine()
 
-    scored: list[tuple[float, dict]] = []
-    for s in same_category:
-        desc = (s.get("description") or "").lower()
-        candidate_words = set(_tokenize_for_similarity(desc))
+    # Build exclude set: self + URL/name duplicates
+    exclude_ids = {target_scan_id}
+    for s in pool:
+        if (s.get("url", "").lower().rstrip("/") == target_url_lower
+                or s.get("service_name", "").lower().strip() == target_name_lower):
+            exclude_ids.add(s["scan_id"])
 
-        # Jaccard similarity on keyword tokens
-        if target_words and candidate_words:
-            intersection = target_words & candidate_words
-            union = target_words | candidate_words
-            similarity = len(intersection) / len(union) if union else 0.0
-        else:
-            similarity = 0.0
-
-        # Boost for same service_type
-        if s.get("service_type") == target.get("service_type"):
-            similarity += 0.05
-
-        # Boost for tag overlap
-        target_tags = set(t.lower() for t in target.get("tags", []))
-        candidate_tags = set(t.lower() for t in s.get("tags", []))
-        if target_tags and candidate_tags:
-            tag_overlap = len(target_tags & candidate_tags) / len(target_tags | candidate_tags)
-            similarity += tag_overlap * 0.15
-
-        scored.append((similarity, s))
-
-    # Sort by similarity desc, then by clarvia_score desc
-    scored.sort(key=lambda x: (x[0], x[1]["clarvia_score"]), reverse=True)
+    # Count same-category tools for metadata
+    same_category_count = sum(
+        1 for s in pool
+        if s.get("category") == target_category and s["scan_id"] not in exclude_ids
+    )
 
     alternatives = []
-    for sim, s in scored[:limit]:
-        alternatives.append({
-            "name": s["service_name"],
-            "url": s.get("url", ""),
-            "score": s["clarvia_score"],
-            "category": s.get("category", "other"),
-            "similarity": round(sim, 3),
-            "install_hint": _generate_install_hint(s),
-            "description": (s.get("description") or "")[:200],
-            "scan_id": s["scan_id"],
-        })
+    if engine.is_built:
+        # Primary: TF-IDF cosine similarity within same category
+        tfidf_results = engine.find_similar(
+            target_scan_id,
+            category=target_category,
+            limit=limit,
+            exclude_scan_ids=exclude_ids,
+        )
+        for r in tfidf_results:
+            r["install_hint"] = _generate_install_hint(
+                next((s for s in pool if s["scan_id"] == r["scan_id"]), {})
+            )
+        alternatives = tfidf_results
+
+    # Fallback: if TF-IDF returns too few, fill with tag/type overlap (old logic)
+    if len(alternatives) < limit:
+        seen_ids = {a["scan_id"] for a in alternatives}
+        same_cat_pool = [
+            s for s in pool
+            if s.get("category") == target_category
+            and s["scan_id"] not in exclude_ids
+            and s["scan_id"] not in seen_ids
+        ]
+        target_tags = set(t.lower() for t in target.get("tags", []))
+        for s in same_cat_pool:
+            if len(alternatives) >= limit:
+                break
+            sim = 0.0
+            if s.get("service_type") == target.get("service_type"):
+                sim += 0.05
+            c_tags = set(t.lower() for t in s.get("tags", []))
+            if target_tags and c_tags:
+                sim += len(target_tags & c_tags) / len(target_tags | c_tags) * 0.15
+            alternatives.append({
+                "name": s["service_name"],
+                "url": s.get("url", ""),
+                "score": s["clarvia_score"],
+                "category": s.get("category", "other"),
+                "similarity": round(sim, 3),
+                "install_hint": _generate_install_hint(s),
+                "description": (s.get("description") or "")[:200],
+                "scan_id": s["scan_id"],
+            })
 
     return {
         "service": target_name,
         "category": target_category,
         "alternatives": alternatives,
-        "total_in_category": len(same_category),
+        "total_in_category": same_category_count,
     }
 
 

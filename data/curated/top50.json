@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-03-30T07:30:10.567558+00:00",
-  "total": 2,
-  "categories": 1,
+  "generated_at": "2026-04-01T00:50:11.865323+00:00",
+  "total": 50,
+  "categories": 10,
   "tools": [
     {
       "name": "Replicate",
@@ -24,12 +24,606 @@
       "rating": "Moderate",
       "scan_id": "scn_f94d78926eff",
       "description": ""
+    },
+    {
+      "name": "Feedoracle",
+      "url": "https://feedoracle.io",
+      "category": "mcp",
+      "clarvia_score": 71,
+      "curation_score": 43.4,
+      "reason": "Good AEO score (71)",
+      "rating": "Moderate",
+      "scan_id": "scn_e0fa7bb10bd8",
+      "description": "7-signal stablecoin risk scoring. 13 tools, 28+ tokens, SAFE/CAUTION/AVOID verdicts."
+    },
+    {
+      "name": "Ai-readiness",
+      "url": "https://ai-readiness.mingles.ai",
+      "category": "mcp",
+      "clarvia_score": 70,
+      "curation_score": 43.0,
+      "reason": "Good AEO score (70)",
+      "rating": "Moderate",
+      "scan_id": "scn_f33a514d3696",
+      "description": "Check website AI-readiness: Schema.org, llms.txt, E-E-A-T, robots.txt. Works in Cursor & Claude."
+    },
+    {
+      "name": "Agentry",
+      "url": "https://agentry.com",
+      "category": "mcp",
+      "clarvia_score": 69,
+      "curation_score": 42.6,
+      "reason": "Good AEO score (69)",
+      "rating": "Moderate",
+      "scan_id": "scn_d822cde7b17b",
+      "description": "Agent registry with Nostr identity, reputation, escrow, observability, and Lightning payments."
+    },
+    {
+      "name": "Aipaygen",
+      "url": "https://aipaygen.com",
+      "category": "mcp",
+      "clarvia_score": 67,
+      "curation_score": 41.8,
+      "reason": "Good AEO score (67)",
+      "rating": "Moderate",
+      "scan_id": "scn_bcf42a37a67a",
+      "description": "250+ AI tools: research, write, code, translate, analyze, scrape, memory, and more."
+    },
+    {
+      "name": "Gia",
+      "url": "https://gia.aceadvising.com",
+      "category": "mcp",
+      "clarvia_score": 63,
+      "curation_score": 40.2,
+      "reason": "Good AEO score (63)",
+      "rating": "Moderate",
+      "scan_id": "scn_405e268d9714",
+      "description": "AI governance engine \u2014 decision controls, compliance, audit chains, knowledge packs."
+    },
+    {
+      "name": "alertersystem.com",
+      "url": "https://www.alertersystem.com/api/docs.json",
+      "category": "ai",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_1ccb71314122",
+      "description": "<p>This is the <a href=\"/\">Alerter System</a> API playground. More documentation is available at the <a href=\"/help/developers/\">API Help Center</a>.</p><p>The \"Available Authorizations\" in the Author"
+    },
+    {
+      "name": "amadeus.com:amadeus-airport-on-time-performance",
+      "url": "https://raw.githubusercontent.com/amadeus4dev/amadeus-open-api-specification/main/spec/json/AirportOnTimePerformance_v1_swagger_specification.json",
+      "category": "ai",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_fd25ea161b4c",
+      "description": "Before using this API, we recommend you read our\u00a0**[Authorization Guide](https://developers.amadeus.com/self-service/apis-docs/guides/authorization-262)**\u00a0for more information on how to generate an ac"
+    },
+    {
+      "name": "cambase.io",
+      "url": "http://api.cambase.io/api-docs/api-docs.json",
+      "category": "ai",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_2d062502118d",
+      "description": "Cambase.io is a project by Evercam.io in order to make it easier for software developers to have a reliable, up to date source of model hardware information available via a public API."
+    },
+    {
+      "name": "contentgroove.com",
+      "url": "https://api.contentgroove.com/api-docs/v1/openapi.json",
+      "category": "ai",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_480001110770",
+      "description": "# Overview\n\nThe ContentGroove Developer API enables you to add the power of ContentGroove's video AI to your own applications and workflows.\n\nWebhooks are a way for ContentGroove to send video informa"
+    },
+    {
+      "name": "data2crm.com",
+      "url": "http://www.data2crm.com/api/",
+      "category": "ai",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_94917573e6b2",
+      "description": "<p>Make use of our in-depth documentation to get more information about the various functions of the service. Those willing to explore the mechanics of Data2CRM.API can test it in live regime using th"
+    },
+    {
+      "name": "byautomata.io",
+      "url": "http://byautomata.io",
+      "category": "productivity",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_5d0fe37872f0",
+      "description": "This document provides the documentation for the Market Intelligence API by Automata. Get your API Key at https://apis.byautomata.io and check out our <a href='https://www.getpostman.com/collections/d"
+    },
+    {
+      "name": "stellastra.com",
+      "url": "https://stellastra.com/docs/api",
+      "category": "productivity",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_384cb7ec613d",
+      "description": "Stellastra makes it easy to get reviews for your cybersecurity solution in real-time with its platform-agnostic REST API."
+    },
+    {
+      "name": "vtex.local:VTEX-Do-API",
+      "url": "https://raw.githubusercontent.com/vtex/openapi-schemas/master/VTEX - VTEX Do API.json",
+      "category": "productivity",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_0f8c7db5bfd2",
+      "description": "VTEX DO is a task management system for authorized users to process orders. It is possible to control notes, and create, update, list, and retrieve tasks."
+    },
+    {
+      "name": "ably.net:control",
+      "url": "https://raw.githubusercontent.com/ably/open-specs/main/definitions/control-v1.yaml",
+      "category": "cloud",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_f57ffe21e557",
+      "description": "Use the Control API to manage your applications, namespaces, keys, queues, rules, and more.\n\nDetailed information on using this API can be found in the Ably <a href=\"https://ably.com/documentation/con"
+    },
+    {
+      "name": "amazonaws.com:accessanalyzer",
+      "url": "https://docs.aws.amazon.com/access-analyzer/",
+      "category": "cloud",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_dca974a371b5",
+      "description": "<p>Identity and Access Management Access Analyzer helps identify potential resource-access risks by enabling you to identify any policies that grant access to an external principal. It does this by us"
+    },
+    {
+      "name": "amazonaws.com:acm",
+      "url": "https://docs.aws.amazon.com/acm/",
+      "category": "cloud",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_529858f1062a",
+      "description": "<fullname>Certificate Manager</fullname> <p>You can use Certificate Manager (ACM) to manage SSL/TLS certificates for your Amazon Web Services-based websites and applications. For more information abou"
+    },
+    {
+      "name": "amazonaws.com:acm-pca",
+      "url": "https://docs.aws.amazon.com/acm-pca/",
+      "category": "cloud",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_f249896fdc6c",
+      "description": "<p>This is the <i>Amazon Web Services Private Certificate Authority API Reference</i>. It provides descriptions, syntax, and usage examples for each of the actions and data types involved in creating "
+    },
+    {
+      "name": "amazonaws.com:alexaforbusiness",
+      "url": "https://docs.aws.amazon.com/a4b/",
+      "category": "cloud",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_17226a6b1a90",
+      "description": "Alexa for Business helps you use Alexa in your organization. Alexa for Business provides you with the tools to manage Alexa devices, enroll your users, and assign skills, at scale. You can build your "
+    },
+    {
+      "name": "airbyte.local:config",
+      "url": "https://airbyte.io",
+      "category": "developer_tools",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_68428d159344",
+      "description": "Airbyte Configuration API\n[https://airbyte.io](https://airbyte.io).\n\nThis API is a collection of HTTP RPC-style methods. While it is not a REST API, those familiar with REST should find the convention"
+    },
+    {
+      "name": "amadeus.com:amadeus-airline-code-lookup",
+      "url": "https://raw.githubusercontent.com/amadeus4dev/amadeus-open-api-specification/main/spec/json/AirlineCodeLookUp_v1_swagger_specification.json",
+      "category": "developer_tools",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_4fc25a79bdbe",
+      "description": "\nBefore using this API, we recommend you read our\u00a0**[Authorization Guide](https://developers.amadeus.com/self-service/apis-docs/guides/authorization-262)**\u00a0for more information on how to generate an a"
+    },
+    {
+      "name": "amadeus.com:amadeus-airport-&-city-search",
+      "url": "https://raw.githubusercontent.com/amadeus4dev/amadeus-open-api-specification/main/spec/json/AirportCitySearch_v1_swagger_specification.json",
+      "category": "developer_tools",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_7008dbb89312",
+      "description": "\nBefore using this API, we recommend you read our **[Authorization Guide](https://developers.amadeus.com/self-service/apis-docs/guides/authorization-262)** for more information on how to generate an a"
+    },
+    {
+      "name": "amadeus.com:amadeus-airport-nearest-relevant",
+      "url": "https://raw.githubusercontent.com/amadeus4dev/amadeus-open-api-specification/main/spec/json/AirportNearestRelevant_v1_swagger_specification.json",
+      "category": "developer_tools",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_ff11b0fedd59",
+      "description": "\nBefore using this API, we recommend you read our\u00a0**[Authorization Guide](https://developers.amadeus.com/self-service/apis-docs/guides/authorization-262)**\u00a0for more information on how to generate an a"
+    },
+    {
+      "name": "amadeus.com:amadeus-branded-fares-upsell",
+      "url": "https://raw.githubusercontent.com/amadeus4dev/amadeus-open-api-specification/main/spec/json/BrandedFaresUpsell_v1_swagger_specification.json",
+      "category": "developer_tools",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_16ca46e65d94",
+      "description": "\nBefore using this API, we recommend you read our **[Authorization Guide](https://developers.amadeus.com/self-service/apis-docs/guides/authorization-262)** for more information on how to generate an a"
+    },
+    {
+      "name": "apis.guru",
+      "url": "https://github.com/APIs-guru/openapi-directory/blob/master/API.md",
+      "category": "open_data",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_2727202956a3",
+      "description": "Wikipedia for Web APIs. Repository of API definitions in OpenAPI format.\n**Warning**: If you want to be notified about changes in advance please join our [Slack channel](https://join.slack.com/t/merma"
+    },
+    {
+      "name": "apisetu.gov.in:aaharjh",
+      "url": "https://apisetu.gov.in/api_specification_v8/aaharjh.yaml",
+      "category": "open_data",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_d82dab66bacd",
+      "description": "Public distribution system (PDS) is an Indian food security system. Established by the Government of India under Ministry of Consumer Affairs, Food, and Public Distribution and managed jointly with st"
+    },
+    {
+      "name": "apisetu.gov.in:acko",
+      "url": "https://apisetu.gov.in/api_specification_v8/acko.yaml",
+      "category": "open_data",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_491218f9594e",
+      "description": "Insurance policies issued by Acko General Insurance (https://www.acko.com) can be fetched by the citizens in their Digilocker accounts."
+    },
+    {
+      "name": "apisetu.gov.in:aharakar",
+      "url": "https://apisetu.gov.in/api_specification_v8/aharakar.yaml",
+      "category": "open_data",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_fcd1448275cc",
+      "description": "Ration Cards issued by Food, Civil Supplies and Consumer Affairs Department, Karnataka (https://ahara.kar.nic.in) are available for download on DigiLocker."
+    },
+    {
+      "name": "apisetu.gov.in:aiimsmangalagiri",
+      "url": "https://apisetu.gov.in/api_specification_v8/aiimsmangalagiri.yaml",
+      "category": "open_data",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_56d875ec916b",
+      "description": "AIIMS Mangalagiri is one of the AIIMS healthcare institutes being established by the Ministry of Health & Family Welfare, Government of India."
+    },
+    {
+      "name": "googleapis.com:abusiveexperiencereport",
+      "url": "https://developers.google.com/abusive-experience-report/",
+      "category": "analytics",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_83e2b48b8842",
+      "description": "Views Abusive Experience Report data, and gets a list of sites that have a significant number of abusive experiences."
+    },
+    {
+      "name": "googleapis.com:adexchangebuyer",
+      "url": "https://developers.google.com/ad-exchange/buyer-rest",
+      "category": "analytics",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_946912b051b9",
+      "description": "Accesses your bidding-account information, submits creatives for validation, finds available direct deals, and retrieves performance reports."
+    },
+    {
+      "name": "googleapis.com:adexchangebuyer2",
+      "url": "https://developers.google.com/authorized-buyers/apis/reference/rest/",
+      "category": "analytics",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_3293b6ad8d0d",
+      "description": "Accesses the latest features for managing Authorized Buyers accounts, Real-Time Bidding configurations and auction metrics, and Marketplace programmatic deals."
+    },
+    {
+      "name": "googleapis.com:adexperiencereport",
+      "url": "https://developers.google.com/ad-experience-report/",
+      "category": "analytics",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_12ae35b01ad0",
+      "description": "Views Ad Experience Report data, and gets a list of sites that have a significant number of annoying ads."
+    },
+    {
+      "name": "googleapis.com:admin",
+      "url": "https://developers.google.com/admin-sdk/",
+      "category": "analytics",
+      "clarvia_score": 60,
+      "curation_score": 39.0,
+      "reason": "Good AEO score (60)",
+      "rating": "Moderate",
+      "scan_id": "scn_7ac773ead655",
+      "description": "Admin SDK lets administrators of enterprise domains to view and manage resources like user, groups etc. It also provides audit and usage reports of domain."
+    },
+    {
+      "name": "clickup.com",
+      "url": "https://jsapi.apiary.io/apis/clickup20.source",
+      "category": "productivity",
+      "clarvia_score": 55,
+      "curation_score": 37.0,
+      "reason": "Meets baseline quality",
+      "rating": "Moderate",
+      "scan_id": "scn_cdbe4af09a92",
+      "description": "Polls is a simple API allowing consumers to view polls and vote in them."
+    },
+    {
+      "name": "moonmoonmoonmoon.com",
+      "url": "http://moonmoonmoonmoon.com/api/api-docs.json",
+      "category": "productivity",
+      "clarvia_score": 55,
+      "curation_score": 37.0,
+      "reason": "Meets baseline quality",
+      "rating": "Moderate",
+      "scan_id": "scn_af3be6e83302",
+      "description": "Turn nothing into something \u2013 make a drawing, make a mark."
+    },
+    {
+      "name": "patientview.org",
+      "url": "https://www.patientview.org/api/api-docs",
+      "category": "infrastructure",
+      "clarvia_score": 55,
+      "curation_score": 37.0,
+      "reason": "Meets baseline quality",
+      "rating": "Moderate",
+      "scan_id": "scn_51980cd1beac",
+      "description": "The recommended REST API endpoints to be used when integrating with PatientView"
+    },
+    {
+      "name": "solarvps.com",
+      "url": "http://api.ss.solarvps.com/api-docs",
+      "category": "infrastructure",
+      "clarvia_score": 55,
+      "curation_score": 37.0,
+      "reason": "Meets baseline quality",
+      "rating": "Moderate",
+      "scan_id": "scn_2f55904c00f4",
+      "description": "This is the Solar VPS Public API. You can find more at http://www.solarvps.com"
+    },
+    {
+      "name": "JoasASantos/mcp-cyber-suite",
+      "url": "https://github.com/JoasASantos/mcp-cyber-suite",
+      "category": "ai-ml",
+      "clarvia_score": 50,
+      "curation_score": 30.0,
+      "reason": "Meets baseline quality",
+      "rating": "Basic",
+      "scan_id": "scn_4bf2a8a14601",
+      "description": ""
+    },
+    {
+      "name": "botanicastudios/mcp-host-rpc",
+      "url": "https://github.com/botanicastudios/mcp-host-rpc",
+      "category": "ai-ml",
+      "clarvia_score": 49,
+      "curation_score": 29.6,
+      "reason": "Meets baseline quality",
+      "rating": "Basic",
+      "scan_id": "scn_fca40279ac4e",
+      "description": ""
+    },
+    {
+      "name": "buildwithgrove/mcp-pocket",
+      "url": "https://github.com/buildwithgrove/mcp-pocket",
+      "category": "ai-ml",
+      "clarvia_score": 49,
+      "curation_score": 29.6,
+      "reason": "Meets baseline quality",
+      "rating": "Basic",
+      "scan_id": "scn_a53aef55ae31",
+      "description": ""
+    },
+    {
+      "name": "@octokit/plugin-paginate-rest",
+      "url": "https://github.com/octokit/plugin-paginate-rest.js#readme",
+      "category": "infrastructure",
+      "clarvia_score": 36,
+      "curation_score": 29.4,
+      "reason": "Meets baseline quality",
+      "rating": "Basic",
+      "scan_id": "scn_3469f5dfc2c5",
+      "description": "Octokit plugin to paginate REST API endpoint responses"
+    },
+    {
+      "name": "@enclave-vm/core",
+      "url": "https://github.com/agentfront/enclave",
+      "category": "coding",
+      "clarvia_score": 36,
+      "curation_score": 29.4,
+      "reason": "Meets baseline quality",
+      "rating": "Basic",
+      "scan_id": "scn_09769bded72d",
+      "description": "Sandbox runtime for secure JavaScript code execution"
+    },
+    {
+      "name": "@hopla/sickw",
+      "url": "https://github.com/juliochemoreno/sickw#readme",
+      "category": "coding",
+      "clarvia_score": 36,
+      "curation_score": 29.4,
+      "reason": "Meets baseline quality",
+      "rating": "Basic",
+      "scan_id": "scn_66ae6d76a176",
+      "description": "TypeScript client for the Sickw IMEI check/unlock API"
+    },
+    {
+      "name": "@rozenite/agent-bridge",
+      "url": "https://github.com/callstackincubator/rozenite#readme",
+      "category": "coding",
+      "clarvia_score": 36,
+      "curation_score": 29.4,
+      "reason": "Meets baseline quality",
+      "rating": "Basic",
+      "scan_id": "scn_3321e7fdb5f2",
+      "description": "React hook API for registering agent tools in React Native"
+    },
+    {
+      "name": "@yarn-tool/resolve-package",
+      "url": "https://github.com/bluelovers/ws-yarn-workspaces/tree/master/packages/@yarn-tool/resolve-package#readme",
+      "category": "coding",
+      "clarvia_score": 36,
+      "curation_score": 29.4,
+      "reason": "Meets baseline quality",
+      "rating": "Basic",
+      "scan_id": "scn_59147e159ab2",
+      "description": "\u89e3\u6790 Node.js \u5957\u4ef6\u7684\u6839\u76ee\u9304\u8207 package.json \u8def\u5f91\u7684\u5de5\u5177\u5eab / A utility for resolving package root and package.json paths"
+    },
+    {
+      "name": "cardinal",
+      "url": "https://github.com/thlorenz/cardinal#readme",
+      "category": "coding",
+      "clarvia_score": 36,
+      "curation_score": 29.4,
+      "reason": "Meets baseline quality",
+      "rating": "Basic",
+      "scan_id": "scn_f5fd0706dda0",
+      "description": "Syntax highlights JavaScript code with ANSI colors to be printed to the terminal."
+    },
+    {
+      "name": "fasuizu-br/brainiall-mcp-server",
+      "url": "https://github.com/fasuizu-br/brainiall-mcp-server",
+      "category": "infrastructure",
+      "clarvia_score": 47,
+      "curation_score": 28.8,
+      "reason": "Meets baseline quality",
+      "rating": "Basic",
+      "scan_id": "scn_e16887a275b7",
+      "description": ""
+    },
+    {
+      "name": "lucianoayres/mcp-server-node",
+      "url": "https://github.com/lucianoayres/mcp-server-node",
+      "category": "infrastructure",
+      "clarvia_score": 47,
+      "curation_score": 28.8,
+      "reason": "Meets baseline quality",
+      "rating": "Basic",
+      "scan_id": "scn_90b221dcc0a4",
+      "description": ""
     }
   ],
   "by_category": {
+    "mcp": [
+      "Feedoracle",
+      "Ai-readiness",
+      "Agentry",
+      "Aipaygen",
+      "Gia"
+    ],
+    "ai": [
+      "alertersystem.com",
+      "amadeus.com:amadeus-airport-on-time-performance",
+      "cambase.io",
+      "contentgroove.com",
+      "data2crm.com"
+    ],
     "ai-ml": [
       "Replicate",
-      "Cohere"
+      "Cohere",
+      "JoasASantos/mcp-cyber-suite",
+      "botanicastudios/mcp-host-rpc",
+      "buildwithgrove/mcp-pocket"
+    ],
+    "productivity": [
+      "byautomata.io",
+      "stellastra.com",
+      "vtex.local:VTEX-Do-API",
+      "clickup.com",
+      "moonmoonmoonmoon.com"
+    ],
+    "cloud": [
+      "ably.net:control",
+      "amazonaws.com:accessanalyzer",
+      "amazonaws.com:acm",
+      "amazonaws.com:acm-pca",
+      "amazonaws.com:alexaforbusiness"
+    ],
+    "developer_tools": [
+      "airbyte.local:config",
+      "amadeus.com:amadeus-airline-code-lookup",
+      "amadeus.com:amadeus-airport-&-city-search",
+      "amadeus.com:amadeus-airport-nearest-relevant",
+      "amadeus.com:amadeus-branded-fares-upsell"
+    ],
+    "infrastructure": [
+      "patientview.org",
+      "solarvps.com",
+      "@octokit/plugin-paginate-rest",
+      "fasuizu-br/brainiall-mcp-server",
+      "lucianoayres/mcp-server-node"
+    ],
+    "open_data": [
+      "apis.guru",
+      "apisetu.gov.in:aaharjh",
+      "apisetu.gov.in:acko",
+      "apisetu.gov.in:aharakar",
+      "apisetu.gov.in:aiimsmangalagiri"
+    ],
+    "analytics": [
+      "googleapis.com:abusiveexperiencereport",
+      "googleapis.com:adexchangebuyer",
+      "googleapis.com:adexchangebuyer2",
+      "googleapis.com:adexperiencereport",
+      "googleapis.com:admin"
+    ],
+    "coding": [
+      "@enclave-vm/core",
+      "@hopla/sickw",
+      "@rozenite/agent-bridge",
+      "@yarn-tool/resolve-package",
+      "cardinal"
     ]
   }
 }
