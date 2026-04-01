@@ -104,7 +104,7 @@ jobs:
 
       - name: Comment PR with Clarvia scores
         if: steps.urls.outputs.has_urls == 'true' && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const results = `${{ steps.scan.outputs.results }}`;
