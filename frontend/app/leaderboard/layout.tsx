@@ -34,7 +34,7 @@ async function fetchLeaderboard(limit = 10): Promise<LeaderboardTool[]> {
 export const metadata: Metadata = {
   title: "AI Agent Tool Leaderboard — Top AEO Scores | Clarvia",
   description:
-    "The definitive ranking of AI agent tools by AEO score. See which MCP servers, APIs, CLIs, and skills rank highest for agent readiness across 27,875+ indexed tools.",
+    "The definitive ranking of AI agent tools by AEO score. See which MCP servers, APIs, CLIs, and skills rank highest for agent readiness across 27,906+ indexed tools.",
   keywords: [
     "MCP server leaderboard",
     "best MCP servers",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "AI Agent Tool Leaderboard — Top AEO Scores | Clarvia",
     description:
-      "Top-ranked MCP servers and AI agent tools by AEO score. 27,875+ tools analyzed.",
+      "Top-ranked MCP servers and AI agent tools by AEO score. 27,906+ tools analyzed.",
   },
   alternates: {
     canonical: "https://clarvia.art/leaderboard",
@@ -153,7 +153,7 @@ export default async function LeaderboardLayout({
                   .slice(0, 5)
                   .map((t) => `${t.name} (${t.score ?? t.clarvia_score}/100)`)
                   .join(", ")}. These tools scored highest across documentation quality, error handling, structured output, and agent discoverability dimensions.`
-              : "Clarvia ranks 27,875+ AI agent tools by AEO score. The top tools score 90+ out of 100 across documentation, error handling, structured outputs, and agent discoverability.",
+              : "Clarvia ranks 27,906+ AI agent tools by AEO score. The top tools score 90+ out of 100 across documentation, error handling, structured outputs, and agent discoverability.",
         },
       },
       {
@@ -169,7 +169,7 @@ export default async function LeaderboardLayout({
         name: "How often is the leaderboard updated?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "The Clarvia leaderboard is updated daily as tools are re-scanned and new tools are added to the index. Over 27,875 tools are tracked continuously.",
+          text: "The Clarvia leaderboard is updated daily as tools are re-scanned and new tools are added to the index. Over 27,906 tools are tracked continuously.",
         },
       },
     ],
@@ -200,7 +200,7 @@ export default async function LeaderboardLayout({
           <h2>Top AI Agent Tools by AEO Score — Clarvia Leaderboard</h2>
           <p>
             The following MCP servers and AI tools scored highest on Clarvia&apos;s
-            AEO (AI Engine Optimization) benchmark out of 27,875+ indexed tools.
+            AEO (AI Engine Optimization) benchmark out of 27,906+ indexed tools.
           </p>
           <ol>
             {tools.slice(0, 10).map((tool, idx) => (

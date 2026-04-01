@@ -30,7 +30,7 @@ async function fetchTrending(): Promise<TrendingTool[]> {
 export const metadata: Metadata = {
   title: "Trending AI Agent Tools — Clarvia",
   description:
-    "Discover the hottest MCP servers, APIs, CLIs, and agent skills trending right now. Ranked by AEO score and momentum across 27,875+ indexed tools.",
+    "Discover the hottest MCP servers, APIs, CLIs, and agent skills trending right now. Ranked by AEO score and momentum across 27,906+ indexed tools.",
   keywords: [
     "trending MCP servers",
     "best AI agent tools 2026",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Trending AI Agent Tools — Clarvia",
     description:
-      "Discover the hottest MCP servers and agent tools trending now. AEO scores for 27,875+ tools.",
+      "Discover the hottest MCP servers and agent tools trending now. AEO scores for 27,906+ tools.",
   },
   alternates: {
     canonical: "https://clarvia.art/trending",
@@ -147,8 +147,8 @@ export default async function TrendingLayout({
               ? `The most popular MCP servers this week by AEO score are: ${tools
                   .slice(0, 5)
                   .map((t) => `${t.name} (${t.clarvia_score ?? t.score ?? "N/A"}/100)`)
-                  .join(", ")}. Ranked across 27,875+ indexed tools on Clarvia.`
-              : "Clarvia tracks 27,875+ MCP servers and AI agent tools. Trending rankings are updated weekly based on AEO scores and ecosystem adoption.",
+                  .join(", ")}. Ranked across 27,906+ indexed tools on Clarvia.`
+              : "Clarvia tracks 27,906+ MCP servers and AI agent tools. Trending rankings are updated weekly based on AEO scores and ecosystem adoption.",
         },
       },
       {
@@ -185,7 +185,7 @@ export default async function TrendingLayout({
           }}
         >
           <h2>Trending AI Agent Tools This Week — Clarvia</h2>
-          <p>Top-performing MCP servers and AI tools ranked by AEO score from 27,875+ indexed tools.</p>
+          <p>Top-performing MCP servers and AI tools ranked by AEO score from 27,906+ indexed tools.</p>
           <ol>
             {tools.slice(0, 10).map((tool, idx) => (
               <li key={idx}>
