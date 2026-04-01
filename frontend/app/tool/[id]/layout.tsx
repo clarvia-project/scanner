@@ -134,6 +134,31 @@ export default async function ToolLayout({
       }
     : null;
 
+  // Build a self-contained answer block visible to AI crawlers (SSR)
+  const answerBlock = tool?.name
+    ? (() => {
+        const score = tool.clarvia_score != null ? Math.round(tool.clarvia_score) : null;
+        const rating = tool.rating ?? (score != null ? (score >= 70 ? "Strong" : score >= 40 ? "Moderate" : "Basic") : "Unknown");
+        const category = tool.category ?? "developer tool";
+        const stype = tool.service_type ?? "tool";
+        const desc = tool.description
+          ? tool.description.replace(/<[^>]+>/g, "").slice(0, 150)
+          : null;
+
+        const lines = [
+          `${tool.name} is a ${stype.replace("_", " ")} in the ${category} category.`,
+          desc ? desc : null,
+          score != null
+            ? `Clarvia AEO Score: ${score}/100 (${rating}). The AEO score measures how easily AI agents can discover and use this tool, covering API accessibility, data structuring, agent compatibility, and trust signals.`
+            : null,
+          tool.url ? `Official resource: ${tool.url}` : null,
+          `View full analysis and badge at https://clarvia.art/tool/${id}`,
+        ].filter(Boolean);
+
+        return lines.join(" ");
+      })()
+    : null;
+
   return (
     <>
       {jsonLd && (
@@ -141,6 +166,22 @@ export default async function ToolLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+      )}
+      {answerBlock && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            width: "1px",
+            height: "1px",
+            overflow: "hidden",
+            clip: "rect(0,0,0,0)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <h1>{tool!.name} — Clarvia AEO Score {tool!.clarvia_score ?? "N/A"}/100</h1>
+          <p>{answerBlock}</p>
+        </div>
       )}
       {children}
     </>
