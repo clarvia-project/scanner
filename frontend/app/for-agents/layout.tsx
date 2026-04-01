@@ -33,7 +33,7 @@ async function fetchTopTools(): Promise<TopTool[]> {
 export const metadata: Metadata = {
   title: "Top Agent-Ready Tools & MCP Servers — Ranked by AEO Score | Clarvia",
   description:
-    "Discover the best agent-ready APIs, MCP servers, and tools ranked by AEO (AI Engine Optimization) score. 27,831+ tools evaluated for agent compatibility, API accessibility, and trust signals.",
+    "Discover the best agent-ready APIs, MCP servers, and tools ranked by AEO (AI Engine Optimization) score. 27,843+ tools evaluated for agent compatibility, API accessibility, and trust signals.",
   keywords: [
     "agent-ready tools",
     "MCP servers for AI agents",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Top Agent-Ready Tools & MCP Servers — Clarvia",
     description:
-      "27,831+ tools ranked by AEO score for AI agent use. Find the best APIs and MCP servers for your autonomous agent workflows.",
+      "27,843+ tools ranked by AEO score for AI agent use. Find the best APIs and MCP servers for your autonomous agent workflows.",
     url: "https://clarvia.art/for-agents",
     siteName: "Clarvia",
     type: "website",
@@ -70,7 +70,7 @@ export default async function ForAgentsLayout({
     "@type": "ItemList",
     name: "Top Agent-Ready Tools — Ranked by AEO Score",
     description:
-      "The best APIs, MCP servers, and tools for AI agents, ranked by Clarvia AEO (AI Engine Optimization) score across 27,831+ indexed services.",
+      "The best APIs, MCP servers, and tools for AI agents, ranked by Clarvia AEO (AI Engine Optimization) score across 27,843+ indexed services.",
     url: "https://clarvia.art/for-agents",
     numberOfItems: tools.length,
     itemListOrder: "https://schema.org/ItemListOrderDescending",
@@ -123,8 +123,8 @@ export default async function ForAgentsLayout({
                     (t) =>
                       `${t.service_name ?? t.name ?? "Unknown"} (${t.clarvia_score ?? t.score ?? "N/A"}/100)`
                   )
-                  .join(", ")}. Clarvia evaluates 27,831+ tools across all major categories.`
-              : "Clarvia evaluates 27,831+ tools and ranks them by AEO score for optimal AI agent integration.",
+                  .join(", ")}. Clarvia evaluates 27,843+ tools across all major categories.`
+              : "Clarvia evaluates 27,843+ tools and ranks them by AEO score for optimal AI agent integration.",
         },
       },
       {
@@ -176,7 +176,7 @@ export default async function ForAgentsLayout({
         >
           <h1>Top Agent-Ready Tools Ranked by AEO Score — Clarvia</h1>
           <p>
-            Clarvia ranks {tools.length > 0 ? "27,831+" : "thousands of"} APIs, MCP servers, and AI
+            Clarvia ranks {tools.length > 0 ? "27,843+" : "thousands of"} APIs, MCP servers, and AI
             tools by AEO (AI Engine Optimization) score — measuring how well each service supports
             autonomous AI agent workflows.
           </p>
