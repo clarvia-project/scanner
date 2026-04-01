@@ -1,6 +1,6 @@
 {
   "name": "Clarvia AEO Scanner",
-  "description": "AI agent tool discovery and scoring platform. Search and evaluate 42,000+ MCP servers, APIs, CLIs, and Skills with AEO (AI Engine Optimization) quality scores. Includes 24 MCP tools for agent-native integration.",
+  "description": "AI agent tool discovery and scoring platform. Search and evaluate 27,900+ MCP servers, APIs, CLIs, and Skills with AEO (AI Engine Optimization) quality scores. Includes 24 MCP tools for agent-native integration.",
   "repository": "https://github.com/clarvia-project/scanner",
   "homepage": "https://clarvia.art",
   "npm": "clarvia-mcp-server",
@@ -10,7 +10,7 @@
   "tags": ["mcp", "ai-agents", "tool-discovery", "aeo", "scoring", "quality", "mcp-scanner", "agent-ready"],
   "api": "https://clarvia-api.onrender.com",
   "tools": 24,
-  "indexed_tools": 42000,
+  "indexed_tools": 27911,
   "author": {
     "name": "Clarvia Project",
     "url": "https://clarvia.art"
