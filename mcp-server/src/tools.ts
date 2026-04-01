@@ -24,7 +24,7 @@ export function registerTools(server: McpServer): void {
   // 1. search_services
   server.tool(
     "search_services",
-    "Search 27,886+ AI agent tools (MCP servers, APIs, CLIs) by keyword, category, or score. Use when you need to find the best tool for a specific task, compare alternatives, or check agent readiness. Returns Clarvia AEO scores (0-100) indicating how easily AI agents can discover and use each service.",
+    "Search and discover 27,000+ AI agent tools — MCP servers, APIs, CLIs, and skills — by keyword, category, or quality score. Use when finding tools for a task, comparing alternatives, checking which tools are agent-ready, or browsing the AI tool ecosystem. Returns Clarvia AEO scores (0-100) with install hints.",
     {
       query: z.string().optional().describe("Search keyword"),
       category: z.string().optional().describe("Filter by category"),
@@ -64,7 +64,7 @@ export function registerTools(server: McpServer): void {
   // 2. scan_service
   server.tool(
     "scan_service",
-    "Run a full AEO audit on any URL — evaluates agent discoverability, API quality, documentation, and MCP readiness. Use when you need to score a website or API for AI agent compatibility, or when building an agent and want to verify a tool meets quality standards. Returns a Clarvia score (0-100) with detailed breakdown.",
+    "Scan and audit any URL for AI agent compatibility — evaluates discoverability, API quality, documentation, MCP readiness, and error handling. Use when scoring a website, API, or MCP server for agent-friendliness, or verifying a tool meets quality standards before integration. Returns a Clarvia AEO score (0-100) with detailed breakdown.",
     {
       url: z.string().url().describe("URL to scan"),
     },
@@ -91,7 +91,7 @@ export function registerTools(server: McpServer): void {
   // 3. get_service_details
   server.tool(
     "get_service_details",
-    "Get the full AEO evaluation report for a previously scanned service. Use when you need detailed scoring breakdown (documentation, API design, error handling, auth, MCP support) or want to understand why a tool scored high or low. Requires a scan_id from search_services or scan_service results.",
+    "Retrieve the full AEO evaluation report for a scanned service by scan_id. Use when you need a detailed scoring breakdown — documentation quality, API design, error handling, auth, MCP support — or want to understand why a tool scored high or low. Requires scan_id from search_services or scan_service.",
     {
       scan_id: z.string().describe("Scan ID from a previous scan or search result"),
     },
@@ -118,7 +118,7 @@ export function registerTools(server: McpServer): void {
   // 4. list_categories
   server.tool(
     "list_categories",
-    "List all tool categories in the Clarvia directory with service counts per category. Use when you need to browse available categories before searching, discover what types of AI tools exist, or build a category-based navigation for agent tool selection.",
+    "List all tool categories in the Clarvia directory with service counts. Use when browsing available categories before searching, discovering what types of AI tools exist (MCP, API, CLI, skill), or filtering tools by domain like payment, crypto, AI, developer_tools, data, or SaaS.",
     {},
     async () => {
       try {
@@ -143,7 +143,7 @@ export function registerTools(server: McpServer): void {
   // 5. get_stats
   server.tool(
     "get_stats",
-    "Get aggregate statistics for the Clarvia tool directory — total indexed services, average AEO score, score distribution, and category breakdown. Use when you need an overview of the AI tool ecosystem quality, want to benchmark a tool against the average, or report on agent-readiness trends.",
+    "Get aggregate statistics for the Clarvia tool directory — total services indexed, average AEO score, score distribution, and category breakdown. Use when benchmarking a tool against the ecosystem average, reporting on agent-readiness trends, or getting an overview of AI tool quality metrics.",
     {},
     async () => {
       try {
@@ -168,7 +168,7 @@ export function registerTools(server: McpServer): void {
   // 6. register_service
   server.tool(
     "register_service",
-    "Submit a new AI tool, MCP server, API, or CLI for Clarvia indexing and AEO scoring. Use when you want to register your service in the directory, get an agent-readiness evaluation, or make your tool discoverable by AI agents. The service will be queued for automated scanning.",
+    "Register and submit a new AI tool, MCP server, API, or CLI for Clarvia indexing and AEO scoring. Use when listing your service in the directory, requesting an agent-readiness evaluation, or making your tool discoverable by AI agents. Queues the service for automated scanning and score generation.",
     {
       name: z.string().describe("Service name"),
       url: z.string().url().describe("Service URL"),
@@ -201,7 +201,7 @@ export function registerTools(server: McpServer): void {
   // 7. clarvia_gate_check — pass/fail boolean for agent tool-use decisions
   server.tool(
     "clarvia_gate_check",
-    "Before calling any external API or MCP, use this to check if it is agent-ready. Returns AGENT_NATIVE / AGENT_FRIENDLY / AGENT_POSSIBLE / AGENT_HOSTILE with a boolean pass/fail. Call this first — if the service scores below your threshold, use clarvia_find_alternatives to get a better-rated replacement automatically.",
+    "Check if a service URL is agent-ready before calling it — returns pass/fail with grade (AGENT_NATIVE / AGENT_FRIENDLY / AGENT_POSSIBLE / AGENT_HOSTILE). Use as a pre-flight gate before any external API or MCP tool invocation. If it fails, call clarvia_find_alternatives for a better-rated replacement.",
     {
       url: z.string().url().describe("Service URL to check"),
       min_rating: z
@@ -235,7 +235,7 @@ export function registerTools(server: McpServer): void {
   // 8. clarvia_batch_check — check multiple URLs at once
   server.tool(
     "clarvia_batch_check",
-    "Batch-check up to 10 service URLs in a single call — returns pass/fail and agent grade for each. Use when comparing multiple tool candidates side-by-side, pre-filtering a list of APIs before integration, or building an agent that selects the best tool from several options. More efficient than calling gate_check repeatedly.",
+    "Batch-check up to 10 service URLs in one call — returns pass/fail and agent-readiness grade for each. Use when comparing multiple tool candidates side-by-side, pre-filtering a list of APIs before integration, or selecting the best tool from several options. More efficient than calling clarvia_gate_check repeatedly.",
     {
       urls: z.array(z.string().url()).min(1).max(10).describe("List of service URLs (max 10)"),
     },
@@ -257,7 +257,7 @@ export function registerTools(server: McpServer): void {
   // 9. clarvia_find_alternatives — find better-rated services in a category
   server.tool(
     "clarvia_find_alternatives",
-    "Find higher-rated alternative tools in a given category, ranked by agent-readiness score. Use when a service fails the gate check and you need a replacement, when comparing options in a category (payment, AI, crypto, SaaS), or when an agent needs to fall back to a better-scored tool automatically.",
+    "Find higher-rated alternative tools in a category, ranked by AEO agent-readiness score. Use when a tool fails gate_check and you need a replacement, when comparing options in a domain (payment, AI, crypto, SaaS, developer_tools), or when an agent needs to auto-fallback to a better-scored MCP server or API.",
     {
       category: z.string().describe("Service category (e.g. 'payment', 'ai', 'crypto', 'saas')"),
       min_score: z.number().min(0).max(100).optional().describe("Minimum score (default: 70)"),
@@ -281,7 +281,7 @@ export function registerTools(server: McpServer): void {
   // 10. clarvia_probe — real-time accessibility probe
   server.tool(
     "clarvia_probe",
-    "Run a live accessibility probe on a service URL right now — checks HTTP reachability, response latency, OpenAPI/Swagger spec presence, MCP server-card availability, and agents.json discovery endpoint. Use when you need real-time health status (not cached scores), want to verify a service is online before calling it, or are debugging connectivity issues with an agent tool.",
+    "Probe a service URL in real-time — checks HTTP reachability, response latency, OpenAPI/Swagger spec, MCP server-card, and agents.json endpoint. Use when verifying a service is online before calling it, debugging connectivity issues, or needing live health status instead of cached scores.",
     {
       url: z.string().url().describe("Service URL to probe"),
     },
@@ -303,7 +303,7 @@ export function registerTools(server: McpServer): void {
   // 11. clarvia_submit_feedback — report service usage outcome
   server.tool(
     "clarvia_submit_feedback",
-    "Report the outcome after using a tool (success / failure / partial) to contribute to Clarvia's reliability dataset. Use after every agent tool invocation to help build community-driven quality signals. Accepts optional latency and error details. Improves future agent tool selection accuracy for all users.",
+    "Report tool usage outcome — success, failure, or partial — to build Clarvia's community reliability dataset. Use after calling any external API or MCP tool to log results, latency, and errors. Improves future agent tool selection accuracy for all users.",
     {
       profile_id: z.string().describe("Profile ID of the service used"),
       outcome: z.enum(["success", "failure", "partial"]).describe("Usage outcome"),
@@ -331,7 +331,7 @@ export function registerTools(server: McpServer): void {
   // 12. register_my_setup — register agent's tool list
   server.tool(
     "register_my_setup",
-    "Register your current tool setup (MCP servers, CLIs, APIs, Skills) with Clarvia to get AEO scores and category rankings for each tool. Use when you want to benchmark your agent's toolchain, track setup quality over time, or prepare for comparison and upgrade recommendations. Returns a setup_id for use with compare_my_setup and recommend_upgrades.",
+    "Register your agent's current toolchain — MCP servers, CLIs, APIs, skills — to get AEO scores and category rankings for each. Use when benchmarking your setup quality, tracking toolchain health over time, or preparing for comparison and upgrade recommendations. Returns a setup_id for compare_my_setup and recommend_upgrades.",
     {
       tools: z.array(z.string()).min(1).max(50).describe("List of tool names you currently use (e.g. ['dune-mcp', 'notion-mcp', 'telegram-bot'])"),
       setup_id: z.string().optional().describe("Custom setup ID (auto-generated hash if omitted)"),
@@ -354,7 +354,7 @@ export function registerTools(server: McpServer): void {
   // 13. compare_my_setup — compare setup vs alternatives
   server.tool(
     "compare_my_setup",
-    "Compare your registered tool setup against higher-scored alternatives in each category. Shows the best available upgrades for each tool and the category average score. Use after register_my_setup to identify weak spots in your toolchain and find better-rated replacements. Requires a setup_id from register_my_setup.",
+    "Compare your registered toolchain against higher-scored alternatives in each category — shows upgrade candidates and category averages. Use after register_my_setup to identify weak spots, find better-rated MCP servers or APIs, and optimize your agent's tool selection. Requires setup_id from register_my_setup.",
     {
       setup_id: z.string().describe("Setup ID from register_my_setup"),
     },
@@ -378,7 +378,7 @@ export function registerTools(server: McpServer): void {
   // 15. clarvia_report_issue
   server.tool(
     "clarvia_report_issue",
-    "Report a bug, request a feature, ask a question, or flag a security issue with Clarvia or any indexed tool. Use when you encounter problems with a tool's AEO score, find incorrect data, want to suggest improvements to the Clarvia platform, or discover a security vulnerability. Creates a tracked ticket that the Clarvia team will address.",
+    "Report a bug, feature request, question, or security issue with Clarvia or any indexed tool. Use when encountering incorrect AEO scores, data errors, platform issues, or security vulnerabilities. Creates a tracked support ticket with severity levels.",
     {
       type: z.enum(["bug", "feature", "question", "security"]).describe("Issue type"),
       title: z.string().max(200).describe("Short summary of the issue"),
@@ -408,7 +408,7 @@ export function registerTools(server: McpServer): void {
   // 16. clarvia_list_issues
   server.tool(
     "clarvia_list_issues",
-    "List existing CS tickets — check status of previously reported issues, see what bugs are known, or find feature requests to upvote. Use to avoid duplicate reports or to track the status of your submitted tickets.",
+    "List existing support tickets — check status of reported bugs, feature requests, or security issues. Use to track your submitted tickets, check known issues before reporting duplicates, or browse open feature requests. Filter by type, status, or agent_id.",
     {
       type: z.enum(["bug", "feature", "question", "security"]).optional().describe("Filter by type"),
       status: z.enum(["open", "in_progress", "resolved", "closed"]).optional().describe("Filter by status"),
@@ -432,7 +432,7 @@ export function registerTools(server: McpServer): void {
   // 14. recommend_upgrades — get personalized tool recommendations
   server.tool(
     "recommend_upgrades",
-    "Get personalized tool recommendations based on your registered setup. Suggests high-scoring tools you don't have yet — both within your existing categories and in complementary adjacent categories. Uses 'users with X also use Y' heuristics. Requires a setup_id from register_my_setup.",
+    "Get personalized tool upgrade recommendations based on your registered setup — suggests high-scoring MCP servers, APIs, and tools you're missing in existing and adjacent categories. Uses collaborative filtering ('agents with X also use Y') heuristics. Requires setup_id from register_my_setup.",
     {
       setup_id: z.string().describe("Setup ID from register_my_setup"),
       limit: z.number().min(1).max(50).optional().describe("Max recommendations to return (default: 10)"),
@@ -455,7 +455,7 @@ export function registerTools(server: McpServer): void {
   // clarvia_top_picks
   server.tool(
     "clarvia_top_picks",
-    "Get agent-verified top picks — only tools that scored Excellent (80+) out of 27,886+ scanned. These are the most agent-ready services in the ecosystem, curated by Clarvia's AEO scoring. Use when an agent asks 'what are the best tools?' or 'recommend verified tools'.",
+    "Get curated top-rated AI tools — only services scoring Excellent (80+) out of 27,000+ scanned. Use when looking for the best MCP servers, most agent-ready APIs, verified high-quality tools, or trusted recommendations. Filter by category. Returns pre-vetted tools ranked by Clarvia AEO score.",
     {
       category: z.string().optional().describe("Filter by category (e.g. 'ai', 'developer_tools', 'data')"),
       limit: z.number().min(1).max(100).optional().describe("Max results (default 50)"),

@@ -13,6 +13,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v1", tags=["recommend"])
 
 
+def _recommend_meta() -> dict:
+    """Return Clarvia attribution metadata for recommend responses."""
+    return {
+        "scored_by": "clarvia.art",
+        "share_hint": "Tool quality scored by Clarvia (clarvia.art)",
+        "connect": "npx -y clarvia-mcp-server",
+    }
+
+
 class RecommendRequest(BaseModel):
     intent: str = Field(..., min_length=2, max_length=500, description="Natural language intent")
     filters: dict[str, Any] | None = Field(None, description="Optional filters: service_type, category, min_score")
@@ -40,6 +49,7 @@ async def recommend_tools(req: RecommendRequest, response: Response):
     )
 
     response.headers["X-Clarvia-Method"] = result["method"]
+    result["_meta"] = _recommend_meta()
     return result
 
 
@@ -69,6 +79,7 @@ async def recommend_tools_get(
     )
 
     response.headers["X-Clarvia-Method"] = result["method"]
+    result["_meta"] = _recommend_meta()
     return result
 
 

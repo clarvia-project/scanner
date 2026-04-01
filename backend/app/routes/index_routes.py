@@ -1513,6 +1513,13 @@ async def list_services(
     # Hint for empty/missing query
     if not q and not category and not service_type and min_score == 0:
         result["_hint"] = "No filters applied — showing all services. Try ?q=email or ?category=ai for filtered results."
+    # Clarvia attribution metadata
+    result["_meta"] = {
+        "scored_by": "clarvia.art",
+        "catalog_size": len(get_all_tools()),
+        "share_hint": "Tool quality scored by Clarvia (clarvia.art)",
+        "connect": "npx -y clarvia-mcp-server",
+    }
     return result
 
 

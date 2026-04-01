@@ -88,6 +88,7 @@ from .routes.agent_traffic_routes import router as agent_traffic_router  # noqa:
 from .routes.agent_traffic_routes import AgentTrafficMiddleware  # noqa: E402
 from .routes.visitor_traffic_routes import router as visitor_traffic_router  # noqa: E402
 from .routes.visitor_traffic_routes import VisitorTrafficMiddleware  # noqa: E402
+from .routes.ingestion_routes import router as ingestion_router  # noqa: E402
 from .keepalive import keepalive_loop  # noqa: E402
 from .scanner import cleanup_cache, get_cached_scan, run_scan  # noqa: E402
 
@@ -153,6 +154,29 @@ async def _periodic_data_freshness_check():
         except Exception as e:
             logger.warning("Freshness check error: %s", e)
         await asyncio.sleep(3600)  # check every hour
+
+
+async def _ingestion_loop():
+    """Run ingestion pipeline periodically (hourly, after 5-min warmup)."""
+    await asyncio.sleep(300)  # Wait 5 min after startup
+    while True:
+        try:
+            from .services.ingestion_pipeline import process_queue
+            from .routes.index_routes import get_all_tools
+
+            # Get existing URLs for dedup
+            existing = {t.get("url", "") for t in get_all_tools() if t.get("url")}
+
+            # Process any queued items
+            results = await process_queue(
+                batch_size=10,
+                existing_urls_fn=lambda: existing,
+            )
+            if results and results.get("indexed", 0) > 0:
+                logger.info("Ingestion processed: %s", results)
+        except Exception as e:
+            logger.warning("Ingestion loop error: %s", e)
+        await asyncio.sleep(3600)  # Every hour
 
 
 @asynccontextmanager
@@ -280,6 +304,17 @@ sys.stdout.buffer.write(pickle.dumps(raw))
 
     # Start keep-alive ping to prevent Render cold starts
     asyncio.create_task(keepalive_loop())
+
+    # Initialize ingestion pipeline queue
+    try:
+        from .services.ingestion_pipeline import get_queue
+        queue = await get_queue()
+        logger.info("Ingestion pipeline initialized (queue size: %d)", queue.size)
+    except Exception as e:
+        logger.warning("Ingestion pipeline init failed: %s", e)
+
+    # Start periodic ingestion loop
+    asyncio.create_task(_ingestion_loop())
 
     # Seed scan history from prebuilt-scans if empty
     from .routes.scan_history_routes import seed_history_from_prebuilt
@@ -480,6 +515,7 @@ app.include_router(analytics_router)
 app.include_router(scan_history_router)
 app.include_router(agent_traffic_router)
 app.include_router(visitor_traffic_router)
+app.include_router(ingestion_router)
 
 # ---------------------------------------------------------------------------
 # Compatibility: /api/v1/* → /v1/* (DESIGN.md specifies /api/v1/*)
