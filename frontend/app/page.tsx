@@ -847,7 +847,7 @@ export default function LandingPage() {
                 <p className="text-xs font-mono text-score-green uppercase tracking-widest mb-3">Agent-Verified</p>
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Top Picks</h2>
                 <p className="text-sm text-muted">
-                  {stats.totalScored.toLocaleString()}+ tools scanned. Only <span className="text-score-green font-semibold">{topPicks.length}</span> scored 80+.
+                  {stats.totalScored.toLocaleString()}+ tools scanned. Top <span className="text-score-green font-semibold">{topPicks.length}</span> highest-scoring tools.
                   These are the most agent-ready services in the ecosystem.
                 </p>
               </div>

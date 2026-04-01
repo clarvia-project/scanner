@@ -2271,6 +2271,7 @@ async def compare_services(
     ids: str | None = Query(None, description="Comma-separated scan_ids (max 4)"),
     names: str | None = Query(None, description="Comma-separated tool names (max 4) — fuzzy matched"),
     services: str | None = Query(None, description="Alias for names — comma-separated tool names"),
+    tools: str | None = Query(None, description="Alias for names — comma-separated tool names"),
 ):
     """Compare up to 4 services side by side.
 
@@ -2294,8 +2295,8 @@ async def compare_services(
                         break
             if service:
                 results.append(_compact_service(service))
-    elif names or services:
-        name_list = [n.strip().lower() for n in (names or services).split(",")][:4]
+    elif names or services or tools:
+        name_list = [n.strip().lower() for n in (names or services or tools).split(",")][:4]
         all_tools = list(_services) + list(_collected_tools)
         for name_q in name_list:
             # Exact match first, then substring match
@@ -2312,7 +2313,7 @@ async def compare_services(
             if found:
                 results.append(_compact_service(found))
     else:
-        raise HTTPException(status_code=400, detail="Provide 'ids' (scan_ids) or 'names'/'services' (tool names) to compare")
+        raise HTTPException(status_code=400, detail="Provide 'ids' (scan_ids) or 'names'/'services'/'tools' (tool names) to compare")
 
     # If only 1 result found (need at least 2 for meaningful comparison), return 400
     if len(results) == 1:

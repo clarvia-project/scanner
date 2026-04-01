@@ -106,6 +106,7 @@ async def get_similar_tools(
         t for t in index_routes._collected_tools if t["scan_id"] not in scanned_ids
     ]
 
+    # Try category + service_type first, then fallback to category only
     similar = [
         t
         for t in all_tools
@@ -113,13 +114,30 @@ async def get_similar_tools(
         and t.get("service_type") == stype
         and t["scan_id"] != scan_id
     ]
+
+    match_mode = "category+type"
+    if len(similar) < limit:
+        # Fallback: same category, any type
+        seen_ids = {t["scan_id"] for t in similar}
+        category_only = [
+            t
+            for t in all_tools
+            if t.get("category") == cat
+            and t["scan_id"] != scan_id
+            and t["scan_id"] not in seen_ids
+        ]
+        category_only.sort(key=lambda x: x.get("clarvia_score", 0), reverse=True)
+        similar.extend(category_only[: limit - len(similar)])
+        if len(similar) > len(seen_ids):
+            match_mode = "category"
+
     similar.sort(key=lambda x: x.get("clarvia_score", 0), reverse=True)
 
     from .index_routes import _compact_service
 
     return {
         "similar": [_compact_service(t) for t in similar[:limit]],
-        "based_on": {"category": cat, "service_type": stype},
+        "based_on": {"category": cat, "service_type": stype, "match_mode": match_mode},
     }
 
 
