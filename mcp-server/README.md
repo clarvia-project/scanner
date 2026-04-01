@@ -210,7 +210,7 @@ npm start      # Run server
 - **Website**: [clarvia.art](https://clarvia.art)
 - **GitHub**: [clarvia-project/scanner](https://github.com/clarvia-project/scanner)
 - **npm**: [clarvia-mcp-server](https://www.npmjs.com/package/clarvia-mcp-server)
-- **GitHub Action**: [clarvia-project/clarvia-action](https://github.com/clarvia-project/clarvia-action) — AEO check in CI/CD
+- **GitHub Action**: [clarvia-project/clarvia-aeo-check](https://github.com/clarvia-project/clarvia-aeo-check) — AEO check in CI/CD pipelines
 - **MCP Registry**: `io.github.digitamaz/clarvia`
 - **Remote Endpoint**: `https://clarvia-api.onrender.com/mcp/`
 
